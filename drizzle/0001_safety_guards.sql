@@ -1,0 +1,11 @@
+CREATE TABLE mutation_guard(value INTEGER NOT NULL CHECK(value = 1));
+CREATE TRIGGER cap_users BEFORE INSERT ON users WHEN (SELECT count(*) FROM users) >= 100 BEGIN SELECT RAISE(ABORT, 'Account registration quota reached'); END;
+CREATE TRIGGER cap_workspaces BEFORE INSERT ON workspaces WHEN (SELECT count(*) FROM workspaces WHERE owner_id=NEW.owner_id) >= 3 BEGIN SELECT RAISE(ABORT, 'Workspace quota reached'); END;
+CREATE TRIGGER cap_members BEFORE INSERT ON workspace_members WHEN (SELECT count(*) FROM workspace_members WHERE workspace_id=NEW.workspace_id) >= 10 BEGIN SELECT RAISE(ABORT, 'Member quota reached'); END;
+CREATE TRIGGER cap_boards BEFORE INSERT ON boards WHEN (SELECT count(*) FROM boards WHERE workspace_id=NEW.workspace_id) >= 5 BEGIN SELECT RAISE(ABORT, 'Board quota reached'); END;
+CREATE TRIGGER cap_sessions BEFORE INSERT ON sessions BEGIN DELETE FROM sessions WHERE expires_at < (unixepoch() * 1000); DELETE FROM sessions WHERE user_id=NEW.user_id AND id IN (SELECT id FROM sessions WHERE user_id=NEW.user_id ORDER BY expires_at DESC LIMIT -1 OFFSET 9); END;
+CREATE TRIGGER cap_daily_mutations BEFORE INSERT ON board_events BEGIN
+  INSERT INTO quotas(key,used) VALUES('mutations:' || date('now'),1) ON CONFLICT(key) DO UPDATE SET used=used+1;
+  SELECT CASE WHEN (SELECT used FROM quotas WHERE key='mutations:' || date('now')) > 2000 THEN RAISE(ABORT,'Daily mutation quota reached') END;
+  DELETE FROM quotas WHERE key LIKE 'mutations:%' AND key < 'mutations:' || date('now','-2 day');
+END;
