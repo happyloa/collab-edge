@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 const iterations = 600_000;
 const encoder = new TextEncoder();
 const hex = (bytes: ArrayBuffer) =>
@@ -42,10 +43,7 @@ export async function verifyPassword(password: string, encoded: string) {
   )
     return false;
   const actual = await derive(password, salt);
-  let difference = 0;
-  for (let i = 0; i < actual.length; i++)
-    difference |= actual.charCodeAt(i) ^ expected.charCodeAt(i);
-  return difference === 0;
+  return timingSafeEqual(encoder.encode(actual), encoder.encode(expected));
 }
 export async function sessionHash(token: string, secret: string) {
   const key = await crypto.subtle.importKey(

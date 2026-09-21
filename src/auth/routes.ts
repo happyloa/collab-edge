@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { users, sessions } from '../db/schema';
 import { body, route } from '../lib/http';
 import { assert } from '../lib/errors';
-import { digest, hashPassword, verifyPassword, sessionHash } from './crypto';
+import { hashPassword, verifyPassword, sessionHash } from './crypto';
 import { createSession, currentUser, tokenFrom } from './session';
 const credentials = z.object({
   email: z.email().trim().toLowerCase().max(254),
@@ -17,9 +17,9 @@ export const authenticate = (register: boolean) =>
     const data = await body(request, credentials);
     const ip = request.headers.get('CF-Connecting-IP') ?? 'local';
     const keys = [
-      `ip:${await digest(ip)}`,
-      `account:${await digest(data.email)}`,
       'auth-global',
+      `ip:${await sessionHash(ip, env.SESSION_SECRET)}`,
+      `account:${await sessionHash(data.email, env.SESSION_SECRET)}`,
     ];
     for (const key of keys)
       assert(

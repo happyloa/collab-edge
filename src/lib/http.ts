@@ -51,6 +51,18 @@ export function route(fn: (request: Request) => Promise<Response>) {
       response.headers.set('X-Content-Type-Options', 'nosniff');
       return response;
     } catch (error) {
+      if (
+        error instanceof Error &&
+        /(?:quota|budget|capacity|limit) reached/i.test(error.message)
+      ) {
+        return Response.json(
+          {
+            error:
+              'This demo has reached its usage limit. Please try again later or contact the owner.',
+          },
+          { status: 429, headers: { 'Cache-Control': 'no-store' } },
+        );
+      }
       if (error instanceof AppError)
         return Response.json(
           { error: error.message },
