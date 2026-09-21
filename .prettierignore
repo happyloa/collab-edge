@@ -1,0 +1,10 @@
+node_modules
+.tools
+dist
+.next
+.wrangler
+pnpm-lock.yaml
+worker-configuration.d.ts
+test-results
+playwright-report
+drizzle/meta

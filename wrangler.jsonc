@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "collab-edge",
+  "compatibility_date": "2026-09-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "worker/index.ts",
+  "secrets": { "required": ["SESSION_SECRET"] },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+  "vars": { "ATTACHMENTS_ENABLED": "false", "REGISTRATION_ENABLED": "true" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "collab-edge-db",
+      "database_id": "8f68d49a-be77-477d-aea1-04b6de4817a2",
+      "migrations_dir": "drizzle",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "ATTACHMENTS", "bucket_name": "collab-edge-attachments" },
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "BOARD_ROOMS", "class_name": "BoardRoom" },
+      { "name": "AUTH_LIMITER", "class_name": "AuthRateLimiter" },
+    ],
+  },
+  "exports": {
+    "BoardRoom": { "type": "durable-object", "storage": "sqlite" },
+    "AuthRateLimiter": { "type": "durable-object", "storage": "sqlite" },
+  },
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS",
+  },
+}

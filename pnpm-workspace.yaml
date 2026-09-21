@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+  workerd: true
+overrides:
+  '@esbuild-kit/esm-loader': 'npm:tsx@4.23.15'
