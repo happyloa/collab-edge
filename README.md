@@ -6,7 +6,7 @@ A shared project workspace that makes realtime collaboration explicit: ordered c
 
 [Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
 
-**Deployment status:** local application verified; public deployment is pending confirmation of the Cloudflare billing plan. No live URL is claimed yet. Production attachments default to disabled to respect the owner's zero-additional-cost requirement. See [delivery status](docs/delivery-status.md).
+**Deployment:** [CollabEdge on Workers](https://collab-edge.piafyoyo06.workers.dev). The Worker is deployed, but dynamic routes currently return **403 for everyone** until the owner-only Cloudflare Access application is configured. This is an intentional fail-closed state, not a working sign-in flow. GitHub About contains the same URL. Native GitHub Builds connection still needs Cloudflare authorization. Production attachments and preview URLs are disabled. See [delivery status](docs/delivery-status.md).
 
 ![CollabEdge seeded demo board captured in Chromium](docs/screenshots/demo-board.png)
 

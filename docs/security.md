@@ -1,5 +1,9 @@
 # Security and resource budgets
 
+Production dynamic routes require a signed Cloudflare Access RS256 JWT for the configured owner email. The verifier checks issuer, application audience, expiration and required identity claims; an email header alone is never trusted. Missing configuration or verification failures deny access before D1/DO work. The intended edge policy is a hostname-based Access application; Worker-level Access currently does not support WebSocket upgrades. See [Cloudflare's Access documentation](https://developers.cloudflare.com/workers/configuration/cloudflare-access/).
+
+After Access verification, a native rate-limit binding allows approximately 120 requests per IP per minute per Cloudflare location. A persistent Durable Object additionally enforces at most 5,000 dynamic requests per fixed 24-hour window globally, including WebSocket upgrades. Static assets do not consume this application counter; existing WebSocket messages have separate per-connection and mutation limits. Any guard failure returns 503; exhausted budgets return 429. The rate-limit binding is not a global billing counter. Production Access setup is currently pending, so dynamic requests are denied with 403 instead of reaching these budgets.
+
 Passwords use Web Crypto PBKDF2-HMAC-SHA256 with 600,000 iterations, a fresh 128-bit random salt and a 256-bit result. Verification uses Workers' supported `node:crypto` `timingSafeEqual` with nodejs_compat. Passwords are 12–128 characters. Demo identities cannot sign in with passwords.
 
 Sessions use two random UUIDs (244 random bits), expire after seven days, and are stored as HMAC-SHA256 digests keyed by SESSION_SECRET. Cookies are HttpOnly, SameSite=Lax, Path=/ and Secure on HTTPS. Logout deletes the session server-side. A user retains at most ten active sessions. Secrets are never committed or placed in Wrangler vars.

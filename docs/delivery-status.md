@@ -1,37 +1,30 @@
 # Delivery status
 
-Local implementation is verified; remote release is blocked by the zero-additional-cost requirement. This file records actual evidence rather than treating a local build as a live deployment.
+Updated 2026-09-22. The Worker is deployed in a fail-closed private state. Owner sign-in, native GitHub Builds integration and authenticated production smoke tests are not complete.
 
-- Official create-vinext-app scaffold created 2026-09-21.
-- Current `vinext check`: 100% compatible (10 supported, no partial support or issues).
-- Public repository: https://github.com/happyloa/collab-edge. Description and all requested topics configured.
-- Cloudflare OAuth is available.
-- D1 `collab-edge-db` created in APAC: `8f68d49a-be77-477d-aea1-04b6de4817a2`.
-- Private R2 Standard bucket `collab-edge-attachments` created.
-- No Worker deployed yet. No remote schema applied yet.
-- Local D1 migrations 0000–0002 applied successfully.
-- Auth, workspace RBAC, D1-atomic mutations, ordered WebSockets, idempotency, conflicts, replay, hibernation and private attachments implemented.
-- 19 Workers/core tests and 3 React DOM tests pass, plus ESLint compatibility probes.
-- Two-user Chromium collaboration scenario passes: synchronized moves/edits, conflict recovery, reconnect, comments, attachments and anonymous download rejection.
-- Demo keyboard entry, mobile layout and dark theme test passes; actual screenshots are in docs/screenshots.
-- Audit: no known vulnerabilities. Peer dependencies: no issues. TypeScript/Vitest compatibility pins are documented.
-- Board renaming and archival synchronize across clients; archived boards are read-only and retain their quota usage. Local lifecycle migration applied successfully.
-- Logical commits are created and verified separately as requested.
-- GitHub CI passed for the initial delivery (`ac18748`): https://github.com/happyloa/collab-edge/actions/runs/35619120868. Subsequent changes run the same CI checks; the README badge reports the current branch result.
+- Repository: https://github.com/happyloa/collab-edge.
+- Deployed URL: https://collab-edge.piafyoyo06.workers.dev. GitHub About Website is set to this URL.
+- Worker version: `ab760c30-a30b-489d-8bdb-28144bd24e08`, deployed at 2026-09-22 04:24 UTC from code commit `dd4bfeb`.
+- D1 `collab-edge-db`, APAC: `8f68d49a-be77-477d-aea1-04b6de4817a2`. All four migrations applied remotely.
+- Private R2 `collab-edge-attachments`; production operations disabled.
+- SQLite Durable Object exports `BoardRoom` and `AuthRateLimiter` created during deployment.
+- Random production SESSION_SECRET stored on Cloudflare without logging its value.
+- User explicitly confirmed Workers Free and requested owner-only access. No plan upgrade was requested or performed.
+- Access JWT guard enabled; absent Access issuer/audience intentionally rejects everyone. Preview URLs disabled.
+- Live checks: anonymous root and a session request with a forged owner email header both returned 403. No authenticated live application test is claimed.
+- Local validation: 24 Workers/core tests, 3 React tests, ESLint probes, typecheck, format, production build and two Chromium scenarios passed. Vinext reports 100% compatibility.
+- Commits remain separated by migration fix, access controls and delivery documentation. The README badge links to current GitHub CI.
 
-## Cost constraint
+## Authorization still required
 
-The owner requires no additional Cloudflare charges and application usage limits.
-Do not upgrade account plans or activate paid products. Verify the Workers plan before deployment.
-R2 free usage is account-wide and shared with existing buckets; application quotas alone cannot guarantee an account-wide zero invoice.
-Keep production attachment operations disabled until available account budget can be established safely. Local R2 functionality and tests remain required.
-Use hard server-side quotas and fail closed, rather than relying on billing notifications.
+The existing Wrangler OAuth can deploy Workers, D1 and secrets, but Access application creation and Workers Builds token lookup return 403. The GitHub Actions deploy token is also absent; its deploy gate remains false. Repository pushes are not yet connected to automatic Worker releases.
 
-## Remaining remote delivery
+Complete the owner-only hostname Access application and native GitHub connection using [the exact configuration in deployment.md](deployment.md). Set the Access team domain and application audience in Wrangler, redeploy, and verify owner sign-in, denial of another email and live WebSocket collaboration. Do not disable the Access requirement to work around missing authorization.
 
-1. Confirm the Cloudflare Workers billing plan is Free. Wrangler OAuth cannot read subscriptions (403); browser runtime initialization also failed, so no plan has been inferred.
-2. Supply a scoped Cloudflare API token for GitHub Actions if automatic deployment is desired. The account ID secret is configured; the API token is not.
-3. Once the zero-cost deployment conditions are satisfied: apply remote migrations, set a securely generated SESSION_SECRET, deploy, verify DO namespaces, capture the real URL and smoke-test live behavior.
-4. Update README with the verified live URL and release evidence. Production attachments remain disabled until account-wide R2 free capacity is verified separately.
+## Migration compatibility
 
-`CLOUDFLARE_DEPLOY_ENABLED` is explicitly false on GitHub. Local deploy additionally requires `CLOUDFLARE_FREE_PLAN_CONFIRMED=true`, no local .dev.vars, and production attachments disabled. A skipped deploy must not be reported as successful.
+The first remote run applied schema and board lifecycle migrations but rolled back the safety trigger migration with `incomplete input`. A read-only inspection confirmed no partial trigger/table changes. Only the two unapplied migrations were rewritten with equivalent single-line triggers and `SELECT RAISE ... WHERE` instead of unparenthesized CASE expressions. The subsequent Wrangler remote migration run succeeded. Already applied remote migrations are immutable.
+
+## Cost boundaries
+
+Production has per-IP throttling, a persistent global dynamic-request budget, transactional write/storage quotas and disabled R2 operations. Workers Free is the platform billing boundary; application limits alone cannot guarantee a zero invoice on a paid/shared account. Keep Workers and any Access/Builds setup on free plans. Do not enable paid overages, preview deployments, production attachments or paid image optimization.
