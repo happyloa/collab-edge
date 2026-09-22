@@ -19,8 +19,8 @@
     "ATTACHMENTS_ENABLED": "false",
     "REGISTRATION_ENABLED": "true",
     "ACCESS_REQUIRED": "true",
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": "",
+    "ACCESS_TEAM_DOMAIN": "piafyoyo06.cloudflareaccess.com",
+    "ACCESS_AUD": "b48711fa742a356a907b61c3e60fa216c981c99cacb6296ca5e9d1188850fba6",
     "ACCESS_ALLOWED_EMAIL": "piafyoyo06@gmail.com",
   },
   "d1_databases": [
