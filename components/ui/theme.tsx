@@ -1,18 +1,26 @@
 'use client';
 import { Moon, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
+
+const subscribe = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   return (
     <button
       className="icon-button"
       aria-label="Toggle color theme"
+      disabled={!ready}
       onClick={() => {
-        document.documentElement.dataset.theme = dark ? 'light' : 'dark';
-        setDark(!dark);
+        const root = document.documentElement;
+        const dark = getComputedStyle(root).colorScheme === 'dark';
+        root.dataset.theme = dark ? 'light' : 'dark';
       }}
     >
-      {dark ? <Sun size={18} /> : <Moon size={18} />}
+      <Sun size={18} className="theme-icon-light" />
+      <Moon size={18} className="theme-icon-dark" />
     </button>
   );
 }

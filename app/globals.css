@@ -14,12 +14,16 @@
   --shadow-panel: 0 2px 5px #16223805, 0 12px 30px #16223804;
 }
 :root {
+  --theme-icon-light-display: none;
+  --theme-icon-dark-display: block;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   background: var(--color-background);
   color: var(--color-foreground);
   color-scheme: light;
 }
 :root[data-theme='dark'] {
+  --theme-icon-light-display: block;
+  --theme-icon-dark-display: none;
   --color-background: #151b22;
   --color-surface: #202833;
   --color-foreground: #e7ecf2;
@@ -33,6 +37,8 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
+    --theme-icon-light-display: block;
+    --theme-icon-dark-display: none;
     --color-background: #151b22;
     --color-surface: #202833;
     --color-foreground: #e7ecf2;
@@ -44,6 +50,12 @@
     --color-warning: #f5cb77;
     color-scheme: dark;
   }
+}
+.theme-icon-light {
+  display: var(--theme-icon-light-display);
+}
+.theme-icon-dark {
+  display: var(--theme-icon-dark-display);
 }
 button,
 a,

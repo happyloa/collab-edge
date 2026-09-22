@@ -49,8 +49,12 @@ it('provides a keyboard-accessible theme control', () => {
   const toggle = screen.getByRole('button', { name: 'Toggle color theme' });
   toggle.focus();
   expect(toggle).toHaveFocus();
+  const style = vi.spyOn(window, 'getComputedStyle');
+  style.mockReturnValue({ colorScheme: 'light' } as CSSStyleDeclaration);
   fireEvent.click(toggle);
   expect(document.documentElement.dataset.theme).toBe('dark');
+  style.mockReturnValue({ colorScheme: 'dark' } as CSSStyleDeclaration);
   fireEvent.click(toggle);
   expect(document.documentElement.dataset.theme).toBe('light');
+  style.mockRestore();
 });
