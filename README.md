@@ -1,5 +1,7 @@
 # CollabEdge
 
+[![CI](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml)
+
 A shared project workspace that makes realtime collaboration explicit: ordered changes, recoverable conflicts, and a clear source of truth.
 
 [Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
@@ -16,6 +18,7 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 
 - Workspaces with server-enforced OWNER, EDITOR and VIEWER roles; member invitations, role changes, removal and leaving.
 - Boards with columns, cards, descriptions, archive, comments, column ordering and pointer/keyboard card dragging.
+- Synchronized board renaming and archival. Archived boards retain history and files, become read-only, and still count toward quotas. The shared demo cannot be archived.
 - Hibernating WebSockets, online presence and ordered event delivery.
 - Optimistic creation, edits and moves, with explicit pending, failed and conflicted states.
 - Per-field conflict detection and a preserved draft with an explicit retry action.

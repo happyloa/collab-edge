@@ -11,12 +11,13 @@ Local implementation is verified; remote release is blocked by the zero-addition
 - No Worker deployed yet. No remote schema applied yet.
 - Local D1 migrations 0000–0002 applied successfully.
 - Auth, workspace RBAC, D1-atomic mutations, ordered WebSockets, idempotency, conflicts, replay, hibernation and private attachments implemented.
-- 17 Workers/core tests and 3 React DOM tests pass, plus ESLint compatibility probes.
+- 19 Workers/core tests and 3 React DOM tests pass, plus ESLint compatibility probes.
 - Two-user Chromium collaboration scenario passes: synchronized moves/edits, conflict recovery, reconnect, comments, attachments and anonymous download rejection.
 - Demo keyboard entry, mobile layout and dark theme test passes; actual screenshots are in docs/screenshots.
 - Audit: no known vulnerabilities. Peer dependencies: no issues. TypeScript/Vitest compatibility pins are documented.
-- Logical commits are being created and verified separately as requested.
-- GitHub CI has not yet been verified at the time of this update.
+- Board renaming and archival synchronize across clients; archived boards are read-only and retain their quota usage. Local lifecycle migration applied successfully.
+- Logical commits are created and verified separately as requested.
+- GitHub CI passed for the initial delivery (`ac18748`): https://github.com/happyloa/collab-edge/actions/runs/35619120868. Subsequent changes run the same CI checks; the README badge reports the current branch result.
 
 ## Cost constraint
 
