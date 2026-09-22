@@ -1,10 +1,10 @@
 # Deployment
 
-Worker URL: https://collab-edge.piafyoyo06.workers.dev. It currently returns 403 for dynamic routes because owner-only Access configuration is pending. Remote D1 migrations, SESSION_SECRET and SQLite Durable Object namespaces are provisioned. See [delivery evidence](delivery-status.md).
+Worker URL: https://collab-edge.piafyoyo06.workers.dev. Owner-only hostname Access is configured, and the Worker is connected to GitHub native Builds. Remote D1 migrations, SESSION_SECRET and SQLite Durable Object namespaces are provisioned. See [delivery evidence](delivery-status.md).
 
-## Finish private access
+## Private access configuration
 
-The user confirmed Workers Free and selected access only for `piafyoyo06@gmail.com`. Existing Wrangler OAuth cannot create Access applications (403). Complete this with a suitably authorized account or scoped API token. Never paste credentials into Git or chat; `.tools/` is ignored for temporary local credentials.
+The user confirmed Workers Free and selected access only for `piafyoyo06@gmail.com`. A user-supplied scoped setup token was used to create application `58261301-84d2-47ec-937f-a4d828aea306`, with an eight-hour session and one owner-email allow policy. The verified team domain is `piafyoyo06.cloudflareaccess.com`; its application AUD is recorded in Wrangler. The following steps describe this configuration for future maintenance. Never paste credentials into Git or chat; `.tools/` is ignored for temporary local credentials.
 
 1. In Cloudflare Zero Trust, use the Free plan; do not select a paid plan. Configure the team domain and email one-time PIN authentication if not already enabled.
 2. Under Access → Applications, add a **Self-hosted hostname** application for `collab-edge.piafyoyo06.workers.dev`, covering all paths. Do not select a Worker-level destination: Cloudflare currently documents that Worker-level Access rejects WebSockets.
@@ -16,9 +16,11 @@ The application independently verifies the Access JWT signature, issuer, audienc
 
 References: [Workers Access and WebSocket limitations](https://developers.cloudflare.com/workers/configuration/cloudflare-access/), [JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/).
 
-## Connect the Worker to GitHub
+## GitHub connection
 
-The repository exists and GitHub CI runs on pushes. **The native Workers Builds connection is not yet established**: its API rejects the existing OAuth with 403. A repository homepage link is not a build connection.
+Native Workers Builds is connected to `happyloa/collab-edge`, with production trigger `d5048a22-ca1a-4390-842a-01904be97a9a`. Pushes to `main` initiate builds automatically; no preview trigger was created. GitHub CI runs separately. The following settings are configured in Cloudflare.
+
+Pure changes to `docs/**`, `README.md` and `AGENTS.md` do not trigger a Cloudflare build, saving free build minutes. Other matching `main` changes trigger the complete native verification and deployment flow. Node 24.12.0 and pnpm 12.5.1 are configured as build variables.
 
 In Workers & Pages → `collab-edge` → Settings → Builds → Connect, authorize the Cloudflare GitHub App only for `happyloa/collab-edge` and configure:
 
@@ -26,7 +28,7 @@ In Workers & Pages → `collab-edge` → Settings → Builds → Connect, author
 | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Production branch             | `main`                                                                                                |
 | Root directory                | `/`                                                                                                   |
-| Build command                 | `corepack pnpm install --frozen-lockfile && corepack pnpm build`                                      |
+| Build command                 | `corepack pnpm install --frozen-lockfile && corepack pnpm verify`                                     |
 | Deploy command                | `node scripts/check-deploy-budget.mjs && corepack pnpm db:migrate:remote && corepack pnpm run deploy` |
 | Build variable                | `CLOUDFLARE_FREE_PLAN_CONFIRMED=true`                                                                 |
 | Non-production/preview builds | Disabled                                                                                              |
