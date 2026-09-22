@@ -17,6 +17,11 @@ export function prepareMutation(
 ): Patch {
   const { command: c, baseRevision } = mutation;
   assert(baseRevision <= state.board.revision, 400, 'Invalid base revision');
+  assert(
+    !state.board.archived || c.type === 'board.archive',
+    410,
+    'This board is archived',
+  );
   const next = state.board.revision + 1;
   const card = state.cards.find((v) => v.id === c.payload.id);
   const column = state.columns.find((v) => v.id === c.payload.id);
@@ -36,6 +41,15 @@ export function prepareMutation(
   )
     assert(column, 404, 'Column no longer exists');
   switch (c.type) {
+    case 'board.rename':
+      assert(c.payload.id === state.board.id, 400, 'Invalid board ID');
+      if (c.payload.title !== state.board.name)
+        changed(state.board.nameRevision);
+      break;
+    case 'board.archive':
+      assert(c.payload.id === state.board.id, 400, 'Invalid board ID');
+      if (!state.board.archived) changed(state.board.revision);
+      break;
     case 'card.create':
       assert(
         state.columns.some((v) => v.id === c.payload.columnId),
@@ -113,6 +127,12 @@ export function prepareMutation(
   }
   const after = optimistic(state, mutation, actorId);
   const patch: Patch = {};
+  if (c.type === 'board.rename' || c.type === 'board.archive')
+    patch.board = {
+      name: after.board.name,
+      archived: after.board.archived,
+      nameRevision: c.type === 'board.rename' ? next : after.board.nameRevision,
+    };
   if (c.type === 'column.remove') patch.removedColumns = [c.payload.id];
   patch.columns = after.columns
     .filter(

@@ -13,6 +13,8 @@ const state: Snapshot = {
     workspaceId: crypto.randomUUID(),
     name: 'Test',
     revision: 2,
+    nameRevision: 0,
+    archived: false,
   },
   columns: [
     {
@@ -42,6 +44,61 @@ const state: Snapshot = {
   attachments: [],
 };
 describe('security and synchronization', () => {
+  it('applies board renames, rejects stale names and makes archived boards read-only', () => {
+    const rename = {
+      clientMutationId: crypto.randomUUID(),
+      baseRevision: 2,
+      command: {
+        type: 'board.rename' as const,
+        payload: { id: boardId, title: 'Renamed' },
+      },
+    };
+    const payload = prepareMutation(state, rename, actorId);
+    const renamed = applyEvent(state, {
+      boardId,
+      revision: 3,
+      eventId: crypto.randomUUID(),
+      clientMutationId: rename.clientMutationId,
+      actorId,
+      type: 'board.rename',
+      payload,
+      createdAt: new Date().toISOString(),
+    });
+    expect(renamed.board).toMatchObject({
+      name: 'Renamed',
+      nameRevision: 3,
+      revision: 3,
+    });
+    expect(() =>
+      prepareMutation(
+        renamed,
+        {
+          ...rename,
+          command: {
+            type: 'board.rename',
+            payload: { id: boardId, title: 'Stale' },
+          },
+        },
+        actorId,
+      ),
+    ).toThrow(ConflictError);
+    const archive = {
+      clientMutationId: crypto.randomUUID(),
+      baseRevision: 3,
+      command: { type: 'board.archive' as const, payload: { id: boardId } },
+    };
+    expect(() =>
+      prepareMutation(renamed, { ...archive, baseRevision: 2 }, actorId),
+    ).toThrow(ConflictError);
+    const archived = applyPatch(
+      renamed,
+      prepareMutation(renamed, archive, actorId),
+    );
+    expect(archived.board.archived).toBe(true);
+    expect(() =>
+      prepareMutation(archived, { ...rename, baseRevision: 3 }, actorId),
+    ).toThrow('This board is archived');
+  });
   it('salts passwords and verifies in the Workers runtime', async () => {
     const hash = await hashPassword('correct-horse-battery');
     expect(await verifyPassword('correct-horse-battery', hash)).toBe(true);

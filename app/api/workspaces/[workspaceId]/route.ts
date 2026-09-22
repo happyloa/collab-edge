@@ -15,7 +15,10 @@ export const GET = route(async (request) => {
   const db = drizzle(env.DB);
   const [workspace, boardList, memberList] = await Promise.all([
     db.select().from(workspaces).where(eq(workspaces.id, id)).get(),
-    db.select().from(boards).where(eq(boards.workspaceId, id)),
+    db
+      .select()
+      .from(boards)
+      .where(and(eq(boards.workspaceId, id), eq(boards.archived, false))),
     db
       .select({
         userId: users.id,

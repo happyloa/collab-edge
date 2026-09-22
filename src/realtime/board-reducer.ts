@@ -12,6 +12,7 @@ export function applyPatch(state: Snapshot, patch: Patch): Snapshot {
   const cardIds = new Set(cards.map((c) => c.id));
   return {
     ...state,
+    board: { ...state.board, ...patch.board },
     columns: upsert(state.columns, patch.columns).filter(
       (c) => !removed.has(c.id),
     ),
@@ -28,10 +29,8 @@ export function applyEvent(state: Snapshot, event: BoardEvent) {
   if (event.revision <= state.board.revision) return state;
   if (event.revision !== state.board.revision + 1)
     throw new Error('revision_gap');
-  return {
-    ...applyPatch(state, event.payload),
-    board: { ...state.board, revision: event.revision },
-  };
+  const patched = applyPatch(state, event.payload);
+  return { ...patched, board: { ...patched.board, revision: event.revision } };
 }
 export function ordered<T extends { id: string; position: number }>(
   items: T[],
@@ -57,6 +56,10 @@ export function optimistic(
   const { command: c } = mutation;
   const revision = state.board.revision;
   switch (c.type) {
+    case 'board.rename':
+      return { ...state, board: { ...state.board, name: c.payload.title } };
+    case 'board.archive':
+      return { ...state, board: { ...state.board, archived: true } };
     case 'card.create':
       return applyPatch(state, {
         cards: [

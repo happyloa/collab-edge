@@ -5,6 +5,11 @@ const revision = z.number().int().nonnegative();
 const anchor = id.nullable();
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({
+    type: z.literal('board.rename'),
+    payload: z.object({ id, title }),
+  }),
+  z.object({ type: z.literal('board.archive'), payload: z.object({ id }) }),
+  z.object({
     type: z.literal('column.create'),
     payload: z.object({ id, title }),
   }),
@@ -109,7 +114,14 @@ export const attachmentSchema = z.object({
   createdAt: z.string(),
 });
 export const snapshotSchema = z.object({
-  board: z.object({ id, workspaceId: id, name: z.string(), revision }),
+  board: z.object({
+    id,
+    workspaceId: id,
+    name: z.string(),
+    revision,
+    nameRevision: revision,
+    archived: z.boolean(),
+  }),
   columns: z.array(columnSchema),
   cards: z.array(cardSchema),
   comments: z.array(commentSchema),
@@ -117,6 +129,9 @@ export const snapshotSchema = z.object({
 });
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export const patchSchema = z.object({
+  board: z
+    .object({ name: z.string(), nameRevision: revision, archived: z.boolean() })
+    .optional(),
   columns: z.array(columnSchema).optional(),
   cards: z.array(cardSchema).optional(),
   comments: z.array(commentSchema).optional(),

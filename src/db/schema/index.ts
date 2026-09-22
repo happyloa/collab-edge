@@ -57,6 +57,8 @@ export const boards = sqliteTable(
       .references(() => workspaces.id, { onDelete: 'cascade' }),
     name: text().notNull(),
     revision: integer().notNull().default(0),
+    nameRevision: integer('name_revision').notNull().default(0),
+    archived: integer({ mode: 'boolean' }).notNull().default(false),
   },
   (t) => [index('boards_workspace').on(t.workspaceId)],
 );

@@ -163,7 +163,8 @@ function Board({ initial }: { initial: BoardData }) {
     .slice(0, 30);
   const [selected, setSelected] = useState<Card | null>(null);
   const [showActivity, setShowActivity] = useState(false);
-  const readOnly = initial.role === 'VIEWER';
+  const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
+  const readOnly = initial.role === 'VIEWER' || state.board.archived;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
@@ -222,6 +223,14 @@ function Board({ initial }: { initial: BoardData }) {
           </p>
         </div>
         <div className="flex gap-3">
+          {!readOnly && (
+            <button
+              className="button secondary"
+              onClick={() => setSettings({ ...state.board })}
+            >
+              Board settings
+            </button>
+          )}
           <span className="badge">
             {initial.role} · Revision {state.board.revision}
           </span>
@@ -235,6 +244,19 @@ function Board({ initial }: { initial: BoardData }) {
         </div>
       </div>
       <main className="p-4 sm:p-6">
+        {state.board.archived && (
+          <p className="notice mb-4">
+            This board is archived. Its history and files remain available
+            read-only.
+          </p>
+        )}
+        {settings && !readOnly && (
+          <BoardSettings
+            initial={settings}
+            mutate={live.mutate}
+            close={() => setSettings(null)}
+          />
+        )}
         {live.error && (
           <p role="alert" className="notice error mb-4">
             {live.error}
@@ -478,6 +500,79 @@ function Board({ initial }: { initial: BoardData }) {
         />
       )}
     </div>
+  );
+}
+function BoardSettings({
+  initial,
+  mutate,
+  close,
+}: {
+  initial: Snapshot['board'];
+  mutate: (command: Command, base?: number) => boolean;
+  close: () => void;
+}) {
+  const [title, setTitle] = useState(initial.name);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  return (
+    <section className="surface mb-4 space-y-4 p-5" aria-label="Board settings">
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (
+            mutate(
+              { type: 'board.rename', payload: { id: initial.id, title } },
+              initial.revision,
+            )
+          )
+            close();
+        }}
+      >
+        <label className="field">
+          Board name
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            required
+            maxLength={160}
+          />
+        </label>
+        <button className="button">Save board name</button>
+        <button type="button" className="button secondary" onClick={close}>
+          Cancel
+        </button>
+      </form>
+      {confirmArchive ? (
+        <div className="space-y-3">
+          <p>
+            Archive this board? It will become read-only and disappear from the
+            workspace list. History is retained and still counts toward usage
+            limits.
+          </p>
+          <button
+            className="button secondary"
+            onClick={() => {
+              if (
+                mutate(
+                  { type: 'board.archive', payload: { id: initial.id } },
+                  initial.revision,
+                )
+              )
+                close();
+            }}
+          >
+            Confirm archive board
+          </button>
+        </div>
+      ) : (
+        <button
+          className="text-sm text-destructive"
+          onClick={() => setConfirmArchive(true)}
+        >
+          Archive board
+        </button>
+      )}
+    </section>
   );
 }
 function CardDialog({

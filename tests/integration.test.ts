@@ -34,11 +34,9 @@ async function fixture(role = 'OWNER') {
       userId,
       role,
     ),
-    env.DB.prepare('INSERT INTO boards VALUES(?,?,?,0)').bind(
-      boardId,
-      workspaceId,
-      'Launch',
-    ),
+    env.DB.prepare(
+      'INSERT INTO boards(id,workspace_id,name,revision) VALUES(?,?,?,0)',
+    ).bind(boardId, workspaceId, 'Launch'),
     env.DB.prepare('INSERT INTO board_columns VALUES(?,?,?,?,0,0)').bind(
       columnId,
       boardId,
@@ -97,6 +95,48 @@ async function fixture(role = 'OWNER') {
   }
   return { ws, next, mutate, stub, boardId, columnId, userId, workspaceId };
 }
+it('persists board lifecycle events and deduplicates archive delivery', async () => {
+  const f = await fixture();
+  try {
+    f.mutate({
+      type: 'board.rename',
+      payload: { id: f.boardId, title: 'Renamed board' },
+    });
+    expect(await f.next('ack')).toMatchObject({ revision: 1 });
+    const command = {
+      type: 'board.archive' as const,
+      payload: { id: f.boardId },
+    };
+    const id = f.mutate(command, 1);
+    expect(await f.next('ack')).toMatchObject({ revision: 2 });
+    f.mutate(command, 1, id);
+    expect(await f.next('ack')).toMatchObject({ revision: 2 });
+    expect(
+      await env.DB.prepare(
+        'SELECT name,name_revision,archived,revision FROM boards WHERE id=?',
+      )
+        .bind(f.boardId)
+        .first(),
+    ).toMatchObject({
+      name: 'Renamed board',
+      name_revision: 1,
+      archived: 1,
+      revision: 2,
+    });
+    f.mutate(
+      {
+        type: 'column.create',
+        payload: { id: crypto.randomUUID(), title: 'Rejected' },
+      },
+      2,
+    );
+    expect(await f.next('error')).toMatchObject({
+      message: 'This board is archived',
+    });
+  } finally {
+    f.ws.close();
+  }
+});
 it('commits one revision atomically, deduplicates, replays, and falls back to snapshots', async () => {
   const f = await fixture();
   try {

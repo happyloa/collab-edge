@@ -142,6 +142,30 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       path: 'docs/screenshots/board.png',
       fullPage: true,
     });
+    await bob.getByRole('button', { name: 'Close card' }).click();
+    await alice.getByRole('button', { name: 'Board settings' }).click();
+    await alice
+      .getByLabel('Board name', { exact: true })
+      .fill('Launch shipped');
+    await alice.getByRole('button', { name: 'Save board name' }).click();
+    await expect(
+      bob.getByRole('heading', { name: 'Launch shipped', exact: true }),
+    ).toBeVisible();
+    await alice.getByRole('button', { name: 'Board settings' }).click();
+    await alice
+      .getByRole('button', { name: 'Archive board', exact: true })
+      .click();
+    await alice.getByRole('button', { name: 'Confirm archive board' }).click();
+    for (const page of [alice, bob]) {
+      await expect(
+        page.getByText('This board is archived.', { exact: false }),
+      ).toBeVisible();
+      await expect(page.getByLabel('New card in Backlog')).toHaveCount(0);
+    }
+    await alice.goto('/workspaces');
+    await expect(
+      alice.getByRole('link', { name: /Launch shipped/ }),
+    ).toHaveCount(0);
     expect(failures).toEqual([]);
   } finally {
     await aliceContext.close();

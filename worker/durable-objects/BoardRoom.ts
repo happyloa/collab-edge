@@ -5,6 +5,7 @@ import { and, eq, gt, asc } from 'drizzle-orm';
 import { boards, events } from '../../src/db/schema';
 import { currentUser, boardAccess } from '../../src/auth/session';
 import { loadSnapshot } from '../../src/db/queries/snapshot';
+import { DEMO } from '../../src/db/demo';
 import {
   clientMessage,
   mutationSchema,
@@ -120,6 +121,7 @@ export class BoardRoom extends DurableObject<Env> {
       validateBytes(bytes, data.mime);
       await boardAccess(userId, boardId, true);
       const state = await loadSnapshot(this.env.DB, boardId);
+      assert(!state.board.archived, 410, 'This board is archived');
       assert(
         state.cards.some((c) => c.id === cardId && !c.archived),
         404,
@@ -222,6 +224,7 @@ export class BoardRoom extends DurableObject<Env> {
         .bind(attachmentId, boardId)
         .first<{ object_key: string }>();
       if (!attachment) return { ok: true };
+      assert(!state.board.archived, 410, 'This board is archived');
       assert(
         state.board.revision < LIMITS.eventsPerBoard,
         429,
@@ -363,6 +366,11 @@ export class BoardRoom extends DurableObject<Env> {
     input: Mutation,
   ): Promise<BoardEvent> {
     const mutation = mutationSchema.parse(input);
+    assert(
+      boardId !== DEMO.board || mutation.command.type !== 'board.archive',
+      403,
+      'The shared demo board cannot be archived',
+    );
     const db = drizzle(this.env.DB);
     const duplicate = await db
       .select()
@@ -403,6 +411,17 @@ export class BoardRoom extends DurableObject<Env> {
       createdAt: new Date().toISOString(),
     };
     const statements: D1PreparedStatement[] = [];
+    if (patch.board)
+      statements.push(
+        this.env.DB.prepare(
+          'UPDATE boards SET name=?,name_revision=?,archived=? WHERE id=?',
+        ).bind(
+          patch.board.name,
+          patch.board.nameRevision,
+          Number(patch.board.archived),
+          boardId,
+        ),
+      );
     for (const col of patch.columns ?? [])
       statements.push(
         this.env.DB.prepare(

@@ -8,6 +8,13 @@
       "when": 1789976200295,
       "tag": "0000_thankful_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790049512316,
+      "tag": "0001_board_lifecycle",
+      "breakpoints": true
     }
   ]
 }
