@@ -4,9 +4,25 @@
   "compatibility_date": "2026-09-21",
   "compatibility_flags": ["nodejs_compat"],
   "main": "worker/index.ts",
+  "workers_dev": true,
+  "preview_urls": false,
+  "ratelimits": [
+    {
+      "name": "REQUEST_LIMITER",
+      "namespace_id": "2026092201",
+      "simple": { "limit": 120, "period": 60 },
+    },
+  ],
   "secrets": { "required": ["SESSION_SECRET"] },
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
-  "vars": { "ATTACHMENTS_ENABLED": "false", "REGISTRATION_ENABLED": "true" },
+  "vars": {
+    "ATTACHMENTS_ENABLED": "false",
+    "REGISTRATION_ENABLED": "true",
+    "ACCESS_REQUIRED": "true",
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": "",
+    "ACCESS_ALLOWED_EMAIL": "piafyoyo06@gmail.com",
+  },
   "d1_databases": [
     {
       "binding": "DB",

@@ -10,6 +10,15 @@ if (existsSync('.dev.vars')) {
   );
 }
 const config = JSON.parse(readFileSync('dist/server/wrangler.json', 'utf8'));
+if (
+  config.vars?.ACCESS_REQUIRED !== 'true' ||
+  config.preview_urls !== false ||
+  !config.ratelimits?.some((item) => item.name === 'REQUEST_LIMITER')
+) {
+  throw new Error(
+    'Deployment blocked: private Access verification, disabled previews and request limits are required.',
+  );
+}
 if (config.vars?.ATTACHMENTS_ENABLED !== 'false') {
   throw new Error(
     'Deployment blocked: production R2 must remain disabled under the zero-cost policy.',

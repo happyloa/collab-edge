@@ -32,5 +32,6 @@ jobs:
       - run: pnpm test:e2e
       - name: Remove local-only secret file before deploying
         run: rm .dev.vars
+      - run: node scripts/check-deploy-budget.mjs
       - run: pnpm db:migrate:remote
       - run: pnpm run deploy

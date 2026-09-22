@@ -1,2 +1,3 @@
 SESSION_SECRET=replace-with-a-cryptographically-random-secret-at-least-32-characters
 ATTACHMENTS_ENABLED=true
+ACCESS_REQUIRED=false
