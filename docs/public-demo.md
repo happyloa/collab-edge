@@ -4,6 +4,8 @@
 
 The demo supports editing, moving, assigning, dating, filtering, archiving and restoring sample cards. The simulated teammate edit uses the same pure mutation/conflict and event reducer functions as the application. It deliberately holds an older draft revision so a conflicting save preserves the user's input and offers an explicit retry. It is a single-tab simulation, not a WebSocket session or proof of live multi-user behavior.
 
+Shared CSS gives the demo the same brief entrances, card hover feedback and dialog animation as the app. All motion honors `prefers-reduced-motion: reduce` and uses transforms/opacity without moving drag targets.
+
 Data lives in React state and resets on reload or Reset demo. No accounts, API requests, analytics, uploads or production data are involved. Existing application card limits bound fixture mutations and the visible activity list retains only eight entries. Language preference uses the same non-sensitive cookie as the app. Fonts are self-hosted with the published site.
 
 ```sh
