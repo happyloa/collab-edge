@@ -9,6 +9,7 @@ export const commandSchema = z.discriminatedUnion('type', [
     payload: z.object({ id, title }),
   }),
   z.object({ type: z.literal('board.archive'), payload: z.object({ id }) }),
+  z.object({ type: z.literal('board.restore'), payload: z.object({ id }) }),
   z.object({
     type: z.literal('column.create'),
     payload: z.object({ id, title }),
@@ -33,14 +34,23 @@ export const commandSchema = z.discriminatedUnion('type', [
         id,
         title: title.optional(),
         description: z.string().max(10000).optional(),
+        assigneeId: id.nullable().optional(),
+        dueDate: z.iso.date().nullable().optional(),
       })
-      .refine((v) => v.title !== undefined || v.description !== undefined),
+      .refine(
+        (v) =>
+          v.title !== undefined ||
+          v.description !== undefined ||
+          v.assigneeId !== undefined ||
+          v.dueDate !== undefined,
+      ),
   }),
   z.object({
     type: z.literal('card.move'),
     payload: z.object({ id, columnId: id, beforeId: anchor }),
   }),
   z.object({ type: z.literal('card.archive'), payload: z.object({ id }) }),
+  z.object({ type: z.literal('card.restore'), payload: z.object({ id }) }),
   z.object({
     type: z.literal('comment.create'),
     payload: z.object({
@@ -94,6 +104,10 @@ export const cardSchema = z.object({
   updatedRevision: revision,
   titleRevision: revision,
   descriptionRevision: revision,
+  assigneeId: id.nullable().default(null),
+  dueDate: z.iso.date().nullable().default(null),
+  assigneeRevision: revision.default(0),
+  dueDateRevision: revision.default(0),
 });
 export const commentSchema = z.object({
   id,

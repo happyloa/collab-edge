@@ -3,6 +3,7 @@ import { hashPassword, verifyPassword, sessionHash } from '../src/auth/crypto';
 import { prepareMutation, ConflictError } from '../src/realtime/mutations';
 import { applyEvent, applyPatch, ordered } from '../src/realtime/board-reducer';
 import { clientMessage, type Snapshot } from '../src/realtime/protocol';
+import { matchesCard } from '../src/realtime/card-filters';
 const boardId = crypto.randomUUID(),
   columnId = crypto.randomUUID(),
   cardId = crypto.randomUUID(),
@@ -38,12 +39,74 @@ const state: Snapshot = {
       updatedRevision: 2,
       titleRevision: 2,
       descriptionRevision: 0,
+      assigneeId: null,
+      dueDate: null,
+      assigneeRevision: 0,
+      dueDateRevision: 0,
     },
   ],
   comments: [],
   attachments: [],
 };
 describe('security and synchronization', () => {
+  it('validates real calendar dates and keeps independent metadata edits mergeable', () => {
+    expect(
+      clientMessage.safeParse({
+        type: 'mutate',
+        mutation: {
+          clientMutationId: crypto.randomUUID(),
+          baseRevision: 2,
+          command: {
+            type: 'card.update',
+            payload: { id: cardId, dueDate: '2026-02-30' },
+          },
+        },
+      }).success,
+    ).toBe(false);
+    const updated = applyPatch(
+      state,
+      prepareMutation(
+        state,
+        {
+          clientMutationId: crypto.randomUUID(),
+          baseRevision: 2,
+          command: {
+            type: 'card.update',
+            payload: { id: cardId, dueDate: '2027-01-01' },
+          },
+        },
+        actorId,
+      ),
+    );
+    const assigned = prepareMutation(
+      updated,
+      {
+        clientMutationId: crypto.randomUUID(),
+        baseRevision: 2,
+        command: {
+          type: 'card.update',
+          payload: { id: cardId, assigneeId: actorId },
+        },
+      },
+      actorId,
+    );
+    expect(assigned.cards?.[0]).toMatchObject({
+      dueDate: '2027-01-01',
+      assigneeId: actorId,
+    });
+    expect(
+      matchesCard(
+        { ...state.cards[0], dueDate: '2027-01-01' },
+        'BOB',
+        'unassigned',
+        'overdue',
+        '2027-01-02',
+      ),
+    ).toBe(true);
+    expect(matchesCard(state.cards[0], '', actorId, '', '2027-01-02')).toBe(
+      false,
+    );
+  });
   it('applies board renames, rejects stale names and makes archived boards read-only', () => {
     const rename = {
       clientMutationId: crypto.randomUUID(),

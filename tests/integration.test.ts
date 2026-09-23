@@ -137,6 +137,75 @@ it('persists board lifecycle events and deduplicates archive delivery', async ()
     f.ws.close();
   }
 });
+
+it('persists metadata and restores cards and boards without deleting history', async () => {
+  const f = await fixture();
+  const cardId = crypto.randomUUID();
+  try {
+    f.mutate({
+      type: 'card.create',
+      payload: { id: cardId, columnId: f.columnId, title: 'Track this' },
+    });
+    await f.next('ack');
+    f.mutate(
+      {
+        type: 'card.update',
+        payload: { id: cardId, assigneeId: crypto.randomUUID() },
+      },
+      1,
+    );
+    expect(await f.next('error')).toMatchObject({
+      message: 'Assignee must be a current workspace member',
+    });
+    expect((await f.stub.snapshot(f.boardId, f.userId)).board.revision).toBe(1);
+    f.mutate(
+      {
+        type: 'card.update',
+        payload: { id: cardId, assigneeId: f.userId, dueDate: '2027-01-15' },
+      },
+      1,
+    );
+    await f.next('ack');
+    f.mutate(
+      { type: 'card.update', payload: { id: cardId, dueDate: '2027-01-16' } },
+      1,
+    );
+    await f.next('conflict');
+    f.mutate({ type: 'card.archive', payload: { id: cardId } }, 2);
+    await f.next('ack');
+    const restoreId = crypto.randomUUID();
+    f.mutate({ type: 'card.restore', payload: { id: cardId } }, 3, restoreId);
+    await f.next('ack');
+    f.mutate({ type: 'card.restore', payload: { id: cardId } }, 3, restoreId);
+    expect(await f.next('ack')).toMatchObject({ revision: 4 });
+    f.mutate({ type: 'board.archive', payload: { id: f.boardId } }, 4);
+    await f.next('ack');
+    f.mutate({ type: 'board.restore', payload: { id: f.boardId } }, 4);
+    await f.next('conflict');
+    f.mutate({ type: 'board.restore', payload: { id: f.boardId } }, 5);
+    await f.next('ack');
+    const snapshot = await f.stub.snapshot(f.boardId, f.userId);
+    expect(snapshot.board).toMatchObject({ revision: 6, archived: false });
+    expect(snapshot.cards[0]).toMatchObject({
+      archived: false,
+      assigneeId: f.userId,
+      dueDate: '2027-01-15',
+      assigneeRevision: 2,
+      dueDateRevision: 2,
+    });
+    expect(
+      (
+        await env.DB.prepare(
+          'SELECT COUNT(*) AS count FROM board_events WHERE board_id=?',
+        )
+          .bind(f.boardId)
+          .first<{ count: number }>()
+      )?.count,
+    ).toBe(6);
+  } finally {
+    f.ws.close();
+  }
+});
 it('commits one revision atomically, deduplicates, replays, and falls back to snapshots', async () => {
   const f = await fixture();
   try {

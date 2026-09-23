@@ -18,7 +18,9 @@ export function prepareMutation(
   const { command: c, baseRevision } = mutation;
   assert(baseRevision <= state.board.revision, 400, 'Invalid base revision');
   assert(
-    !state.board.archived || c.type === 'board.archive',
+    !state.board.archived ||
+      c.type === 'board.archive' ||
+      c.type === 'board.restore',
     410,
     'This board is archived',
   );
@@ -31,7 +33,8 @@ export function prepareMutation(
   if (
     c.type.startsWith('card.') &&
     c.type !== 'card.create' &&
-    c.type !== 'card.archive'
+    c.type !== 'card.archive' &&
+    c.type !== 'card.restore'
   )
     assert(card && !card.archived, 404, 'Card no longer exists');
   if (
@@ -49,6 +52,14 @@ export function prepareMutation(
     case 'board.archive':
       assert(c.payload.id === state.board.id, 400, 'Invalid board ID');
       if (!state.board.archived) changed(state.board.revision);
+      break;
+    case 'board.restore':
+      assert(c.payload.id === state.board.id, 400, 'Invalid board ID');
+      if (state.board.archived) changed(state.board.revision);
+      break;
+    case 'card.restore':
+      assert(card, 404, 'Card no longer exists');
+      if (card.archived) changed(card.updatedRevision);
       break;
     case 'card.create':
       assert(
@@ -73,6 +84,16 @@ export function prepareMutation(
       break;
     case 'card.update':
       if (card) {
+        if (
+          c.payload.assigneeId !== undefined &&
+          c.payload.assigneeId !== card.assigneeId
+        )
+          changed(card.assigneeRevision);
+        if (
+          c.payload.dueDate !== undefined &&
+          c.payload.dueDate !== card.dueDate
+        )
+          changed(card.dueDateRevision);
         if (c.payload.title !== undefined && c.payload.title !== card.title)
           changed(card.titleRevision);
         if (
@@ -127,7 +148,11 @@ export function prepareMutation(
   }
   const after = optimistic(state, mutation, actorId);
   const patch: Patch = {};
-  if (c.type === 'board.rename' || c.type === 'board.archive')
+  if (
+    c.type === 'board.rename' ||
+    c.type === 'board.archive' ||
+    c.type === 'board.restore'
+  )
     patch.board = {
       name: after.board.name,
       archived: after.board.archived,
@@ -167,6 +192,16 @@ export function prepareMutation(
         (c.type === 'card.update' && c.payload.description !== undefined)
           ? next
           : v.descriptionRevision,
+      assigneeRevision:
+        c.type === 'card.create' ||
+        (c.type === 'card.update' && c.payload.assigneeId !== undefined)
+          ? next
+          : v.assigneeRevision,
+      dueDateRevision:
+        c.type === 'card.create' ||
+        (c.type === 'card.update' && c.payload.dueDate !== undefined)
+          ? next
+          : v.dueDateRevision,
     }));
   patch.comments = after.comments.filter(
     (v) => !state.comments.some((old) => old.id === v.id),

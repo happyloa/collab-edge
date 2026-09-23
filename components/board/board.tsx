@@ -32,6 +32,7 @@ import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
 import { Attachments } from './attachments';
 import { useBoard } from '../../src/realtime/socket-client';
+import { matchesCard, localToday } from '../../src/realtime/card-filters';
 import type {
   Snapshot,
   Command,
@@ -41,6 +42,7 @@ type BoardData = {
   snapshot: Snapshot;
   role: string;
   user: { id: string; name: string };
+  people: { id: string; name: string }[];
 };
 type Card = Snapshot['cards'][number];
 export function BoardLoader({ id }: { id: string }) {
@@ -74,11 +76,13 @@ function SortableCard({
   readOnly,
   open,
   pending,
+  people,
 }: {
   card: Card;
   readOnly: boolean;
   open: () => void;
   pending: boolean;
+  people: BoardData['people'];
 }) {
   const { t } = useI18n();
   const {
@@ -126,6 +130,17 @@ function SortableCard({
         <span>CE–{card.id.slice(0, 4).toUpperCase()}</span>
         <span>{pending ? t('Saving…') : <MessageSquare size={13} />}</span>
       </div>
+      {(card.assigneeId || card.dueDate) && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
+          {card.assigneeId && (
+            <span>
+              {people.find((p) => p.id === card.assigneeId)?.name ??
+                t('Former member')}
+            </span>
+          )}
+          {card.dueDate && <time dateTime={card.dueDate}>{card.dueDate}</time>}
+        </div>
+      )}
     </div>
   );
 }
@@ -169,6 +184,12 @@ function Board({ initial }: { initial: BoardData }) {
     .slice(0, 30);
   const [selected, setSelected] = useState<Card | null>(null);
   const [showActivity, setShowActivity] = useState(false);
+  const [search, setSearch] = useState('');
+  const [assignee, setAssignee] = useState('');
+  const [due, setDue] = useState('');
+  const [showArchive, setShowArchive] = useState(false);
+  const filtered = Boolean(search.trim() || assignee || due);
+  const today = localToday();
   const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
   const readOnly = initial.role === 'VIEWER' || state.board.archived;
   const sensors = useSensors(
@@ -179,6 +200,7 @@ function Board({ initial }: { initial: BoardData }) {
   );
   const columns = [...state.columns].sort((a, b) => a.position - b.position);
   function dragEnd({ active, over }: DragEndEvent) {
+    if (filtered || readOnly) return;
     if (!over || active.id === over.id) return;
     const targetCard = state.cards.find((c) => c.id === over.id);
     const destination = targetCard?.columnId ?? String(over.id);
@@ -265,6 +287,110 @@ function Board({ initial }: { initial: BoardData }) {
             )}
           </p>
         )}
+        {state.board.archived && initial.role !== 'VIEWER' && (
+          <button
+            className="button mb-4"
+            onClick={() =>
+              live.mutate({
+                type: 'board.restore',
+                payload: { id: state.board.id },
+              })
+            }
+          >
+            {t('Restore board')}
+          </button>
+        )}
+        <div className="surface mb-4 flex flex-wrap items-end gap-3 p-4">
+          <label className="field flex-1">
+            {t('Search cards')}
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            {t('Filter by assignee')}
+            <select
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+            >
+              <option value="">{t('All members')}</option>
+              <option value="unassigned">{t('Unassigned')}</option>
+              {initial.people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            {t('Filter by due date')}
+            <select value={due} onChange={(e) => setDue(e.target.value)}>
+              <option value="">{t('All dates')}</option>
+              <option value="overdue">{t('Overdue')}</option>
+              <option value="today">{t('Due today')}</option>
+              <option value="upcoming">{t('Upcoming')}</option>
+              <option value="none">{t('No due date')}</option>
+            </select>
+          </label>
+          <button
+            className="button secondary"
+            onClick={() => {
+              setSearch('');
+              setAssignee('');
+              setDue('');
+            }}
+          >
+            {t('Clear filters')}
+          </button>
+          <button
+            className="button secondary"
+            onClick={() => setShowArchive(!showArchive)}
+          >
+            {t('Archived cards')}
+          </button>
+          {filtered && (
+            <p className="w-full text-xs text-muted">
+              {t('Clear filters to drag cards. Editing remains available.')}
+            </p>
+          )}
+        </div>
+        {showArchive && (
+          <section
+            className="surface mb-4 p-4"
+            aria-label={t('Archived cards')}
+          >
+            <h2 className="font-semibold">{t('Archived cards')}</h2>
+            {state.cards.filter((c) => c.archived).length === 0 && (
+              <p>{t('No archived cards')}</p>
+            )}
+            {state.cards
+              .filter((c) => c.archived)
+              .map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 py-3"
+                >
+                  <span>{c.title}</span>
+                  {!readOnly && (
+                    <button
+                      className="button secondary"
+                      aria-label={t('Restore {title}', { title: c.title })}
+                      onClick={() =>
+                        live.mutate({
+                          type: 'card.restore',
+                          payload: { id: c.id },
+                        })
+                      }
+                    >
+                      {t('Restore card')}
+                    </button>
+                  )}
+                </div>
+              ))}
+          </section>
+        )}
         {settings && !readOnly && (
           <BoardSettings
             initial={settings}
@@ -330,7 +456,12 @@ function Board({ initial }: { initial: BoardData }) {
           <div className="flex min-h-96 gap-4 overflow-x-auto pb-10">
             {columns.map((column, index) => {
               const cards = state.cards
-                .filter((c) => c.columnId === column.id && !c.archived)
+                .filter(
+                  (c) =>
+                    c.columnId === column.id &&
+                    !c.archived &&
+                    matchesCard(c, search, assignee, due, today),
+                )
                 .sort((a, b) => a.position - b.position);
               return (
                 <Column key={column.id} column={column}>
@@ -422,7 +553,8 @@ function Board({ initial }: { initial: BoardData }) {
                       <SortableCard
                         key={card.id}
                         card={card}
-                        readOnly={readOnly}
+                        readOnly={readOnly || filtered}
+                        people={initial.people}
                         open={() => setSelected({ ...card })}
                         pending={live.pending.some(
                           (p) =>
@@ -434,7 +566,11 @@ function Board({ initial }: { initial: BoardData }) {
                   </SortableContext>
                   {cards.length === 0 && (
                     <div className="mb-3 rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted">
-                      {t('Room for something new')}
+                      {t(
+                        filtered
+                          ? 'No matching cards'
+                          : 'Room for something new',
+                      )}
                     </div>
                   )}
                   {!readOnly && (
@@ -535,6 +671,7 @@ function Board({ initial }: { initial: BoardData }) {
           initial={selected}
           state={state}
           readOnly={readOnly}
+          people={initial.people}
           mutate={live.mutate}
           close={() => setSelected(null)}
         />
@@ -626,18 +763,23 @@ function CardDialog({
   readOnly,
   mutate,
   close,
+  people,
 }: {
   initial: Card;
   state: Snapshot;
   readOnly: boolean;
   mutate: (command: Command, base?: number) => boolean;
   close: () => void;
+  people: BoardData['people'];
 }) {
   const { t, locale } = useI18n();
 
   const dialog = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState(initial.title);
   const [description, setDescription] = useState(initial.description);
+  const [assigneeId, setAssigneeId] = useState(initial.assigneeId ?? '');
+  const [dueDate, setDueDate] = useState(initial.dueDate ?? '');
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [base] = useState(state.board.revision);
   useEffect(() => {
     dialog.current?.showModal();
@@ -662,13 +804,21 @@ function CardDialog({
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
-          const payload: { id: string; title?: string; description?: string } =
-            { id: initial.id };
+          const payload: {
+            id: string;
+            title?: string;
+            description?: string;
+            assigneeId?: string | null;
+            dueDate?: string | null;
+          } = { id: initial.id };
           if (title !== initial.title) payload.title = title;
           if (description !== initial.description)
             payload.description = description;
-          if (payload.title === undefined && payload.description === undefined)
-            return;
+          if ((assigneeId || null) !== initial.assigneeId)
+            payload.assigneeId = assigneeId || null;
+          if ((dueDate || null) !== initial.dueDate)
+            payload.dueDate = dueDate || null;
+          if (Object.keys(payload).length === 1) return;
           if (mutate({ type: 'card.update', payload }, base)) close();
         }}
       >
@@ -691,13 +841,45 @@ function CardDialog({
             disabled={readOnly}
           />
         </label>
+        <label className="field">
+          {t('Assignee')}
+          <select
+            aria-label={t('Assignee')}
+            disabled={readOnly}
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+          >
+            <option value="">{t('Unassigned')}</option>
+            {assigneeId && !people.some((p) => p.id === assigneeId) && (
+              <option value={assigneeId}>{t('Former member')}</option>
+            )}
+            {people.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          {t('Due date')}
+          <input
+            type="date"
+            disabled={readOnly}
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </label>
         {!readOnly && (
-          <div className="flex justify-between">
+          <div className="flex flex-wrap justify-between gap-3">
             <button className="button">{t('Save changes')}</button>
             <button
               type="button"
               className="text-sm text-destructive"
               onClick={() => {
+                if (!confirmArchive) {
+                  setConfirmArchive(true);
+                  return;
+                }
                 if (
                   mutate(
                     { type: 'card.archive', payload: { id: initial.id } },
@@ -707,8 +889,13 @@ function CardDialog({
                   close();
               }}
             >
-              {t('Archive card')}
+              {t(confirmArchive ? 'Confirm archive card' : 'Archive card')}
             </button>
+            {confirmArchive && (
+              <button type="button" onClick={() => setConfirmArchive(false)}>
+                {t('Cancel')}
+              </button>
+            )}
           </div>
         )}
       </form>

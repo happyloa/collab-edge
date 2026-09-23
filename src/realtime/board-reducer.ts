@@ -60,6 +60,8 @@ export function optimistic(
       return { ...state, board: { ...state.board, name: c.payload.title } };
     case 'board.archive':
       return { ...state, board: { ...state.board, archived: true } };
+    case 'board.restore':
+      return { ...state, board: { ...state.board, archived: false } };
     case 'card.create':
       return applyPatch(state, {
         cards: [
@@ -74,6 +76,10 @@ export function optimistic(
             updatedRevision: revision,
             titleRevision: revision,
             descriptionRevision: revision,
+            assigneeId: null,
+            dueDate: null,
+            assigneeRevision: revision,
+            dueDateRevision: revision,
           },
         ],
       });
@@ -104,10 +110,13 @@ export function optimistic(
         ),
       };
     case 'card.archive':
+    case 'card.restore':
       return {
         ...state,
         cards: state.cards.map((card) =>
-          card.id === c.payload.id ? { ...card, archived: true } : card,
+          card.id === c.payload.id
+            ? { ...card, archived: c.type === 'card.archive' }
+            : card,
         ),
       };
     case 'column.remove':

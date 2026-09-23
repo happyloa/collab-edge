@@ -16,7 +16,7 @@ import { ThemeToggle } from '../ui/theme';
 type Workspace = { id: string; name: string; role: string };
 type Detail = {
   workspace: Workspace;
-  boards: { id: string; name: string; revision: number }[];
+  boards: { id: string; name: string; revision: number; archived: boolean }[];
   members: { userId: string; name: string; email: string; role: string }[];
   role: string;
 };
@@ -26,6 +26,7 @@ export function Dashboard() {
   const client = useQueryClient();
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const list = useQuery({
     queryKey: ['workspaces'],
     queryFn: () => api<Workspace[]>('/api/workspaces'),
@@ -158,25 +159,36 @@ export function Dashboard() {
               <p className="mt-3 text-muted">
                 {t('A shared view of what’s moving forward.')}
               </p>
+              <label className="mt-6 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="w-auto"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                />
+                {t('Show archived boards')}
+              </label>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {detail.data.boards.map((board) => (
-                  <Link
-                    key={board.id}
-                    href={`/boards/${board.id}`}
-                    className="surface group p-6"
-                  >
-                    <div className="flex justify-between">
-                      <LayoutDashboard className="text-primary" size={24} />
-                      <ArrowUpRight size={18} />
-                    </div>
-                    <h2 className="mt-6 font-semibold">{board.name}</h2>
-                    <p className="mt-2 text-xs text-muted">
-                      {t('Revision {revision} · Realtime board', {
-                        revision: board.revision,
-                      })}
-                    </p>
-                  </Link>
-                ))}
+                {detail.data.boards
+                  .filter((board) => board.archived === showArchived)
+                  .map((board) => (
+                    <Link
+                      key={board.id}
+                      href={`/boards/${board.id}`}
+                      className="surface group p-6"
+                    >
+                      <div className="flex justify-between">
+                        <LayoutDashboard className="text-primary" size={24} />
+                        <ArrowUpRight size={18} />
+                      </div>
+                      <h2 className="mt-6 font-semibold">{board.name}</h2>
+                      <p className="mt-2 text-xs text-muted">
+                        {t('Revision {revision} · Realtime board', {
+                          revision: board.revision,
+                        })}
+                      </p>
+                    </Link>
+                  ))}
               </div>
               {detail.data.role !== 'VIEWER' && (
                 <form

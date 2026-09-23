@@ -400,6 +400,18 @@ export class BoardRoom extends DurableObject<Env> {
       'Demo board mutation quota reached',
     );
     const patch = prepareMutation(state, mutation, actorId);
+    const assignment =
+      mutation.command.type === 'card.update'
+        ? mutation.command.payload.assigneeId
+        : undefined;
+    if (assignment) {
+      const member = await this.env.DB.prepare(
+        'SELECT 1 FROM workspace_members WHERE workspace_id=? AND user_id=?',
+      )
+        .bind(state.board.workspaceId, assignment)
+        .first();
+      assert(member, 400, 'Assignee must be a current workspace member');
+    }
     const event: BoardEvent = {
       boardId,
       revision: state.board.revision + 1,
@@ -411,6 +423,12 @@ export class BoardRoom extends DurableObject<Env> {
       createdAt: new Date().toISOString(),
     };
     const statements: D1PreparedStatement[] = [];
+    if (assignment)
+      statements.push(
+        this.env.DB.prepare(
+          'INSERT INTO mutation_guard(value) SELECT CASE WHEN EXISTS(SELECT 1 FROM workspace_members WHERE workspace_id=? AND user_id=?) THEN 1 ELSE 0 END',
+        ).bind(state.board.workspaceId, assignment),
+      );
     if (patch.board)
       statements.push(
         this.env.DB.prepare(
@@ -438,7 +456,7 @@ export class BoardRoom extends DurableObject<Env> {
     for (const card of patch.cards ?? [])
       statements.push(
         this.env.DB.prepare(
-          'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision',
+          'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision,assignee_id,due_date,assignee_revision,due_date_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision,assignee_id=excluded.assignee_id,due_date=excluded.due_date,assignee_revision=excluded.assignee_revision,due_date_revision=excluded.due_date_revision',
         ).bind(
           card.id,
           boardId,
@@ -450,6 +468,10 @@ export class BoardRoom extends DurableObject<Env> {
           card.updatedRevision,
           card.titleRevision,
           card.descriptionRevision,
+          card.assigneeId,
+          card.dueDate,
+          card.assigneeRevision,
+          card.dueDateRevision,
         ),
       );
     for (const comment of patch.comments ?? [])

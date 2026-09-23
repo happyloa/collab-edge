@@ -93,6 +93,12 @@ export const cards = sqliteTable(
     updatedRevision: integer('updated_revision').notNull(),
     titleRevision: integer('title_revision').notNull(),
     descriptionRevision: integer('description_revision').notNull(),
+    assigneeId: text('assignee_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    dueDate: text('due_date'),
+    assigneeRevision: integer('assignee_revision').notNull().default(0),
+    dueDateRevision: integer('due_date_revision').notNull().default(0),
   },
   (t) => [
     index('cards_board').on(t.boardId),

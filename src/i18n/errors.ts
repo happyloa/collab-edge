@@ -1,6 +1,7 @@
 import type { Locale } from './messages';
 
 const errors: Record<string, string> = {
+  'Assignee must be a current workspace member': '負責人必須是目前的工作區成員',
   'Request failed': '操作失敗，請稍後重試。',
   'Request failed. Please try again.': '操作失敗，請稍後重試。',
   'Sign in failed': '登入失敗，請稍後重試。',

@@ -15,6 +15,13 @@
       "when": 1790049512316,
       "tag": "0001_board_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790147361611,
+      "tag": "0002_task_metadata",
+      "breakpoints": true
     }
   ]
 }

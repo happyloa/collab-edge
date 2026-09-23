@@ -69,14 +69,33 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       .getByRole('button', { name: 'Plan our launch', exact: true })
       .click();
     await bob.getByLabel('Title', { exact: true }).fill('Launch checklist');
+    await bob
+      .getByLabel('Assignee', { exact: true })
+      .selectOption({ label: 'Bob' });
+    await bob.getByLabel('Due date', { exact: true }).fill('2027-01-15');
     await bob.getByRole('button', { name: 'Save changes' }).click();
     await expect(
       alice.getByRole('button', { name: 'Launch checklist', exact: true }),
     ).toBeVisible();
+    await alice
+      .getByLabel('Search cards', { exact: true })
+      .fill('no matching task');
+    await expect(
+      alice.getByRole('button', { name: 'Launch checklist', exact: true }),
+    ).toHaveCount(0);
+    await alice
+      .getByRole('button', { name: 'Clear filters', exact: true })
+      .click();
     for (const page of [alice, bob])
       await page
         .getByRole('button', { name: 'Launch checklist', exact: true })
         .click();
+    await expect(alice.getByLabel('Due date', { exact: true })).toHaveValue(
+      '2027-01-15',
+    );
+    await expect(
+      alice.getByLabel('Assignee', { exact: true }).locator('option:checked'),
+    ).toHaveText('Bob');
     await alice.getByLabel('Title', { exact: true }).fill('Alice proposal');
     await bob.getByLabel('Title', { exact: true }).fill('Bob proposal');
     await bob.getByRole('button', { name: 'Save changes' }).click();
@@ -143,6 +162,27 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       fullPage: true,
     });
     await bob.getByRole('button', { name: 'Close card' }).click();
+    await alice
+      .getByRole('button', { name: 'Ready for launch', exact: true })
+      .click();
+    await alice
+      .getByRole('button', { name: 'Archive card', exact: true })
+      .click();
+    await alice
+      .getByRole('button', { name: 'Confirm archive card', exact: true })
+      .click();
+    await expect(
+      bob.getByRole('button', { name: 'Ready for launch', exact: true }),
+    ).toHaveCount(0);
+    await alice
+      .getByRole('button', { name: 'Archived cards', exact: true })
+      .click();
+    await alice
+      .getByRole('button', { name: 'Restore Ready for launch', exact: true })
+      .click();
+    await expect(
+      bob.getByRole('button', { name: 'Ready for launch', exact: true }),
+    ).toBeVisible();
     await alice.getByRole('button', { name: 'Board settings' }).click();
     await alice
       .getByLabel('Board name', { exact: true })
@@ -166,6 +206,12 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await expect(
       alice.getByRole('link', { name: /Launch shipped/ }),
     ).toHaveCount(0);
+    await alice.getByLabel('Show archived boards').check();
+    await alice.getByRole('link', { name: /Launch shipped/ }).click();
+    await alice
+      .getByRole('button', { name: 'Restore board', exact: true })
+      .click();
+    await expect(bob.getByLabel('New card in Backlog')).toBeVisible();
     expect(failures).toEqual([]);
   } finally {
     await aliceContext.close();
