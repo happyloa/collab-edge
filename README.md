@@ -8,7 +8,9 @@ A shared project workspace that makes realtime collaboration explicit: ordered c
 
 [Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
 
-**Deployment:** [CollabEdge on Workers](https://collab-edge.piafyoyo06.workers.dev), protected by owner-only Cloudflare Access email verification. GitHub About contains the same URL. The Worker is connected to this repository through native Workers Builds for `main`; GitHub Actions runs CI separately. Production attachments and preview URLs are disabled. See [delivery status](docs/delivery-status.md) for release verification and remaining testing limits.
+**Deployment:** [CollabEdge on Workers](https://collab-edge.piafyoyo06.workers.dev), protected by owner-only Cloudflare Access email verification. GitHub About contains the same URL. The Worker is connected to this repository through native Workers Builds for `main`; GitHub Actions runs CI and publishes the separate static demo. Production attachments and preview URLs are disabled. See [delivery status](docs/delivery-status.md) for release verification and remaining testing limits.
+
+**Public interactive demo:** [Try it without signing in](https://happyloa.github.io/collab-edge/). This separate GitHub Pages site runs entirely in your browser: edit, assign, filter, move, archive and restore sample cards, or simulate a conflicting edit. Reload or reset to discard changes. It does not call the production API or demonstrate live multi-user synchronization. [Demo setup and boundaries](docs/public-demo.md).
 
 ![CollabEdge seeded demo board captured in Chromium](docs/screenshots/demo-board.png)
 
@@ -20,7 +22,8 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 
 - Workspaces with server-enforced OWNER, EDITOR and VIEWER roles; member invitations, role changes, removal and leaving.
 - Boards with columns, cards, descriptions, archive, comments, column ordering and pointer/keyboard card dragging.
-- Synchronized board renaming and archival. Archived boards retain history and files, become read-only, and still count toward quotas. The shared demo cannot be archived.
+- Synchronized board renaming, archival and restoration. Archived boards retain history and files, become read-only, and still count toward quotas. The shared demo cannot be archived.
+- Card assignees restricted to current workspace members, calendar due dates, title/description search and assignee/date filters. Archived cards can be restored with their metadata and history intact. Clear filters to re-enable dragging.
 - Hibernating WebSockets, online presence and ordered event delivery.
 - Optimistic creation, edits and moves, with explicit pending, failed and conflicted states.
 - Per-field conflict detection and a preserved draft with an explicit retry action.

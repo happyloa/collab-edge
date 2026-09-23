@@ -28,3 +28,5 @@ HTTP snapshots use a D1 batch and pass through the board queue, preventing a sna
 R2 and D1 cannot participate in one distributed transaction. Uploads reserve a conservative lifetime byte budget, write a random R2 key, and commit metadata plus a board event. Failure attempts to remove the object. An abrupt process failure can leave an inaccessible orphan; the byte budget still bounds it. Deletion commits metadata removal before deleting the object, so a failure cannot leave an accessible file.
 
 Limits and deployment gates are documented in [security](security.md) and [deployment](deployment.md).
+
+The public [interactive demo](public-demo.md) is a separate Vite build on GitHub Pages. It imports only the pure mutation, event and filter logic plus shared UI styling and translations. Its cards stay in browser memory; it does not contact D1, Durable Objects, R2 or Worker APIs. The production Worker remains behind owner-only Cloudflare Access.

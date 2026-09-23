@@ -18,7 +18,9 @@ Client messages are Zod discriminated unions: `hello`, `resync`, `mutate`, `pres
 }
 ```
 
-The nested `command` discriminated union keeps each payload typed. Commands cover column create/rename/move/remove, card create/update/move/archive, and comment create. Attachments enter through HTTP and the same serialized board coordinator.
+The nested `command` discriminated union keeps each payload typed. Commands cover board rename/archive/restore, column create/rename/move/remove, card create/update/move/archive/restore, and comment create. Attachments enter through HTTP and the same serialized board coordinator.
+
+`card.update` accepts optional `assigneeId` (member UUID or null) and `dueDate` (valid YYYY-MM-DD calendar date or null). Both have independent conflict revisions. The coordinator validates current workspace membership before assignment and repeats that check inside the entity/revision/event transaction. Older stored events default absent metadata to null and field revisions to zero. Dates have no timezone; UI date filters use the browser's local calendar day. Archived cards and boards retain their quota footprint. Restoration checks the relevant entity revision and uses the same UUID idempotency and authorization as other writes.
 
 Each event contains boardId, revision, eventId, clientMutationId, actorId, type, a patch payload and createdAt. Patches upsert changed entities and explicitly list removed IDs. Numeric positions are calculated from authoritative ordering and neighbor IDs. Successful events update local state without refetching the board.
 

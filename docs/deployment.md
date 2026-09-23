@@ -35,7 +35,7 @@ In Workers & Pages → `collab-edge` → Settings → Builds → Connect, author
 
 Use a build token scoped to this account's Workers Scripts, D1 and required bindings; never use a Global API Key. Keep Builds on the Free allowance and disable paid overages. Verify an actual successful build after connecting. Do not enable both native Builds and GitHub Actions deployments for the same branch.
 
-The obsolete, disabled GitHub Actions deployment workflow, its two repository deployment variables and its account-ID secret have been removed. GitHub Actions runs CI only; native Builds retains its own deploy token and Free-plan build variable in Cloudflare.
+The obsolete, disabled GitHub Actions Worker deployment workflow, its two repository deployment variables and its account-ID secret have been removed. GitHub Actions runs app CI and the separate static GitHub Pages demo deployment; native Builds retains its own Worker deploy token and Free-plan build variable in Cloudflare. See [public demo](public-demo.md) for the independent browser-only artifact.
 
 References: [GitHub integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/), [Builds API permissions and setup](https://developers.cloudflare.com/workers/ci-cd/builds/api-reference/), [Builds limits and pricing](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/).
 
