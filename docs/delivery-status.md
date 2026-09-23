@@ -4,7 +4,7 @@ Updated 2026-09-23. The Worker is deployed behind owner-only Cloudflare Access a
 
 - Repository: https://github.com/happyloa/collab-edge.
 - Deployed URL: https://collab-edge.piafyoyo06.workers.dev. GitHub About Website is set to this URL.
-- Latest verified functional release: Worker version `3a53f646-1fbf-47b5-bfe2-7c2fa711b0e4`, deployed at 2026-09-22 12:47 UTC from commit `fa2b667`, including the initial color-theme toggle fix. This is a dated release record, not a moving pointer to every later maintenance deployment.
+- Latest verified functional release: Worker version `9135dc9d-307d-4657-b41d-9a63073fc6f4`, deployed at 2026-09-23 04:14 UTC from commit `dc3c6c4`, including persistent English/Traditional Chinese UI and the initial color-theme toggle fix. This is a dated release record, not a moving pointer to every later maintenance deployment.
 - D1 `collab-edge-db`, APAC: `8f68d49a-be77-477d-aea1-04b6de4817a2`. All four migrations applied remotely.
 - Private R2 `collab-edge-attachments`; production operations disabled.
 - SQLite Durable Object exports `BoardRoom` and `AuthRateLimiter` created during deployment.
@@ -12,10 +12,11 @@ Updated 2026-09-23. The Worker is deployed behind owner-only Cloudflare Access a
 - User explicitly confirmed Workers Free and requested owner-only access. No plan upgrade was requested or performed.
 - Hostname Access application `58261301-84d2-47ec-937f-a4d828aea306` covers the entire production hostname, with an eight-hour session and one allow policy for `piafyoyo06@gmail.com`. Its actual issuer and audience are deployed and the JWT guard remains enabled. Preview URLs disabled.
 - Live checks: the production root redirects to `piafyoyo06.cloudflareaccess.com`; the login page returns 200 and provides email-code authentication. The Access policy and deployed bindings were read back and verified. No authenticated live application test is claimed.
-- Validation: 24 Workers/core tests, 3 React tests, ESLint probes, typecheck, format and production build passed. All five Chromium scenarios passed in the release CI, including three theme regressions. Vinext reports 100% compatibility.
+- Validation: 24 Workers/core tests, 3 React tests, ESLint probes, typecheck, format and production build passed. All seven Chromium scenarios passed in the release CI, including three theme and two language scenarios. Vinext reports 100% compatibility.
 - Commits remain separated by migration fix, access controls and delivery documentation. The README badge links to current GitHub CI.
-- Native Cloudflare build `cb7dac1e-bc5b-47cd-8346-9b445bd7a0e2` succeeded; its recorded source is `push_event`, branch `main`, commit `fa2b6671f32bd1911a4a81c5d7c1f130e5274014`. It ran full verification, checked remote migrations and deployed the Worker.
-- Release GitHub CI succeeded: https://github.com/happyloa/collab-edge/actions/runs/35729148546.
+- Native Cloudflare build `9d0341d3-043d-43f8-95d9-e24ce24f54b3` succeeded; its recorded source is `push_event`, branch `main`, commit `dc3c6c490902c28198701eb5c1e64457f80e6afa`. It ran full verification, checked remote migrations and deployed the Worker. The anonymous homepage still returns an Access redirect (302).
+- Release GitHub CI succeeded: https://github.com/happyloa/collab-edge/actions/runs/35817429573.
+- The [Chinese README](../README.zh-TW.md) and [i18n guide](i18n.md) document language persistence, server rendering and untranslated user content. The app's language selector does not customize Cloudflare-managed login pages or OTP emails.
 
 ## GitHub integration and remaining validation
 
