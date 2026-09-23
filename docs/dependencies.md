@@ -2,6 +2,8 @@
 
 jose 6.2.12 is pinned for Cloudflare Access JWT signature and claim verification, following Cloudflare's documented jose integration.
 
+GSAP 3.15.0 supplies the landing page's scoped entrance, ticker and ScrollTrigger sequences. It runs only in the client home component, honors `prefers-reduced-motion`, and does not animate draggable board elements.
+
 Vinext and its official Cloudflare adapter are currently published as beta releases; the official scaffold selects them. React Server Components uses the exact same React version as react-dom and react-server-dom-webpack.
 
 TypeScript 6.0.3 is selected because typescript-eslint currently supports versions below 6.1. Vitest 4.1.11 matches @cloudflare/vitest-plugin's required ^4.1 range. These are intentional compatibility pins.
