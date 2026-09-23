@@ -63,6 +63,8 @@
     "test": "vitest",
     "test:run": "vitest run && vitest run --config vitest.ui.config.ts && node tests/lint-tooling.mjs",
     "test:e2e": "playwright test",
+    "build:showcase": "vite build --config showcase/vite.config.ts",
+    "test:showcase": "playwright test --config showcase/playwright.config.ts",
     "cf:typegen": "wrangler types --strict-vars=false",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
