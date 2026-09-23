@@ -101,7 +101,7 @@ function SortableCard({
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className="surface mb-3 p-4"
+      className="surface sortable-surface mb-3 p-4"
     >
       <div className="flex items-start gap-2">
         <button
@@ -147,16 +147,19 @@ function SortableCard({
 function Column({
   column,
   children,
+  index,
 }: {
   column: Snapshot['columns'][number];
   children: React.ReactNode;
+  index: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
     <section
       ref={setNodeRef}
       aria-label={column.title}
-      className={`w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : ''}`}
+      className={`motion-reveal w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : ''}`}
+      style={{ animationDelay: `${Math.min(index, 5) * 70}ms` }}
     >
       {children}
     </section>
@@ -241,7 +244,7 @@ function Board({ initial }: { initial: BoardData }) {
           <ThemeToggle />
         </div>
       </header>
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-6">
+      <div className="motion-reveal flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-6">
         <div>
           <Link
             href="/workspaces"
@@ -300,7 +303,7 @@ function Board({ initial }: { initial: BoardData }) {
             {t('Restore board')}
           </button>
         )}
-        <div className="surface mb-4 flex flex-wrap items-end gap-3 p-4">
+        <div className="surface motion-reveal motion-delay-1 mb-4 flex flex-wrap items-end gap-3 p-4">
           <label className="field flex-1">
             {t('Search cards')}
             <input
@@ -358,7 +361,7 @@ function Board({ initial }: { initial: BoardData }) {
         </div>
         {showArchive && (
           <section
-            className="surface mb-4 p-4"
+            className="surface motion-reveal mb-4 p-4"
             aria-label={t('Archived cards')}
           >
             <h2 className="font-semibold">{t('Archived cards')}</h2>
@@ -464,7 +467,7 @@ function Board({ initial }: { initial: BoardData }) {
                 )
                 .sort((a, b) => a.position - b.position);
               return (
-                <Column key={column.id} column={column}>
+                <Column key={column.id} column={column} index={index}>
                   <div className="mb-4 flex items-center gap-2 px-1">
                     <span className={`column-dot tone-${index % 4}`} />
                     <h2 className="flex-1 text-sm font-semibold">
@@ -642,7 +645,7 @@ function Board({ initial }: { initial: BoardData }) {
           </div>
         </DndContext>
         {showActivity && (
-          <section className="surface p-6">
+          <section className="surface motion-reveal p-6">
             <h2 className="font-semibold">{t('Recent activity')}</h2>
             {activity.length === 0 && (
               <p className="mt-3 text-sm text-muted">
@@ -651,7 +654,10 @@ function Board({ initial }: { initial: BoardData }) {
             )}
             <ol className="mt-3 space-y-3">
               {activity.map((e) => (
-                <li key={e.eventId} className="flex gap-4 text-sm">
+                <li
+                  key={e.eventId}
+                  className="motion-reveal flex gap-4 text-sm"
+                >
                   <span className="text-muted">#{e.revision}</span>
                   <span>
                     {locale === 'en' ? e.type.replace('.', ' · ') : t(e.type)}
@@ -694,7 +700,7 @@ function BoardSettings({
   const [confirmArchive, setConfirmArchive] = useState(false);
   return (
     <section
-      className="surface mb-4 space-y-4 p-5"
+      className="surface motion-reveal mb-4 space-y-4 p-5"
       aria-label={t('Board settings')}
     >
       <form
@@ -788,7 +794,7 @@ function CardDialog({
     <dialog
       ref={dialog}
       onClose={close}
-      className="m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
+      className="motion-dialog m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
     >
       <div className="mb-6 flex items-center justify-between">
         <span className="eyebrow">{t('CARD DETAILS')}</span>

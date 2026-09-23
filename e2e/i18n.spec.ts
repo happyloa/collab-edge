@@ -71,6 +71,7 @@ test('language persists across routes and reloads without losing drafts or recon
   await page.screenshot({
     path: 'docs/screenshots/board-zh.png',
     fullPage: true,
+    animations: 'disabled',
   });
   await page.goto('/workspaces');
   await expect(page.getByText('你的工作區', { exact: true })).toBeVisible();

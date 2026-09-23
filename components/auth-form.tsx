@@ -30,7 +30,7 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
   } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
   return (
     <main className="grid min-h-screen place-items-center px-6">
-      <div className="w-full max-w-md">
+      <div className="motion-reveal w-full max-w-md">
         <Link href="/" className="brand mb-12">
           <Layers3 /> CollabEdge
         </Link>

@@ -23,6 +23,7 @@ test('public demo supports keyboard entry, mobile layout, and dark theme', async
   await page.screenshot({
     path: 'docs/screenshots/demo-board.png',
     fullPage: true,
+    animations: 'disabled',
   });
   await page.getByRole('button', { name: 'Toggle color theme' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -38,6 +39,7 @@ test('public demo supports keyboard entry, mobile layout, and dark theme', async
   await page.screenshot({
     path: 'docs/screenshots/mobile-dark.png',
     fullPage: true,
+    animations: 'disabled',
   });
   expect(errors).toEqual([]);
 });

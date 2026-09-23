@@ -87,7 +87,7 @@ button:disabled {
     @apply flex items-center gap-2 text-lg font-semibold tracking-tight;
   }
   .button {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-surface transition-opacity hover:opacity-85;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-surface;
   }
   .button.secondary {
     @apply border border-border bg-surface text-foreground;
@@ -141,6 +141,165 @@ button:disabled {
   }
   .notice.error {
     @apply border-destructive text-destructive;
+  }
+}
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes motion-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes motion-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes motion-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes motion-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes motion-presence {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.35);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .motion-reveal {
+    animation: motion-rise 520ms cubic-bezier(0.2, 0.75, 0.25, 1) backwards;
+    animation-delay: var(--motion-delay, 0ms);
+  }
+  .motion-card {
+    animation: motion-card-in 460ms cubic-bezier(0.2, 0.75, 0.25, 1) backwards;
+    animation-delay: var(--motion-delay, 0ms);
+  }
+  .sortable-surface > * {
+    animation: motion-fade 380ms ease-out backwards;
+  }
+  .motion-dialog[open] {
+    animation: motion-dialog-in 260ms cubic-bezier(0.2, 0.75, 0.25, 1) backwards;
+  }
+  .motion-dialog[open]::backdrop {
+    animation: motion-backdrop-in 260ms ease-out backwards;
+  }
+  .motion-delay-1 {
+    --motion-delay: 90ms;
+  }
+  .motion-delay-2 {
+    --motion-delay: 180ms;
+  }
+  .motion-delay-3 {
+    --motion-delay: 270ms;
+  }
+  .motion-delay-4 {
+    --motion-delay: 360ms;
+  }
+  .button,
+  .icon-button,
+  .motion-icon svg,
+  .interactive-surface,
+  .sortable-surface,
+  input,
+  textarea,
+  select {
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease,
+      border-color 220ms ease,
+      background-color 220ms ease,
+      opacity 220ms ease;
+  }
+  .status-dot {
+    position: relative;
+  }
+  .status-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid var(--color-success);
+    border-radius: 9999px;
+    animation: motion-presence 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px
+      color-mix(in srgb, var(--color-primary) 24%, transparent);
+  }
+  .button:not(:disabled):active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: none;
+  }
+  .button.secondary:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--color-primary) 42%,
+      var(--color-border)
+    );
+    background-color: var(--color-background);
+  }
+  .icon-button:hover {
+    transform: translateY(-2px);
+  }
+  .motion-icon:hover svg {
+    transform: rotate(-16deg);
+  }
+  .interactive-surface:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(
+      in srgb,
+      var(--color-primary) 40%,
+      var(--color-border)
+    );
+    box-shadow: 0 14px 30px
+      color-mix(in srgb, var(--color-foreground) 12%, transparent);
+  }
+  .sortable-surface:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--color-primary) 35%,
+      var(--color-border)
+    );
+    box-shadow: 0 9px 22px
+      color-mix(in srgb, var(--color-foreground) 10%, transparent);
   }
 }
 @media (prefers-reduced-motion: reduce) {

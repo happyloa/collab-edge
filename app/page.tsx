@@ -51,21 +51,21 @@ export default function Home() {
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-16">
-        <p className="eyebrow">
+        <p className="eyebrow motion-reveal">
           <span className="status-dot" />
           {t('A little closer. A lot more in sync.')}
         </p>
-        <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight sm:text-7xl">
+        <h1 className="motion-reveal motion-delay-1 mt-6 max-w-4xl text-5xl font-semibold tracking-tight sm:text-7xl">
           {t('Good work happens')}
           <br />
           {t('in a')} <span className="text-primary">{t('shared space.')}</span>
         </h1>
-        <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted">
+        <p className="motion-reveal motion-delay-2 mt-7 max-w-xl text-lg leading-relaxed text-muted">
           {t(
             'Bring your team’s next big idea into focus. Plan together, see changes as they happen, and keep every decision in the same conversation.',
           )}
         </p>
-        <div className="mt-9 flex gap-4">
+        <div className="motion-reveal motion-delay-3 mt-9 flex flex-wrap gap-4">
           <Link href="/register" className="button">
             {t('Create your workspace')}
             <ArrowUpRight size={18} />
@@ -77,7 +77,7 @@ export default function Home() {
         <DemoEntry />
         <section
           aria-label={t('Product preview')}
-          className="surface mt-16 overflow-hidden"
+          className="surface motion-reveal motion-delay-4 mt-16 overflow-hidden"
         >
           <div className="flex items-center justify-between border-b border-border p-5">
             <div>
@@ -116,7 +116,10 @@ export default function Home() {
                   <span className="ml-auto text-muted">02</span>
                 </div>
                 {titles.map((title, j) => (
-                  <div key={t(title)} className="surface mb-3 p-5">
+                  <div
+                    key={t(title)}
+                    className="surface interactive-surface mb-3 p-5"
+                  >
                     <span className="tag">{t(j ? 'Design' : 'Product')}</span>
                     <h3 className="my-4 font-medium">{t(title)}</h3>
                     <div className="flex justify-between text-xs text-muted">
@@ -130,8 +133,12 @@ export default function Home() {
           </div>
         </section>
         <section className="mt-14 grid gap-8 sm:grid-cols-3">
-          {features.map(({ Icon, title, description }) => (
-            <article key={t(title)}>
+          {features.map(({ Icon, title, description }, index) => (
+            <article
+              key={t(title)}
+              className="motion-reveal"
+              style={{ animationDelay: `${index * 90}ms` }}
+            >
               <Icon className="mb-4 text-primary" size={23} />
               <h2 className="font-semibold">{t(title)}</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">

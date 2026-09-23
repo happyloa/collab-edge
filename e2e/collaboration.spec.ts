@@ -160,6 +160,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await alice.screenshot({
       path: 'docs/screenshots/board.png',
       fullPage: true,
+      animations: 'disabled',
     });
     await bob.getByRole('button', { name: 'Close card' }).click();
     await alice

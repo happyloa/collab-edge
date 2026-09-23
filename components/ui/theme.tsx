@@ -13,7 +13,7 @@ export function ThemeToggle() {
   const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   return (
     <button
-      className="icon-button"
+      className="icon-button motion-icon"
       aria-label={t('Toggle color theme')}
       disabled={!ready}
       onClick={() => {

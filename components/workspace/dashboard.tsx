@@ -78,7 +78,7 @@ export function Dashboard() {
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-4">
-        <aside>
+        <aside className="motion-reveal">
           <p className="eyebrow mb-5">{t('YOUR WORKSPACES')}</p>
           <div className="space-y-2">
             {list.data?.map((w) => (
@@ -126,7 +126,7 @@ export function Dashboard() {
             {t('Up to 3 workspaces per account.')}
           </p>
         </aside>
-        <main className="lg:col-span-3">
+        <main className="motion-reveal motion-delay-1 lg:col-span-3">
           {(error || list.error || detail.error) && (
             <div role="alert" className="notice error mb-6">
               {errorText(error || list.error?.message || detail.error?.message)}{' '}
@@ -171,11 +171,12 @@ export function Dashboard() {
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {detail.data.boards
                   .filter((board) => board.archived === showArchived)
-                  .map((board) => (
+                  .map((board, index) => (
                     <Link
                       key={board.id}
                       href={`/boards/${board.id}`}
-                      className="surface group p-6"
+                      className="surface interactive-surface motion-card group p-6"
+                      style={{ animationDelay: `${index * 70}ms` }}
                     >
                       <div className="flex justify-between">
                         <LayoutDashboard className="text-primary" size={24} />

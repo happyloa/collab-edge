@@ -33,7 +33,7 @@ function CardModal({
       ref={dialog}
       onClose={close}
       aria-label={label}
-      className="m-auto max-h-11/12 w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-panel border border-border bg-surface p-6 text-foreground shadow-panel backdrop:bg-black/40"
+      className="motion-dialog m-auto max-h-11/12 w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-panel border border-border bg-surface p-6 text-foreground shadow-panel backdrop:bg-black/40"
     >
       {children}
     </dialog>
@@ -139,7 +139,7 @@ function Showcase() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl p-5 sm:p-8">
-        <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
+        <div className="motion-reveal mb-7 flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="eyebrow mb-3">
               {t('A little less friction. A lot more together.')}
@@ -161,12 +161,12 @@ function Showcase() {
             <ArrowUpRight size={16} />
           </a>
         </div>
-        <div className="notice mb-6">
+        <div className="notice motion-reveal motion-delay-1 mb-6">
           {t(
             'Try editing a card, moving it, or simulating a teammate edit to see how a conflicting draft is preserved. Live collaboration is available in the private app and local setup.',
           )}
         </div>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="motion-reveal motion-delay-2 mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">Website Launch</h2>
             <p className="mt-1 text-sm text-muted">
@@ -178,7 +178,7 @@ function Showcase() {
             {t('Reset demo')}
           </button>
         </div>
-        <div className="surface mb-6 flex flex-wrap items-end gap-3 p-4">
+        <div className="surface motion-reveal motion-delay-3 mb-6 flex flex-wrap items-end gap-3 p-4">
           <label className="field min-w-48 flex-1">
             {t('Search cards')}
             <input
@@ -251,7 +251,8 @@ function Showcase() {
             <section
               key={column.id}
               aria-label={t(column.title)}
-              className="rounded-panel border border-border bg-border/25 p-4"
+              className="motion-reveal rounded-panel border border-border bg-border/25 p-4"
+              style={{ animationDelay: `${index * 80}ms` }}
             >
               <h3 className="mb-4 flex items-center gap-2 font-semibold">
                 <span className={`column-dot tone-${index + 1}`} />
@@ -265,7 +266,10 @@ function Showcase() {
                   .filter((card) => card.columnId === column.id)
                   .sort((a, b) => a.position - b.position)
                   .map((card) => (
-                    <article key={card.id} className="surface p-4">
+                    <article
+                      key={card.id}
+                      className="surface interactive-surface motion-card p-4"
+                    >
                       <button
                         className="mb-3 text-left font-medium hover:text-primary"
                         onClick={() => {
@@ -309,7 +313,7 @@ function Showcase() {
             </section>
           ))}
         </div>
-        <aside className="surface mt-6 p-5">
+        <aside className="surface motion-reveal mt-6 p-5">
           <h2 className="font-semibold">{t('Activity')}</h2>
           {activity.length ? (
             <ol className="mt-3 flex flex-wrap gap-2">

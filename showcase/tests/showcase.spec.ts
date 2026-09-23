@@ -55,6 +55,7 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   await page.screenshot({
     path: 'docs/screenshots/public-demo.png',
     fullPage: true,
+    animations: 'disabled',
   });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
