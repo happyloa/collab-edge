@@ -1,5 +1,8 @@
 @import 'tailwindcss';
+@import '../src/styles/noto-sans-tc.css';
 @theme {
+  --font-sans: 'Noto Sans TC', sans-serif;
+  --font-mono: 'Noto Sans TC', sans-serif;
   --color-background: #f7f8fa;
   --color-foreground: #1c2637;
   --color-surface: #ffffff;
@@ -16,7 +19,7 @@
 :root {
   --theme-icon-light-display: none;
   --theme-icon-dark-display: block;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--color-background);
   color: var(--color-foreground);
   color-scheme: light;
