@@ -48,7 +48,7 @@ flowchart LR
     D -->|Ordered events| B
 ```
 
-Vinext owns pages, React Server Components and HTTP routes. The custom Worker routes WebSockets and exports DO classes. One BoardRoom per board serializes mutations and allocates revisions. D1 stores canonical entities and events. R2 stores binaries. AuthRateLimiter stores durable counters. There is no external authentication or realtime provider.
+Vinext owns pages, React Server Components and HTTP routes. The custom Worker routes WebSockets and exports DO classes. One BoardRoom per board serializes mutations and allocates revisions. D1 stores canonical entities and events. R2 stores binaries. AuthRateLimiter stores durable counters. Cloudflare Access protects the production hostname; application accounts and sessions are managed internally. There is no external realtime provider.
 
 ## Realtime synchronization
 
@@ -97,7 +97,7 @@ drizzle/             Committed SQL migrations, constraints and quota triggers
 tests/               workerd integration, pure logic and React DOM tests
 e2e/                 Independent-browser collaboration scenario
 docs/                Architecture, protocol, security, tests and deployment
-.github/workflows/   Verification and explicitly gated deployment
+.github/workflows/   GitHub CI verification; deployment uses Workers Builds
 ```
 
 ## Local development
@@ -121,7 +121,7 @@ The setup script creates a random local SESSION_SECRET and enables only **local*
 
 D1 and private R2 were provisioned with Wrangler; their actual configuration is committed. DO exports declare SQLite storage. Use `pnpm cf:typegen` after binding changes, committed SQL migrations for schema changes, and `wrangler secret put SESSION_SECRET` for the runtime secret. The official deployment command is `pnpm run deploy`.
 
-The deploy workflow verifies the app and applies remote migrations before deployment, but stays disabled until billing is verified and deployment secrets are supplied. A skipped workflow does not mean the app is deployed. [Exact commands, permissions and release gates →](docs/deployment.md)
+Native Workers Builds verifies the app, checks deployment safety gates, applies remote migrations and deploys pushes to main. GitHub Actions runs CI only. [Exact commands, permissions and release gates →](docs/deployment.md)
 
 ## Testing
 
@@ -146,9 +146,9 @@ PBKDF2-HMAC-SHA256 uses 600,000 iterations, a unique 128-bit salt and a 256-bit 
 - **D1:** one durable source of truth and atomic event/entity batches. Authorization and broadcast checks consume reads; this favors correctness over maximum fan-out.
 - **R2:** private binary storage with random keys. R2 and D1 are not a distributed transaction; crashes can leave inaccessible objects, bounded by the upload budget.
 - **Revisions:** understandable conflict and replay semantics without claiming CRDT text merging. Event retention is capped; capacity exhaustion fails closed instead of auto-scaling cost.
-- **Cost:** quotas are not an account-wide billing guarantee. Production R2 is disabled, and deployment awaits a verified free plan.
+- **Cost:** quotas are not an account-wide billing guarantee. The Worker is deployed on the user-confirmed Free plan, with production R2 disabled and owner-only Access enabled.
 
-MVP intentionally omits password reset, email verification, rich-text CRDTs, automated orphan cleanup, event compaction and account deletion. Owners cannot transfer or relinquish ownership yet. Archived cards remain retained and count toward quotas.
+MVP intentionally omits password reset, application-account email verification, rich-text CRDTs, automated orphan cleanup, event compaction and account deletion. Cloudflare Access email verification is a separate outer gate and does not automatically log users into an application account. Member invitations add existing registered accounts; they do not send email. Owners cannot transfer or relinquish ownership yet. Archived cards remain retained and count toward quotas. The [custom verification email](docs/email/README.md) is a design artifact, not the production Access email.
 
 ## Roadmap
 

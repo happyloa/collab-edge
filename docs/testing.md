@@ -6,6 +6,8 @@ Workers tests use @cloudflare/vitest-plugin and actual local D1/R2/SQLite Durabl
 
 React Testing Library checks viewer attachment controls, rejecting large uploads before fetch, and accessible theme controls. `node tests/lint-tooling.mjs` proves the compatibility bridge still reports real React key and accessibility errors.
 
+The latest verified suite contains 24 Workers/core tests, 3 React tests and 5 Chromium scenarios. Theme scenarios cover initial light/dark preferences, one-click switching, explicit theme overrides, and system-driven icons before JavaScript hydration. The other scenarios cover collaboration and demo/mobile behavior. CI runs all five; these are local emulation tests, not authenticated production smoke tests.
+
 Board lifecycle tests verify rename patches retain their name revision, concurrent stale names and stale archival are rejected, archive delivery is idempotent, and subsequent mutations cannot change an archived board. The two-browser scenario additionally verifies synchronized renaming, read-only archival and removal from the workspace list.
 
 The primary Playwright scenario registers Alice and Bob, creates a workspace and board, invites Bob, creates and moves a card, renames it, submits concurrent conflicting edits, retries a preserved draft, disconnects/reconnects Bob, posts a comment, uploads an attachment, checks anonymous download rejection and captures the board screenshot. Page errors fail the scenario.
