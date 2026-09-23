@@ -1,5 +1,7 @@
 # CollabEdge
 
+[繁體中文](README.zh-TW.md) · **English**
+
 [![CI](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml)
 
 A shared project workspace that makes realtime collaboration explicit: ordered changes, recoverable conflicts, and a clear source of truth.
@@ -25,10 +27,13 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 - Reconnect replay, revision-gap detection and snapshot fallback.
 - Private, authorized R2 attachments with MIME/signature validation and bounded uploads; enabled locally, gated in production.
 - Persistent board activity, light/dark themes, responsive scrolling, keyboard controls and reduced-motion support.
+- English and Traditional Chinese interface, including persistent language selection, server-rendered locale, statuses, common errors, accessibility labels and dates. User-authored content stays unchanged.
 - Hard server-side quotas for users, workspaces, boards, messages, mutations, events and attachments.
 - Alice and Bob demo sessions with a seeded **Acme Product Team / Website Launch** board.
 
 ## Try collaboration locally
+
+Choose **English / 繁體中文** from the language selector on the home, authentication, workspace or board screen. The choice persists for a year using a cookie; English is the default. Switching does not clear drafts or reconnect the board. Cloudflare Access pages and emails are outside this app's localization. See [i18n maintenance](docs/i18n.md).
 
 Start the app, open its home page, and choose **Try as Alice**. Open a private window and choose **Try as Bob**. Both sessions join the same public demo board. Move a card or edit a title and watch the second window update without a reload. Demo identities are editors; they cannot manage members. Keep sensitive information out of the shared demo.
 
@@ -89,6 +94,7 @@ The exact reproducible graph lives in pnpm-lock.yaml. Compatibility pins, the ES
 app/                 Server pages and App Router HTTP handlers
 components/          Interactive auth, workspace, board and UI components
 src/auth/            Passwords, sessions, permissions and auth routes
+src/i18n/            English/Traditional Chinese UI and error messages
 src/db/              Drizzle schema, consistent snapshots and demo data
 src/realtime/        Validated protocol, reducers, conflicts and socket client
 src/validation/      Upload metadata and signature checks
