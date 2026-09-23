@@ -28,6 +28,7 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 - Private, authorized R2 attachments with MIME/signature validation and bounded uploads; enabled locally, gated in production.
 - Persistent board activity, light/dark themes, responsive scrolling, keyboard controls and reduced-motion support.
 - English and Traditional Chinese interface, including persistent language selection, server-rendered locale, statuses, common errors, accessibility labels and dates. User-authored content stays unchanged.
+- Self-hosted Google Fonts Noto Sans TC across the website, with Unicode subsets loaded on demand. [Font source and license](public/fonts/README.md).
 - Hard server-side quotas for users, workspaces, boards, messages, mutations, events and attachments.
 - Alice and Bob demo sessions with a seeded **Acme Product Team / Website Launch** board.
 
