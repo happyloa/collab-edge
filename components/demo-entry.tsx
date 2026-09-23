@@ -1,9 +1,12 @@
 'use client';
+import { useI18n } from './ui/i18n';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './ui/providers';
 import { useHydrated } from './ui/use-hydrated';
 export function DemoEntry() {
+  const { t, errorText } = useI18n();
+
   const hydrated = useHydrated();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -32,16 +35,16 @@ export function DemoEntry() {
               }
             }}
           >
-            Try as {person}
+            {t('Try as {person}', { person })}
           </button>
         ))}
       </div>
       <p className="mt-3 text-xs text-muted">
-        Shared public demo · open Bob in a private window to collaborate.
+        {t('Shared public demo · open Bob in a private window to collaborate.')}
       </p>
       {error && (
         <p role="alert" className="mt-3 text-sm text-destructive">
-          {error}
+          {errorText(error)}
         </p>
       )}
     </div>

@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, LanguageSelect } from './ui/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -9,11 +10,16 @@ import { z } from 'zod';
 import { Layers3 } from 'lucide-react';
 import { api } from './ui/providers';
 const schema = z.object({
-  email: z.email(),
-  password: z.string().min(12, 'Use at least 12 characters').max(128),
-  name: z.string().max(80).optional(),
+  email: z.email('Enter a valid email address'),
+  password: z
+    .string()
+    .min(12, 'Use at least 12 characters')
+    .max(128, 'Use at most 128 characters'),
+  name: z.string().max(80, 'Use at most 80 characters').optional(),
 });
 export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
+  const { t, errorText } = useI18n();
+
   const hydrated = useHydrated();
   const router = useRouter();
   const [error, setError] = useState('');
@@ -28,14 +34,19 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
         <Link href="/" className="brand mb-12">
           <Layers3 /> CollabEdge
         </Link>
-        <p className="eyebrow">YOUR NEXT CHAPTER</p>
+        <div className="mb-6 flex justify-end">
+          <LanguageSelect />
+        </div>
+        <p className="eyebrow">{t('YOUR NEXT CHAPTER')}</p>
         <h1 className="mt-3 text-3xl font-semibold">
-          {registerMode ? 'Make room for good work.' : 'Welcome back.'}
+          {t(registerMode ? 'Make room for good work.' : 'Welcome back.')}
         </h1>
         <p className="mt-3 text-muted">
-          {registerMode
-            ? 'Create an account and bring your team together.'
-            : 'Your team’s shared space is right here.'}
+          {t(
+            registerMode
+              ? 'Create an account and bring your team together.'
+              : 'Your team’s shared space is right here.',
+          )}
         </p>
         <form
           method="post"
@@ -55,19 +66,31 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
         >
           {registerMode && (
             <label className="field">
-              Your name
-              <input autoComplete="name" required {...register('name')} />
+              {t('Your name')}
+              <input
+                autoComplete="name"
+                required
+                maxLength={80}
+                {...register('name')}
+              />
+              {errors.name && (
+                <span className="text-destructive">
+                  {t(errors.name.message ?? 'Use at most 80 characters')}
+                </span>
+              )}
             </label>
           )}
           <label className="field">
-            Email address
+            {t('Email address')}
             <input type="email" autoComplete="email" {...register('email')} />
             {errors.email && (
-              <span className="text-destructive">{errors.email.message}</span>
+              <span className="text-destructive">
+                {t(errors.email.message ?? 'Enter a valid email address')}
+              </span>
             )}
           </label>
           <label className="field">
-            Password
+            {t('Password')}
             <input
               type="password"
               autoComplete={registerMode ? 'new-password' : 'current-password'}
@@ -75,38 +98,41 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
             />
             {errors.password && (
               <span className="text-destructive">
-                {errors.password.message}
+                {t(errors.password.message ?? 'Use at least 12 characters')}
               </span>
             )}
           </label>
           {error && (
             <p role="alert" className="notice error">
-              {error}
+              {errorText(error)}
             </p>
           )}
           <button
             className="button w-full"
             disabled={isSubmitting || !hydrated}
           >
-            {isSubmitting
-              ? 'Just a moment…'
-              : registerMode
-                ? 'Create account'
-                : 'Sign in'}
+            {t(
+              isSubmitting
+                ? 'Just a moment…'
+                : registerMode
+                  ? 'Create account'
+                  : 'Sign in',
+            )}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-muted">
-          {registerMode ? 'Already have a space?' : 'New here?'}{' '}
+          {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
           <Link
             className="text-primary"
             href={registerMode ? '/login' : '/register'}
           >
-            {registerMode ? 'Sign in' : 'Create an account'}
+            {t(registerMode ? 'Sign in' : 'Create an account')}
           </Link>
         </p>
         <p className="mt-8 text-xs leading-relaxed text-muted">
-          Portfolio environment · limited capacity. Keep sensitive information
-          out of shared demo boards.
+          {t(
+            'Portfolio environment · limited capacity. Keep sensitive information out of shared demo boards.',
+          )}
         </p>
       </div>
     </main>

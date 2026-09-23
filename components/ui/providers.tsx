@@ -1,7 +1,15 @@
 'use client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-export function Providers({ children }: { children: React.ReactNode }) {
+import { LocaleProvider } from './i18n';
+import type { Locale } from '../../src/i18n/messages';
+export function Providers({
+  children,
+  locale = 'en',
+}: {
+  children: React.ReactNode;
+  locale?: Locale;
+}) {
   const [client] = useState(
     () =>
       new QueryClient({
@@ -10,7 +18,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }),
   );
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <LocaleProvider initialLocale={locale}>
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    </LocaleProvider>
+  );
 }
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {

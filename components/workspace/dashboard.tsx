@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,6 +21,8 @@ type Detail = {
   role: string;
 };
 export function Dashboard() {
+  const { t, errorText } = useI18n();
+
   const client = useQueryClient();
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
@@ -51,16 +54,17 @@ export function Dashboard() {
   }
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-5">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-5">
         <Link href="/" className="brand">
           <Layers3 />
           CollabEdge
         </Link>
         <div className="flex gap-3">
+          <LanguageSelect />
           <ThemeToggle />
           <button
             className="icon-button"
-            aria-label="Sign out"
+            aria-label={t('Sign out')}
             onClick={() =>
               void run(async () => {
                 await api('/api/auth/logout', { method: 'POST' });
@@ -74,7 +78,7 @@ export function Dashboard() {
       </header>
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-4">
         <aside>
-          <p className="eyebrow mb-5">YOUR WORKSPACES</p>
+          <p className="eyebrow mb-5">{t('YOUR WORKSPACES')}</p>
           <div className="space-y-2">
             {list.data?.map((w) => (
               <button
@@ -104,53 +108,55 @@ export function Dashboard() {
             }}
           >
             <label className="field">
-              New workspace
+              {t('New workspace')}
               <input
                 name="name"
                 required
                 maxLength={80}
-                placeholder="Your team’s name"
+                placeholder={t('Your team’s name')}
               />
             </label>
             <button className="button secondary w-full">
               <Plus size={16} />
-              Create workspace
+              {t('Create workspace')}
             </button>
           </form>
           <p className="mt-4 text-xs text-muted">
-            Up to 3 workspaces per account.
+            {t('Up to 3 workspaces per account.')}
           </p>
         </aside>
         <main className="lg:col-span-3">
           {(error || list.error || detail.error) && (
             <div role="alert" className="notice error mb-6">
-              {error || list.error?.message || detail.error?.message}{' '}
-              {list.error && <Link href="/login">Sign in →</Link>}
+              {errorText(error || list.error?.message || detail.error?.message)}{' '}
+              {list.error && <Link href="/login">{t('Sign in →')}</Link>}
             </div>
           )}
           {list.isPending && (
             <div role="status" className="surface h-40 animate-pulse p-6">
-              Loading your workspaces…
+              {t('Loading your workspaces…')}
             </div>
           )}
           {!id && !list.isPending && (
             <div className="surface p-10">
               <h1 className="text-3xl font-semibold">
-                A fresh space for your team.
+                {t('A fresh space for your team.')}
               </h1>
               <p className="mt-4 text-muted">
-                Create a workspace to start planning together.
+                {t('Create a workspace to start planning together.')}
               </p>
             </div>
           )}
           {detail.data && (
             <>
-              <p className="eyebrow">WORKSPACE / {detail.data.role}</p>
+              <p className="eyebrow">
+                {t('WORKSPACE /')} {t(detail.data.role)}
+              </p>
               <h1 className="mt-3 text-3xl font-semibold">
                 {detail.data.workspace.name}
               </h1>
               <p className="mt-3 text-muted">
-                A shared view of what’s moving forward.
+                {t('A shared view of what’s moving forward.')}
               </p>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {detail.data.boards.map((board) => (
@@ -165,7 +171,9 @@ export function Dashboard() {
                     </div>
                     <h2 className="mt-6 font-semibold">{board.name}</h2>
                     <p className="mt-2 text-xs text-muted">
-                      Revision {board.revision} · Realtime board
+                      {t('Revision {revision} · Realtime board', {
+                        revision: board.revision,
+                      })}
                     </p>
                   </Link>
                 ))}
@@ -189,24 +197,24 @@ export function Dashboard() {
                   }}
                 >
                   <label className="field flex-1">
-                    New board
+                    {t('New board')}
                     <input
                       name="name"
                       required
                       maxLength={80}
-                      placeholder="What are we working toward?"
+                      placeholder={t('What are we working toward?')}
                     />
                   </label>
                   <button className="button">
                     <Plus size={16} />
-                    Create board
+                    {t('Create board')}
                   </button>
                 </form>
               )}
               <section className="surface mt-10 p-6">
                 <h2 className="flex items-center gap-2 font-semibold">
                   <Users size={18} />
-                  People in this space
+                  {t('People in this space')}
                 </h2>
                 <ul className="mt-5 divide-y divide-border">
                   {detail.data.members.map((member) => (
@@ -224,7 +232,9 @@ export function Dashboard() {
                           <>
                             <select
                               className="w-auto text-xs"
-                              aria-label={`Role for ${member.name}`}
+                              aria-label={t('Role for {name}', {
+                                name: member.name,
+                              })}
                               value={member.role}
                               onChange={(e) =>
                                 void run(() =>
@@ -236,8 +246,8 @@ export function Dashboard() {
                                 )
                               }
                             >
-                              <option>EDITOR</option>
-                              <option>VIEWER</option>
+                              <option value="EDITOR">{t('EDITOR')}</option>
+                              <option value="VIEWER">{t('VIEWER')}</option>
                             </select>
                             <button
                               className="text-xs text-destructive"
@@ -250,11 +260,11 @@ export function Dashboard() {
                                 )
                               }
                             >
-                              Remove
+                              {t('Remove')}
                             </button>
                           </>
                         ) : (
-                          <span className="badge">{member.role}</span>
+                          <span className="badge">{t(member.role)}</span>
                         )}
                       </div>
                     </li>
@@ -279,22 +289,24 @@ export function Dashboard() {
                       }}
                     >
                       <label className="field flex-1">
-                        Invite a registered teammate
+                        {t('Invite a registered teammate')}
                         <input
                           type="email"
                           name="email"
                           required
-                          placeholder="name@team.com"
+                          placeholder={t('name@team.com')}
                         />
                       </label>
                       <label className="field">
-                        Role
+                        {t('Role')}
                         <select name="role">
-                          <option>EDITOR</option>
-                          <option>VIEWER</option>
+                          <option value="EDITOR">{t('EDITOR')}</option>
+                          <option value="VIEWER">{t('VIEWER')}</option>
                         </select>
                       </label>
-                      <button className="button secondary">Add member</button>
+                      <button className="button secondary">
+                        {t('Add member')}
+                      </button>
                     </form>
                     <form
                       className="mt-5 flex items-end gap-3"
@@ -309,7 +321,7 @@ export function Dashboard() {
                       }}
                     >
                       <label className="field flex-1">
-                        Workspace name
+                        {t('Workspace name')}
                         <input
                           name="name"
                           defaultValue={detail.data.workspace.name}
@@ -318,7 +330,9 @@ export function Dashboard() {
                           maxLength={80}
                         />
                       </label>
-                      <button className="button secondary">Rename</button>
+                      <button className="button secondary">
+                        {t('Rename')}
+                      </button>
                     </form>
                   </>
                 )}
@@ -332,7 +346,7 @@ export function Dashboard() {
                       })
                     }
                   >
-                    Leave workspace
+                    {t('Leave workspace')}
                   </button>
                 )}
               </section>

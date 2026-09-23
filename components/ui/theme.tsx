@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from './i18n';
 import { Moon, Sun } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 
@@ -7,11 +8,13 @@ const clientReady = () => true;
 const serverReady = () => false;
 
 export function ThemeToggle() {
+  const { t } = useI18n();
+
   const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   return (
     <button
       className="icon-button"
-      aria-label="Toggle color theme"
+      aria-label={t('Toggle color theme')}
       disabled={!ready}
       onClick={() => {
         const root = document.documentElement;

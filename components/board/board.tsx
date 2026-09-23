@@ -1,4 +1,5 @@
 'use client';
+import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -43,6 +44,8 @@ type BoardData = {
 };
 type Card = Snapshot['cards'][number];
 export function BoardLoader({ id }: { id: string }) {
+  const { t, errorText } = useI18n();
+
   const query = useQuery({
     queryKey: ['board', id],
     queryFn: () => api<BoardData>(`/api/boards/${id}`),
@@ -51,16 +54,16 @@ export function BoardLoader({ id }: { id: string }) {
     return (
       <main className="p-10">
         <p role="alert" className="notice error">
-          {query.error.message}
+          {errorText(query.error.message)}
         </p>
-        <Link href="/workspaces">Back to workspaces</Link>
+        <Link href="/workspaces">{t('Back to workspaces')}</Link>
       </main>
     );
   if (!query.data)
     return (
       <main className="p-10">
         <div role="status" className="surface h-60 animate-pulse p-6">
-          Opening your shared space…
+          {t('Opening your shared space…')}
         </div>
       </main>
     );
@@ -77,6 +80,7 @@ function SortableCard({
   open: () => void;
   pending: boolean;
 }) {
+  const { t } = useI18n();
   const {
     attributes,
     listeners,
@@ -105,7 +109,7 @@ function SortableCard({
         {!readOnly && (
           <button
             className="text-muted"
-            aria-label={`Move ${card.title}`}
+            aria-label={t('Move {title}', { title: card.title })}
             {...attributes}
             {...listeners}
           >
@@ -120,7 +124,7 @@ function SortableCard({
       )}
       <div className="mt-5 flex items-center justify-between text-xs text-muted">
         <span>CE–{card.id.slice(0, 4).toUpperCase()}</span>
-        <span>{pending ? 'Saving…' : <MessageSquare size={13} />}</span>
+        <span>{pending ? t('Saving…') : <MessageSquare size={13} />}</span>
       </div>
     </div>
   );
@@ -144,6 +148,8 @@ function Column({
   );
 }
 function Board({ initial }: { initial: BoardData }) {
+  const { t, errorText, locale } = useI18n();
+
   const history = useQuery({
     queryKey: ['activity', initial.snapshot.board.id],
     queryFn: () =>
@@ -201,10 +207,15 @@ function Board({ initial }: { initial: BoardData }) {
               </span>
             ))}
           </div>
-          <span role="status" aria-label="Connection status" className="badge">
+          <span
+            role="status"
+            aria-label={t('Connection status')}
+            className="badge"
+          >
             <span className="status-dot" />
-            {live.status}
+            {t(live.status)}
           </span>
+          <LanguageSelect />
           <ThemeToggle />
         </div>
       </header>
@@ -215,39 +226,43 @@ function Board({ initial }: { initial: BoardData }) {
             className="mb-3 flex items-center gap-1 text-xs text-muted"
           >
             <ArrowLeft size={13} />
-            Workspace
+            {t('Workspace')}
           </Link>
           <h1 className="text-2xl font-semibold">{state.board.name}</h1>
           <p className="mt-2 text-sm text-muted">
-            Make progress visible. Keep your team in sync.
+            {t('Make progress visible. Keep your team in sync.')}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
           {!readOnly && (
             <button
               className="button secondary"
               onClick={() => setSettings({ ...state.board })}
             >
-              Board settings
+              {t('Board settings')}
             </button>
           )}
           <span className="badge">
-            {initial.role} · Revision {state.board.revision}
+            {t('{role} · Revision {revision}', {
+              role: t(initial.role),
+              revision: state.board.revision,
+            })}
           </span>
           <button
             className="button secondary"
             onClick={() => setShowActivity(!showActivity)}
           >
             <Activity size={16} />
-            Activity
+            {t('Activity')}
           </button>
         </div>
       </div>
       <main className="p-4 sm:p-6">
         {state.board.archived && (
           <p className="notice mb-4">
-            This board is archived. Its history and files remain available
-            read-only.
+            {t(
+              'This board is archived. Its history and files remain available read-only.',
+            )}
           </p>
         )}
         {settings && !readOnly && (
@@ -259,7 +274,7 @@ function Board({ initial }: { initial: BoardData }) {
         )}
         {live.error && (
           <p role="alert" className="notice error mb-4">
-            {live.error}
+            {errorText(live.error)}
           </p>
         )}
         {live.pending
@@ -271,9 +286,11 @@ function Board({ initial }: { initial: BoardData }) {
               className="notice mb-4"
             >
               <strong>
-                {p.state === 'conflicted' ? 'Edit conflict' : 'Could not save'}
+                {t(
+                  p.state === 'conflicted' ? 'Edit conflict' : 'Could not save',
+                )}
               </strong>
-              <p className="my-2">{p.error}</p>
+              <p className="my-2">{errorText(p.error)}</p>
               <pre className="overflow-auto text-xs whitespace-pre-wrap">
                 {JSON.stringify(p.mutation.command.payload, null, 2)}
               </pre>
@@ -282,17 +299,34 @@ function Board({ initial }: { initial: BoardData }) {
                   className="button secondary"
                   onClick={() => live.retry(p)}
                 >
-                  Retry my draft
+                  {t('Retry my draft')}
                 </button>
                 <button
                   onClick={() => live.dismiss(p.mutation.clientMutationId)}
                 >
-                  Discard draft
+                  {t('Discard draft')}
                 </button>
               </div>
             </div>
           ))}
-        <DndContext sensors={sensors} onDragEnd={dragEnd}>
+        <DndContext
+          sensors={sensors}
+          onDragEnd={dragEnd}
+          accessibility={{
+            screenReaderInstructions: {
+              draggable:
+                locale === 'en'
+                  ? 'Press Space to pick up a card, arrow keys to move, Space to drop, or Escape to cancel.'
+                  : t('Drag instructions'),
+            },
+            announcements: {
+              onDragStart: () => t('Picked up card.'),
+              onDragOver: () => t('Card moved.'),
+              onDragEnd: () => t('Card dropped.'),
+              onDragCancel: () => t('Drag cancelled.'),
+            },
+          }}
+        >
           <div className="flex min-h-96 gap-4 overflow-x-auto pb-10">
             {columns.map((column, index) => {
               const cards = state.cards
@@ -310,7 +344,7 @@ function Board({ initial }: { initial: BoardData }) {
                   {!readOnly && (
                     <details className="mb-3 text-xs text-muted">
                       <summary className="cursor-pointer">
-                        Column options
+                        {t('Column options')}
                       </summary>
                       <form
                         className="my-2 flex gap-2"
@@ -328,13 +362,15 @@ function Board({ initial }: { initial: BoardData }) {
                         }}
                       >
                         <input
-                          aria-label={`Rename ${column.title}`}
+                          aria-label={t('Rename {title}', {
+                            title: column.title,
+                          })}
                           name="title"
                           defaultValue={column.title}
                           required
                           maxLength={160}
                         />
-                        <button>Save</button>
+                        <button>{t('Save')}</button>
                       </form>
                       <div className="flex flex-wrap gap-3">
                         <button
@@ -349,7 +385,7 @@ function Board({ initial }: { initial: BoardData }) {
                             })
                           }
                         >
-                          Move left
+                          {t('Move left')}
                         </button>
                         <button
                           onClick={() =>
@@ -362,7 +398,7 @@ function Board({ initial }: { initial: BoardData }) {
                             })
                           }
                         >
-                          Move right
+                          {t('Move right')}
                         </button>
                         <button
                           className="text-destructive"
@@ -373,7 +409,7 @@ function Board({ initial }: { initial: BoardData }) {
                             })
                           }
                         >
-                          Remove empty column
+                          {t('Remove empty column')}
                         </button>
                       </div>
                     </details>
@@ -398,7 +434,7 @@ function Board({ initial }: { initial: BoardData }) {
                   </SortableContext>
                   {cards.length === 0 && (
                     <div className="mb-3 rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted">
-                      Room for something new
+                      {t('Room for something new')}
                     </div>
                   )}
                   {!readOnly && (
@@ -421,14 +457,16 @@ function Board({ initial }: { initial: BoardData }) {
                     >
                       <input
                         name="title"
-                        aria-label={`New card in ${column.title}`}
-                        placeholder="Add a card…"
+                        aria-label={t('New card in {title}', {
+                          title: column.title,
+                        })}
+                        placeholder={t('Add a card…')}
                         required
                         maxLength={160}
                       />
                       <button className="mt-2 flex items-center gap-1 text-xs text-muted">
                         <Plus size={14} />
-                        Add card
+                        {t('Add card')}
                       </button>
                     </form>
                   )}
@@ -455,13 +493,13 @@ function Board({ initial }: { initial: BoardData }) {
               >
                 <input
                   name="title"
-                  aria-label="New column name"
-                  placeholder="New column…"
+                  aria-label={t('New column name')}
+                  placeholder={t('New column…')}
                   required
                   maxLength={160}
                 />
                 <button className="mt-3 text-sm text-muted">
-                  + Add column
+                  {t('+ Add column')}
                 </button>
               </form>
             )}
@@ -469,19 +507,21 @@ function Board({ initial }: { initial: BoardData }) {
         </DndContext>
         {showActivity && (
           <section className="surface p-6">
-            <h2 className="font-semibold">Recent activity</h2>
+            <h2 className="font-semibold">{t('Recent activity')}</h2>
             {activity.length === 0 && (
               <p className="mt-3 text-sm text-muted">
-                Board updates will appear here.
+                {t('Board updates will appear here.')}
               </p>
             )}
             <ol className="mt-3 space-y-3">
               {activity.map((e) => (
                 <li key={e.eventId} className="flex gap-4 text-sm">
                   <span className="text-muted">#{e.revision}</span>
-                  <span>{e.type.replace('.', ' · ')}</span>
+                  <span>
+                    {locale === 'en' ? e.type.replace('.', ' · ') : t(e.type)}
+                  </span>
                   <time className="ml-auto text-xs text-muted">
-                    {new Date(e.createdAt).toLocaleTimeString()}
+                    {new Date(e.createdAt).toLocaleTimeString(locale)}
                   </time>
                 </li>
               ))}
@@ -511,10 +551,15 @@ function BoardSettings({
   mutate: (command: Command, base?: number) => boolean;
   close: () => void;
 }) {
+  const { t } = useI18n();
+
   const [title, setTitle] = useState(initial.name);
   const [confirmArchive, setConfirmArchive] = useState(false);
   return (
-    <section className="surface mb-4 space-y-4 p-5" aria-label="Board settings">
+    <section
+      className="surface mb-4 space-y-4 p-5"
+      aria-label={t('Board settings')}
+    >
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => {
@@ -529,7 +574,7 @@ function BoardSettings({
         }}
       >
         <label className="field">
-          Board name
+          {t('Board name')}
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -537,17 +582,17 @@ function BoardSettings({
             maxLength={160}
           />
         </label>
-        <button className="button">Save board name</button>
+        <button className="button">{t('Save board name')}</button>
         <button type="button" className="button secondary" onClick={close}>
-          Cancel
+          {t('Cancel')}
         </button>
       </form>
       {confirmArchive ? (
         <div className="space-y-3">
           <p>
-            Archive this board? It will become read-only and disappear from the
-            workspace list. History is retained and still counts toward usage
-            limits.
+            {t(
+              'Archive this board? It will become read-only and disappear from the workspace list. History is retained and still counts toward usage limits.',
+            )}
           </p>
           <button
             className="button secondary"
@@ -561,7 +606,7 @@ function BoardSettings({
                 close();
             }}
           >
-            Confirm archive board
+            {t('Confirm archive board')}
           </button>
         </div>
       ) : (
@@ -569,7 +614,7 @@ function BoardSettings({
           className="text-sm text-destructive"
           onClick={() => setConfirmArchive(true)}
         >
-          Archive board
+          {t('Archive board')}
         </button>
       )}
     </section>
@@ -588,6 +633,8 @@ function CardDialog({
   mutate: (command: Command, base?: number) => boolean;
   close: () => void;
 }) {
+  const { t, locale } = useI18n();
+
   const dialog = useRef<HTMLDialogElement>(null);
   const [title, setTitle] = useState(initial.title);
   const [description, setDescription] = useState(initial.description);
@@ -602,8 +649,12 @@ function CardDialog({
       className="m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
     >
       <div className="mb-6 flex items-center justify-between">
-        <span className="eyebrow">CARD DETAILS</span>
-        <button className="icon-button" aria-label="Close card" onClick={close}>
+        <span className="eyebrow">{t('CARD DETAILS')}</span>
+        <button
+          className="icon-button"
+          aria-label={t('Close card')}
+          onClick={close}
+        >
           <X size={20} />
         </button>
       </div>
@@ -622,7 +673,7 @@ function CardDialog({
         }}
       >
         <label className="field">
-          Title
+          {t('Title')}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -632,7 +683,7 @@ function CardDialog({
           />
         </label>
         <label className="field">
-          Description
+          {t('Description')}
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -642,7 +693,7 @@ function CardDialog({
         </label>
         {!readOnly && (
           <div className="flex justify-between">
-            <button className="button">Save changes</button>
+            <button className="button">{t('Save changes')}</button>
             <button
               type="button"
               className="text-sm text-destructive"
@@ -656,14 +707,14 @@ function CardDialog({
                   close();
               }}
             >
-              Archive card
+              {t('Archive card')}
             </button>
           </div>
         )}
       </form>
       {!readOnly && (
         <label className="field mt-6">
-          Move to
+          {t('Move to')}
           <select
             value={
               state.cards.find((c) => c.id === initial.id)?.columnId ??
@@ -689,7 +740,7 @@ function CardDialog({
         </label>
       )}
       <section className="mt-8 border-t border-border pt-6">
-        <h2 className="font-semibold">Conversation</h2>
+        <h2 className="font-semibold">{t('Conversation')}</h2>
         <ul className="my-4 space-y-3">
           {state.comments
             .filter((c) => c.cardId === initial.id)
@@ -697,7 +748,7 @@ function CardDialog({
               <li key={c.id} className="rounded-lg bg-background p-3 text-sm">
                 <p className="whitespace-pre-wrap">{c.body}</p>
                 <time className="mt-2 block text-xs text-muted">
-                  {new Date(c.createdAt).toLocaleString()}
+                  {new Date(c.createdAt).toLocaleString(locale)}
                 </time>
               </li>
             ))}
@@ -721,10 +772,12 @@ function CardDialog({
             }}
           >
             <label className="field">
-              Add a comment
+              {t('Add a comment')}
               <textarea name="body" required maxLength={2000} />
             </label>
-            <button className="button secondary mt-3">Post comment</button>
+            <button className="button secondary mt-3">
+              {t('Post comment')}
+            </button>
           </form>
         )}
       </section>

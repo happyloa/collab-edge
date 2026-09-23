@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { localeCookie, parseLocale } from '../src/i18n/messages';
 import './globals.css';
 import { Providers } from '../components/ui/providers';
 
@@ -8,13 +10,14 @@ export const metadata: Metadata = {
     'A realtime workspace with server-authoritative collaboration, built at the edge.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = parseLocale((await cookies()).get(localeCookie)?.value);
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers locale={locale}>{children}</Providers>
       </body>
     </html>
   );

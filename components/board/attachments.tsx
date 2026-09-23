@@ -1,4 +1,5 @@
 'use client';
+import { useI18n } from '../ui/i18n';
 import { useState } from 'react';
 import { api } from '../ui/providers';
 import type { Snapshot } from '../../src/realtime/protocol';
@@ -11,11 +12,13 @@ export function Attachments({
   items: Snapshot['attachments'];
   readOnly: boolean;
 }) {
+  const { t, errorText } = useI18n();
+
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   return (
     <section className="mt-8 border-t border-border pt-6">
-      <h2 className="font-semibold">Attachments</h2>
+      <h2 className="font-semibold">{t('Attachments')}</h2>
       <ul className="my-4 space-y-3">
         {items
           .filter((a) => a.cardId === cardId)
@@ -45,7 +48,7 @@ export function Attachments({
                     }
                   }}
                 >
-                  Remove
+                  {t('Remove')}
                 </button>
               )}
             </li>
@@ -53,12 +56,12 @@ export function Attachments({
       </ul>
       {error && (
         <p role="alert" className="notice error">
-          {error}
+          {errorText(error)}
         </p>
       )}
       {!readOnly && (
         <label className="field">
-          Upload a file
+          {t('Upload a file')}
           <input
             type="file"
             disabled={busy}
@@ -94,7 +97,7 @@ export function Attachments({
             }}
           />
           <span className="text-xs text-muted">
-            PNG, JPEG, WebP, PDF or text · 10 MB each · 10 files per card
+            {t('PNG, JPEG, WebP, PDF or text · 10 MB each · 10 files per card')}
           </span>
         </label>
       )}
