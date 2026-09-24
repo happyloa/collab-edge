@@ -39,7 +39,7 @@ export function useBoard(initial: Snapshot, actorId: string) {
         setStatus('Offline');
         return;
       }
-      setStatus(navigator.onLine ? 'Connecting' : 'Offline');
+      setStatus('Connecting');
       const ws = new WebSocket(
         `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/realtime/${initial.board.id}`,
       );

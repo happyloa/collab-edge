@@ -10,6 +10,17 @@ export class ConflictError extends AppError {
     );
   }
 }
+function changedEntity<T extends { id: string }>(
+  previous: Map<string, T>,
+  current: T,
+) {
+  const before = previous.get(current.id);
+  if (!before) return true;
+  if (before === current) return false;
+  return Object.keys(current).some(
+    (key) => current[key as keyof T] !== before[key as keyof T],
+  );
+}
 export function prepareMutation(
   state: Snapshot,
   mutation: Mutation,
@@ -159,12 +170,10 @@ export function prepareMutation(
       nameRevision: c.type === 'board.rename' ? next : after.board.nameRevision,
     };
   if (c.type === 'column.remove') patch.removedColumns = [c.payload.id];
+  const previousColumns = new Map(state.columns.map((item) => [item.id, item]));
+  const previousCards = new Map(state.cards.map((item) => [item.id, item]));
   patch.columns = after.columns
-    .filter(
-      (v) =>
-        JSON.stringify(v) !==
-        JSON.stringify(state.columns.find((old) => old.id === v.id)),
-    )
+    .filter((v) => changedEntity(previousColumns, v))
     .map((v) => ({
       ...v,
       updatedRevision: next,
@@ -174,11 +183,7 @@ export function prepareMutation(
           : v.titleRevision,
     }));
   patch.cards = after.cards
-    .filter(
-      (v) =>
-        JSON.stringify(v) !==
-        JSON.stringify(state.cards.find((old) => old.id === v.id)),
-    )
+    .filter((v) => changedEntity(previousCards, v))
     .map((v) => ({
       ...v,
       updatedRevision: next,

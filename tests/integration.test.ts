@@ -246,6 +246,65 @@ it('commits one revision atomically, deduplicates, replays, and falls back to sn
     f.ws.close();
   }
 });
+it('reorders a full column in one transactional D1 update', async () => {
+  const f = await fixture();
+  const ids = Array.from({ length: 120 }, () => crypto.randomUUID());
+  try {
+    await env.DB.prepare(
+      `INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision)
+       SELECT value, ?, ?, 'Bulk card', '', CAST(key AS INTEGER), 0, 0, 0, 0
+       FROM json_each(?)`,
+    )
+      .bind(f.boardId, f.columnId, JSON.stringify(ids))
+      .run();
+    f.mutate({
+      type: 'card.move',
+      payload: {
+        id: ids[119],
+        columnId: f.columnId,
+        beforeId: ids[0],
+      },
+    });
+    expect(await f.next('ack')).toMatchObject({ revision: 1 });
+    const rows = await env.DB.prepare(
+      'SELECT id,position,updated_revision FROM cards WHERE board_id=? ORDER BY position',
+    )
+      .bind(f.boardId)
+      .all<{ id: string; position: number; updated_revision: number }>();
+    expect(rows.results.map((row) => row.id)).toEqual([
+      ids[119],
+      ...ids.slice(0, 119),
+    ]);
+    expect(rows.results.map((row) => row.position)).toEqual(
+      Array.from({ length: 120 }, (_, index) => index),
+    );
+    expect(rows.results.every((row) => row.updated_revision === 1)).toBe(true);
+    expect((await f.stub.snapshot(f.boardId, f.userId)).board.revision).toBe(1);
+    await env.DB.prepare('UPDATE quotas SET used=2000 WHERE key=?')
+      .bind(`mutations:${new Date().toISOString().slice(0, 10)}`)
+      .run();
+    f.mutate(
+      {
+        type: 'card.move',
+        payload: { id: ids[119], columnId: f.columnId, beforeId: null },
+      },
+      1,
+    );
+    await f.next('error');
+    const afterFailure = await env.DB.prepare(
+      'SELECT id FROM cards WHERE board_id=? ORDER BY position',
+    )
+      .bind(f.boardId)
+      .all<{ id: string }>();
+    expect(afterFailure.results.map((row) => row.id)).toEqual([
+      ids[119],
+      ...ids.slice(0, 119),
+    ]);
+    expect((await f.stub.snapshot(f.boardId, f.userId)).board.revision).toBe(1);
+  } finally {
+    f.ws.close();
+  }
+});
 it('rejects viewer mutations on the server', async () => {
   const f = await fixture('VIEWER');
   try {
@@ -262,6 +321,75 @@ it('rejects viewer mutations on the server', async () => {
     });
     expect((await f.stub.snapshot(f.boardId, f.userId)).board.revision).toBe(0);
   } finally {
+    f.ws.close();
+  }
+});
+it('revokes event and presence recipients after workspace access is removed', async () => {
+  const f = await fixture();
+  const otherId = crypto.randomUUID();
+  let other: WebSocket | undefined;
+  try {
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(
+        otherId,
+        `${otherId}@test.dev`,
+        'Bob',
+        'unused',
+        Date.now(),
+      ),
+      env.DB.prepare('INSERT INTO workspace_members VALUES(?,?,?)').bind(
+        f.workspaceId,
+        otherId,
+        'EDITOR',
+      ),
+    ]);
+    const cookie = (
+      await createSession(otherId, new Request('https://test.dev'))
+    ).split(';')[0];
+    const response = await f.stub.fetch(
+      new Request(`https://test.dev/realtime/${f.boardId}`, {
+        headers: {
+          Upgrade: 'websocket',
+          Origin: 'https://test.dev',
+          Cookie: cookie,
+        },
+      }),
+    );
+    expect(response.status).toBe(101);
+    other = response.webSocket!;
+    other.accept();
+    const otherMessages: ServerMessage[] = [];
+    other.addEventListener('message', (e) => {
+      otherMessages.push(serverMessage.parse(JSON.parse(String(e.data))));
+    });
+    const closed = new Promise<void>((resolve) => {
+      other?.addEventListener('close', () => resolve(), { once: true });
+    });
+    await env.DB.prepare(
+      'DELETE FROM workspace_members WHERE workspace_id=? AND user_id=?',
+    )
+      .bind(f.workspaceId, otherId)
+      .run();
+    f.mutate({
+      type: 'board.rename',
+      payload: { id: f.boardId, title: 'Still private' },
+    });
+    expect(await f.next('ack')).toMatchObject({ revision: 1 });
+    await closed;
+    expect(
+      otherMessages.some(
+        (message) => message.type === 'event' && message.event.revision === 1,
+      ),
+    ).toBe(false);
+    f.ws.send(JSON.stringify({ type: 'presence', status: 'active' }));
+    for (let i = 0; i < 4; i++) {
+      const message = await f.next('presence');
+      if (message.type !== 'presence') continue;
+      if (message.users.every((user) => user.userId === f.userId)) return;
+    }
+    throw new Error('Revoked user remained in presence');
+  } finally {
+    other?.close();
     f.ws.close();
   }
 });

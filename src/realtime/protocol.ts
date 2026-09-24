@@ -75,7 +75,6 @@ export const presenceSchema = z.object({
 });
 export type Presence = z.infer<typeof presenceSchema>;
 export const clientMessage = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('hello'), lastSeenRevision: revision }),
   z.object({ type: z.literal('resync'), lastSeenRevision: revision }),
   z.object({ type: z.literal('mutate'), mutation: mutationSchema }),
   z.object({

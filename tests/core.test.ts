@@ -213,6 +213,33 @@ describe('security and synchronization', () => {
     expect(patch.cards?.[0].titleRevision).toBe(2);
     expect(patch.cards?.[0].descriptionRevision).toBe(3);
   });
+  it('writes only the edited card on a full board', () => {
+    const fullBoard: Snapshot = {
+      ...state,
+      cards: [
+        state.cards[0],
+        ...Array.from({ length: 199 }, (_, position) => ({
+          ...state.cards[0],
+          id: crypto.randomUUID(),
+          position: position + 1,
+        })),
+      ],
+    };
+    const patch = prepareMutation(
+      fullBoard,
+      {
+        clientMutationId: crypto.randomUUID(),
+        baseRevision: fullBoard.board.revision,
+        command: {
+          type: 'card.update',
+          payload: { id: cardId, title: 'Only this card changed' },
+        },
+      },
+      actorId,
+    );
+    expect(patch.cards?.map((card) => card.id)).toEqual([cardId]);
+    expect(patch.columns).toEqual([]);
+  });
   it('accepts stale creates while the parent exists', () => {
     const patch = prepareMutation(
       state,

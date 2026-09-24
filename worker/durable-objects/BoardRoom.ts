@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/d1';
 import { and, eq, gt, asc } from 'drizzle-orm';
 import { boards, events } from '../../src/db/schema';
-import { currentUser, boardAccess } from '../../src/auth/session';
+import { currentUser, boardAccess, tokenFrom } from '../../src/auth/session';
+import { sessionHash } from '../../src/auth/crypto';
 import { loadSnapshot } from '../../src/db/queries/snapshot';
 import { DEMO } from '../../src/db/demo';
 import {
@@ -85,7 +86,7 @@ export class BoardRoom extends DurableObject<Env> {
           role,
           userId: user.id,
         });
-        this.broadcastPresence();
+        await this.broadcastPresence(boardId);
         return new Response(null, { status: 101, webSocket: client });
       } catch (error) {
         return Response.json(
@@ -307,7 +308,7 @@ export class BoardRoom extends DurableObject<Env> {
         const user = await currentUser(request);
         assert(user, 401, 'Session expired');
         await boardAccess(user.id, state.boardId, message.type === 'mutate');
-        if (message.type === 'hello' || message.type === 'resync')
+        if (message.type === 'resync')
           await this.replay(socket, state.boardId, message.lastSeenRevision);
         if (message.type === 'ping') this.send(socket, { type: 'pong' });
         if (message.type === 'presence') {
@@ -318,7 +319,7 @@ export class BoardRoom extends DurableObject<Env> {
             selectedCardId: message.selectedCardId,
           };
           socket.serializeAttachment(state);
-          this.broadcastPresence();
+          await this.broadcastPresence(state.boardId);
         }
         if (message.type === 'mutate') {
           mutationId = message.mutation.clientMutationId;
@@ -453,27 +454,51 @@ export class BoardRoom extends DurableObject<Env> {
           col.titleRevision,
         ),
       );
-    for (const card of patch.cards ?? [])
+    if (mutation.command.type === 'card.move' && patch.cards?.length) {
+      // One statement keeps large reorders below the Workers Free D1 query cap.
+      const positions = patch.cards.map(({ id, columnId, position }) => ({
+        id,
+        columnId,
+        position,
+      }));
       statements.push(
         this.env.DB.prepare(
-          'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision,assignee_id,due_date,assignee_revision,due_date_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision,assignee_id=excluded.assignee_id,due_date=excluded.due_date,assignee_revision=excluded.assignee_revision,due_date_revision=excluded.due_date_revision',
-        ).bind(
-          card.id,
-          boardId,
-          card.columnId,
-          card.title,
-          card.description,
-          card.position,
-          Number(card.archived),
-          card.updatedRevision,
-          card.titleRevision,
-          card.descriptionRevision,
-          card.assigneeId,
-          card.dueDate,
-          card.assigneeRevision,
-          card.dueDateRevision,
-        ),
+          `WITH moved AS (
+            SELECT json_extract(value, '$.id') AS id,
+                   json_extract(value, '$.columnId') AS column_id,
+                   CAST(json_extract(value, '$.position') AS INTEGER) AS position
+            FROM json_each(?)
+          )
+          UPDATE cards
+          SET column_id = (SELECT column_id FROM moved WHERE moved.id = cards.id),
+              position = (SELECT position FROM moved WHERE moved.id = cards.id),
+              updated_revision = ?
+          WHERE board_id = ? AND id IN (SELECT id FROM moved)`,
+        ).bind(JSON.stringify(positions), event.revision, boardId),
       );
+    } else {
+      for (const card of patch.cards ?? [])
+        statements.push(
+          this.env.DB.prepare(
+            'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision,assignee_id,due_date,assignee_revision,due_date_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision,assignee_id=excluded.assignee_id,due_date=excluded.due_date,assignee_revision=excluded.assignee_revision,due_date_revision=excluded.due_date_revision',
+          ).bind(
+            card.id,
+            boardId,
+            card.columnId,
+            card.title,
+            card.description,
+            card.position,
+            Number(card.archived),
+            card.updatedRevision,
+            card.titleRevision,
+            card.descriptionRevision,
+            card.assigneeId,
+            card.dueDate,
+            card.assigneeRevision,
+            card.dueDateRevision,
+          ),
+        );
+    }
     for (const comment of patch.comments ?? [])
       statements.push(
         this.env.DB.prepare(
@@ -558,20 +583,66 @@ export class BoardRoom extends DurableObject<Env> {
     });
   }
   private async broadcastEvent(event: BoardEvent) {
-    // Reauthorize recipients as well as senders so revoked members cannot keep receiving updates.
-    for (const socket of this.ctx.getWebSockets()) {
+    for (const { socket } of await this.authorizedSockets(event.boardId))
+      this.send(socket, { type: 'event', event });
+  }
+  private async authorizedSockets(boardId: string) {
+    const candidates = await Promise.all(
+      this.ctx.getWebSockets().map(async (socket) => {
+        const parsed = socketState.safeParse(socket.deserializeAttachment());
+        const state = parsed.success ? parsed.data : null;
+        const token =
+          state?.boardId === boardId
+            ? tokenFrom(
+                new Request(state.origin, {
+                  headers: { cookie: state.cookie },
+                }),
+              )
+            : undefined;
+        if (!state || !token) return { socket, state: null, sessionId: null };
+        return {
+          socket,
+          state,
+          sessionId: await sessionHash(token, this.env.SESSION_SECRET),
+        };
+      }),
+    );
+    const ids = candidates.flatMap(({ sessionId }) =>
+      sessionId ? [sessionId] : [],
+    );
+    const allowed = new Map<string, string>();
+    if (ids.length) {
       try {
-        const state = socketState.parse(socket.deserializeAttachment());
-        const user = await currentUser(
-          new Request(state.origin, { headers: { cookie: state.cookie } }),
-        );
-        assert(user, 401, 'Expired');
-        await boardAccess(user.id, event.boardId);
-        this.send(socket, { type: 'event', event });
+        const rows = await this.env.DB.prepare(
+          `SELECT s.id, s.user_id FROM sessions AS s
+           JOIN boards AS b ON b.id = ?
+           JOIN workspace_members AS m
+             ON m.workspace_id = b.workspace_id AND m.user_id = s.user_id
+           WHERE s.id IN (SELECT value FROM json_each(?)) AND s.expires_at > ?`,
+        )
+          .bind(boardId, JSON.stringify(ids), Date.now())
+          .all<{ id: string; user_id: string }>();
+        for (const row of rows.results) allowed.set(row.id, row.user_id);
       } catch {
-        socket.close(1008, 'Access expired');
+        // A database failure must not leak events or presence to stale members.
       }
     }
+    const recipients: {
+      socket: WebSocket;
+      state: z.infer<typeof socketState>;
+    }[] = [];
+    for (const { socket, state, sessionId } of candidates) {
+      if (
+        state &&
+        sessionId &&
+        socket.readyState === WebSocket.OPEN &&
+        allowed.get(sessionId) === state.presence.userId
+      )
+        recipients.push({ socket, state });
+      else if (socket.readyState === WebSocket.OPEN)
+        socket.close(1008, 'Access expired');
+    }
+    return recipients;
   }
   private send(socket: WebSocket, message: ServerMessage) {
     try {
@@ -580,22 +651,22 @@ export class BoardRoom extends DurableObject<Env> {
       socket.close(1011, 'Connection unavailable');
     }
   }
-  private broadcastPresence() {
+  private async broadcastPresence(boardId: string) {
+    const recipients = await this.authorizedSockets(boardId);
     const users = new Map<string, Presence>();
-    for (const socket of this.ctx.getWebSockets()) {
-      const state = socketState.safeParse(socket.deserializeAttachment());
-      if (state.success)
-        users.set(state.data.presence.userId, state.data.presence);
-    }
-    for (const socket of this.ctx.getWebSockets())
+    for (const { state } of recipients)
+      users.set(state.presence.userId, state.presence);
+    for (const { socket } of recipients)
       this.send(socket, { type: 'presence', users: [...users.values()] });
   }
-  webSocketClose(socket: WebSocket, code: number) {
+  async webSocketClose(socket: WebSocket, code: number) {
+    const state = socketState.safeParse(socket.deserializeAttachment());
     socket.close([1005, 1006, 1015].includes(code) ? 1000 : code);
-    this.broadcastPresence();
+    if (state.success) await this.broadcastPresence(state.data.boardId);
   }
-  webSocketError(socket: WebSocket) {
+  async webSocketError(socket: WebSocket) {
+    const state = socketState.safeParse(socket.deserializeAttachment());
     socket.close(1011, 'Connection error');
-    this.broadcastPresence();
+    if (state.success) await this.broadcastPresence(state.data.boardId);
   }
 }
