@@ -10,6 +10,7 @@ export default defineConfig({
           TEST_MIGRATIONS: await readD1Migrations('./drizzle'),
           SESSION_SECRET: 'test-only-secret-at-least-32-characters-long',
           ATTACHMENTS_ENABLED: 'true',
+          ACCESS_REQUIRED: 'false',
         },
       },
     }),
