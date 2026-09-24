@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'CollabEdge — A shared space for what comes next',
   description:
     'A realtime workspace with server-authoritative collaboration, built at the edge.',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' }],
+  },
 };
 
 export default async function RootLayout({
