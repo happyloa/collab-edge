@@ -14,6 +14,8 @@ The user confirmed Workers Free and selected access only for `piafyoyo06@gmail.c
 
 The application independently verifies the Access JWT signature, issuer, audience, expiration and owner email. Missing configuration fails closed. Framework static assets do not carry application data; the hostname Access policy additionally protects those at the edge.
 
+Private registration must match the verified Access email. Password recovery uses that same signed identity and invalidates all app sessions; it does not provision an email sender or require new storage bindings. Existing app accounts with a different email may sign in and explicitly adopt the verified address. Demo accounts are excluded. Keep the Access allow policy owner-only and `ACCESS_REQUIRED=true`; otherwise recovery remains unavailable.
+
 References: [Workers Access and WebSocket limitations](https://developers.cloudflare.com/workers/configuration/cloudflare-access/), [JWT validation](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/).
 
 ## GitHub connection
