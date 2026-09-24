@@ -14,6 +14,12 @@ import {
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
 type Workspace = { id: string; name: string; role: string };
+type SessionState = {
+  user: { email: string } | null;
+  emailVerified?: boolean;
+  verifiedEmail?: string | null;
+  canVerifyEmail?: boolean;
+};
 type Detail = {
   workspace: Workspace;
   boards: { id: string; name: string; revision: number; archived: boolean }[];
@@ -27,6 +33,10 @@ export function Dashboard() {
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const session = useQuery({
+    queryKey: ['auth', 'session'],
+    queryFn: () => api<SessionState>('/api/auth/session'),
+  });
   const list = useQuery({
     queryKey: ['workspaces'],
     queryFn: () => api<Workspace[]>('/api/workspaces'),
@@ -127,6 +137,35 @@ export function Dashboard() {
           </p>
         </aside>
         <main className="motion-reveal motion-delay-1 lg:col-span-3">
+          {session.data?.user &&
+            session.data.verifiedEmail &&
+            session.data.canVerifyEmail &&
+            session.data.emailVerified === false && (
+              <div className="notice mb-6">
+                <p>
+                  {t(
+                    'Your account uses {current}. Cloudflare Access verified {verified}. Use the verified email to enable password recovery.',
+                    {
+                      current: session.data.user.email,
+                      verified: session.data.verifiedEmail,
+                    },
+                  )}
+                </p>
+                <button
+                  className="button secondary mt-4"
+                  onClick={() =>
+                    void run(async () => {
+                      await api('/api/auth/verify-email', { method: 'POST' });
+                      await client.invalidateQueries({
+                        queryKey: ['auth', 'session'],
+                      });
+                    })
+                  }
+                >
+                  {t('Use verified email')}
+                </button>
+              </div>
+            )}
           {(error || list.error || detail.error) && (
             <div role="alert" className="notice error mb-6">
               {errorText(error || list.error?.message || detail.error?.message)}{' '}

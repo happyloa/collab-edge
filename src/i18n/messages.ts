@@ -104,6 +104,22 @@ export const zh = {
   'Your team’s shared space is right here.': '你的團隊工作區就在這裡。',
   'Just a moment…': '請稍候…',
   'Create account': '建立帳號',
+  'Forgot password?': '忘記密碼？',
+  'On the private site, use the email you verified with Cloudflare Access.':
+    '在私人網站請使用剛才通過 Cloudflare Access 驗證的信箱。',
+  'ACCOUNT RECOVERY': '帳號復原',
+  'Reset your password': '重設密碼',
+  'First verify your email with Cloudflare Access. This resets the CollabEdge account using that same email.':
+    '請先透過 Cloudflare Access 驗證信箱。系統只會重設使用該信箱的 CollabEdge 帳號。',
+  'New password': '新密碼',
+  'Confirm new password': '確認新密碼',
+  'Set new password': '設定新密碼',
+  'Password updated. All previous CollabEdge sessions are signed out.':
+    '密碼已更新，所有舊的 CollabEdge 登入狀態都已登出。',
+  'Back to sign in': '返回登入',
+  'Your account uses {current}. Cloudflare Access verified {verified}. Use the verified email to enable password recovery.':
+    '目前帳號信箱為 {current}，Cloudflare Access 已驗證 {verified}。改用已驗證信箱後即可重設密碼。',
+  'Use verified email': '改用已驗證信箱',
   'Already have a space?': '已經有帳號了嗎？',
   'New here?': '第一次使用嗎？',
   'Create an account': '註冊帳號',

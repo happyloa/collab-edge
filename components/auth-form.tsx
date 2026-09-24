@@ -83,6 +83,13 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
           <label className="field">
             {t('Email address')}
             <input type="email" autoComplete="email" {...register('email')} />
+            {registerMode && (
+              <span className="text-xs font-normal text-muted">
+                {t(
+                  'On the private site, use the email you verified with Cloudflare Access.',
+                )}
+              </span>
+            )}
             {errors.email && (
               <span className="text-destructive">
                 {t(errors.email.message ?? 'Enter a valid email address')}
@@ -102,6 +109,13 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
               </span>
             )}
           </label>
+          {!registerMode && (
+            <div className="text-right text-sm">
+              <Link href="/reset-password" className="text-primary">
+                {t('Forgot password?')}
+              </Link>
+            </div>
+          )}
           {error && (
             <p role="alert" className="notice error">
               {errorText(error)}

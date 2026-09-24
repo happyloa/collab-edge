@@ -19,6 +19,16 @@ const errors: Record<string, string> = {
   'Unable to register this email': '無法使用此電子郵件註冊',
   'Display name required': '請輸入顯示名稱',
   'Registration is currently closed': '目前暫停註冊',
+  'Use your Cloudflare Access verified email':
+    '請使用剛才通過 Cloudflare Access 驗證的信箱註冊。',
+  'Verify your email with Cloudflare Access first':
+    '請先透過 Cloudflare Access 完成信箱驗證。',
+  'No account uses your verified email':
+    '這個已驗證信箱尚未註冊 CollabEdge 帳號。',
+  'Verified email already belongs to another account':
+    '這個已驗證信箱已由另一個 CollabEdge 帳號使用。',
+  'Demo accounts cannot verify email': '示範帳號不能綁定正式信箱。',
+  'Passwords do not match': '兩次輸入的密碼不相同',
   'Please sign in': '請先登入',
   'Session expired': '登入已過期，請重新登入。',
   'Workspace access denied': '你沒有此工作區的存取權限',
