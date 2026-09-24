@@ -85,7 +85,7 @@ flowchart LR
 
 Vinext 處理頁面與 HTTP API。每個看板由一個 BoardRoom 序列化變更；D1 保存正式資料及事件。R2 儲存附件，AuthRateLimiter 保存使用量計數。
 
-每次操作附上唯一 `clientMutationId` 與 `baseRevision`。伺服器在同一筆 D1 transaction 中更新資料、版本與事件，再廣播結果。重送相同操作不會重複寫入。
+每次操作附上唯一 `clientMutationId` 與 `baseRevision`。伺服器在同一筆 D1 transaction 中更新資料、版本與事件，再廣播結果。重送相同操作不會重複寫入。整欄拖曳排序以單一 SQL 更新受影響卡片的位置，避免在 Workers Free 上為每張卡片各執行一次查詢；變動的資料列仍計入 D1 每日寫入額度。事件及在線名單廣播以一筆 D1 查詢重新確認所有接收者的權限；單一看板最多 20 條連線。
 
 例如 Alice 開啟版本 40 的卡片，Bob 修改標題後成為版本 41；Alice 再以舊版本修改同一標題時，系統會提示衝突並保留草稿。重連時依最後版本補回事件，無法安全重播則取得完整快照。這不是 CRDT 文字合併，也沒有長期離線寫入佇列。
 

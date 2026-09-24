@@ -153,7 +153,7 @@ PBKDF2-HMAC-SHA256 uses 600,000 iterations, a unique 128-bit salt and a 256-bit 
 
 - **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. Its beta compatibility surface remains an upstream risk.
 - **Durable Objects:** a natural coordination boundary per board, with explicit serialization across asynchronous I/O and hibernating sockets.
-- **D1:** one durable source of truth and atomic event/entity batches. Authorization and broadcast checks consume reads; this favors correctness over maximum fan-out.
+- **D1:** one durable source of truth and atomic event/entity batches. Full-column card moves write changed positions with one JSON-expanded SQL statement inside the batch, avoiding a per-card query burst on Workers Free. A large move still counts every changed row toward D1's daily write allowance. Event and presence broadcasts reauthorize all recipients with one batched D1 query; the room remains capped at 20 sockets.
 - **R2:** private binary storage with random keys. R2 and D1 are not a distributed transaction; crashes can leave inaccessible objects, bounded by the upload budget.
 - **Revisions:** understandable conflict and replay semantics without claiming CRDT text merging. Event retention is capped; capacity exhaustion fails closed instead of auto-scaling cost.
 - **Cost:** quotas are not an account-wide billing guarantee. The Worker is deployed on the user-confirmed Free plan, with production R2 disabled and owner-only Access enabled.

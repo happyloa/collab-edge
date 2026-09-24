@@ -2,7 +2,7 @@
 
 Upgrade `GET /realtime/:boardId` using the same-origin session cookie. The server verifies Origin, live session, membership and connection quota before accepting. The WebSocket Hibernation API preserves socket attachments across eviction.
 
-Client messages are Zod discriminated unions: `hello`, `resync`, `mutate`, `presence`, `ping`. Server messages are validated by the browser: `ready`, `snapshot`, `event`, `ack`, `presence`, `conflict`, `error`, `pong`.
+Client messages are Zod discriminated unions: `resync`, `mutate`, `presence`, `ping`. Server messages are validated by the browser: `ready`, `snapshot`, `event`, `ack`, `presence`, `conflict`, `error`, `pong`.
 
 ```json
 {
