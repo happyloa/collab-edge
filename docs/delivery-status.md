@@ -1,8 +1,15 @@
 # Delivery status
 
-Updated 2026-09-24. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Account recovery is released; remote authentication interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-24. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
 
-## Current account-recovery release
+## Current portfolio-hardening release
+
+- Separate commits `7842d74` (board performance, recipient authorization and regression tests) and `16ab94f` (documentation and scoped public-demo build triggers) were pushed to `main`. Native Cloudflare build `1f75afe5-0037-44b1-8400-abf38f54aa6b` succeeded for `16ab94fc493ef64d94ae564a6851dc32aa386a96`; Worker version `e60d28c8-d6bd-4e24-a876-2d3afcc9fb97` deployed at 2026-09-24 15:40 UTC. Its log records successful deployment to the production URL.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36021039993) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36021040360) both succeeded for that commit. Local `pnpm verify` passed 33 Workers/core tests, 3 React tests, strict typecheck, lint, formatting and production build; `pnpm test:e2e` passed 11 Chromium scenarios. The static demo build and its browser scenario passed. `pnpm audit` reported no known vulnerabilities.
+- Removed the unused `hello` WebSocket message and an unreachable connection-status branch. Snapshot patch detection now compares cards and columns by ID in linear time. A 120-card move and quota-triggered rollback pass in workerd; reorders use one D1 statement inside the existing transaction. Events and presence reauthorize all room recipients in one D1 query, and the revoked-member test passes. No dependency, migration, paid service or production R2 setting changed.
+- Post-deployment readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`. The production root redirects anonymous requests to Access (302); the public demo returns 200. The user confirmed Workers Free previously, but this token cannot read the billing plan. Authenticated production registration, reset and WebSocket smoke still require the owner's Access login.
+
+## Previous account-recovery release
 
 - Commits: `5aded5d` (Access-backed registration, verified-email adoption, password reset and tests), `dbdd88d` (bilingual and security documentation), `e0fe67f` (explicit local test Access setting). The first Cloudflare build for `dbdd88d` failed because its secret-free test environment inherited production `ACCESS_REQUIRED=true`; the fix was verified without `.dev.vars` and the subsequent release succeeded.
 - Native Cloudflare build `4a7a446b-1219-4c80-8959-42532b5e925c` succeeded for `e0fe67f3a49176e7153c5af862bf44d97c8d9b65`. Worker version `77e28bab-1bbf-4617-9ea7-31f166eae7b5` deployed at 2026-09-24 03:53 UTC. The build log records the budget gate, upload and successful deploy. [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/35953220516) and [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/35953220530) succeeded for the same commit.
