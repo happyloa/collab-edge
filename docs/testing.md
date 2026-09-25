@@ -10,7 +10,7 @@ The current app suite contains 33 Workers/core tests, 3 React tests and 11 Chrom
 
 Board lifecycle tests verify rename patches retain their name revision, concurrent stale names and stale archival/restoration are rejected, archive/restore delivery is idempotent, and ordinary mutations cannot change an archived board. Metadata tests check calendar dates, independent field conflict revisions, filters, nonmember assignment rejection and metadata retention after restoration. The two-browser scenario additionally verifies synchronized assignment/due date, search, card archive/restore, read-only board archival, archived-board discovery and restoration.
 
-The primary Playwright scenario registers Alice and Bob, creates a workspace and board, invites Bob, creates and moves a card, renames it, submits concurrent conflicting edits, retries a preserved draft, disconnects/reconnects Bob, posts a comment, uploads an attachment, checks anonymous download rejection and captures the board screenshot. Page errors fail the scenario.
+The primary Playwright scenario registers Alice and Bob, creates a workspace and board, invites Bob, creates and moves a card, renames it, submits concurrent conflicting edits, retries a preserved draft, disconnects/reconnects Bob, posts a comment, uploads an attachment, checks anonymous download rejection, downloads a board JSON export and verifies its snapshot and absence of private object keys, then captures the board screenshot. Page errors fail the scenario.
 
 ```sh
 pnpm install --frozen-lockfile
