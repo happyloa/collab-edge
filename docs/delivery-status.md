@@ -1,6 +1,13 @@
 # Delivery status
 
-Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Board JSON export, security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Ownership transfer, board JSON export, security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Workspace ownership transfer
+
+- Commit `940563a` adds a seven-day, two-party ownership transfer for non-demo workspaces. The current owner proposes to an existing member after password confirmation; the recipient signs in and accepts with their own password. The owner may cancel; the recipient may decline. D1 changes the canonical owner and both membership roles in one transaction, and a trigger also enforces the recipient's three-workspace cap. No new Cloudflare product or production R2 operation is used.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 35 Workers/core tests, 3 React tests, Vinext compatibility and production build. `corepack pnpm test:e2e` passed all 12 Chromium scenarios, including a two-context owner/recipient transfer and wrong-password checks. [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36154619633), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36154619703) and [public demo](https://github.com/happyloa/collab-edge/actions/runs/36154619712) succeeded for the code commit.
+- Native Cloudflare build `7b118ac0-7518-4245-bddc-1fdc8ef64c53` succeeded for `940563a`. Its log records successful application of `0003_new_sleeper.sql` and deployment to the production URL. Deployment readback shows Worker version `f787a720-6ac0-41b5-84e6-eeabf1437fca` at 100% traffic since 2026-09-25 15:41 UTC. The setup token cannot independently query remote D1 (`7403`), so migration confirmation is based on the successful build log, not a separate `migrations list` call.
+- Post-deployment readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`. The hostname Access application still has one Allow policy for that email, and anonymous root access redirects to Access (302). Cloudflare Builds reported that its monthly build-minute limit was not reached. The production allow policy does not permit registering a second account with a different email. No owner-authenticated production transfer has been tested.
 
 ## Current board-export release
 
@@ -55,7 +62,7 @@ The owner must complete Access email verification to validate authenticated prod
 
 ## Remaining product limits
 
-Production attachments remain disabled. Member invitations add registered application accounts without sending email; the outer Access allowlist still admits only the owner. New private registrations bind the account to the Access-verified email; existing accounts can explicitly adopt that email, and password reset revokes old sessions. The active Access session suffices for reset; there is no fresh app-specific code. Ownership transfer, account deletion and automatic event compaction are not implemented. The [branded verification email](email/README.md) includes HTML, plain text and desktop/mobile previews, but is not integrated into Access delivery.
+Production attachments remain disabled. Member invitations add registered application accounts without sending email; the outer Access allowlist still admits only the owner. New private registrations bind the account to the Access-verified email; existing accounts can explicitly adopt that email, and password reset revokes old sessions. The active Access session suffices for reset; there is no fresh app-specific code. Ownership transfer is implemented for existing non-demo members; account deletion and automatic event compaction are not implemented. The [branded verification email](email/README.md) includes HTML, plain text and desktop/mobile previews, but is not integrated into Access delivery.
 
 All remote migrations are applied and immutable. Retain every migration and its metadata for fresh installations and future schema changes.
 
