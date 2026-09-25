@@ -9,13 +9,15 @@ test('recovery is reachable from login and validates both passwords', async ({
   await expect(
     page.getByRole('heading', { name: 'Reset your password' }),
   ).toBeVisible();
+  const submit = page.getByRole('button', { name: 'Set new password' });
+  await expect(submit).toBeEnabled();
   await page
     .getByLabel('New password', { exact: true })
     .fill('A-long-new-password-2026');
   await page
     .getByLabel('Confirm new password')
     .fill('A-different-password-2026');
-  await page.getByRole('button', { name: 'Set new password' }).click();
+  await submit.click();
   await expect(page.getByRole('alert')).toHaveText('Passwords do not match');
 
   await page.getByRole('combobox').selectOption('zh-TW');
