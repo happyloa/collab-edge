@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import type { Snapshot } from '../src/realtime/protocol';
 test('two people synchronize, resolve conflicts, reconnect, and share private files', async ({
   browser,
 }) => {
@@ -157,6 +159,44 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     expect(denied.status()).toBe(401);
     await anonymous.close();
     await alice.getByRole('button', { name: 'Close card' }).click();
+    const exportButton = alice.getByRole('button', {
+      name: 'Export board JSON',
+    });
+    await expect(exportButton).toBeEnabled();
+    const [boardDownload] = await Promise.all([
+      alice.waitForEvent('download'),
+      exportButton.click(),
+    ]);
+    expect(boardDownload.suggestedFilename()).toMatch(
+      /^collabedge-board-[0-9a-f-]{36}\.json$/,
+    );
+    const exportedBoard = JSON.parse(
+      await readFile(await boardDownload.path(), 'utf8'),
+    ) as {
+      format: string;
+      snapshot: Snapshot;
+      attachmentContentsIncluded: boolean;
+    };
+    expect(exportedBoard.format).toBe('collabedge.board.v1');
+    expect(exportedBoard.snapshot.cards).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Ready for launch' }),
+      ]),
+    );
+    expect(exportedBoard.snapshot.comments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ body: 'The team is ready.' }),
+      ]),
+    );
+    expect(exportedBoard.snapshot.attachments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ filename: 'launch-notes.txt' }),
+      ]),
+    );
+    expect(exportedBoard.attachmentContentsIncluded).toBe(false);
+    expect(exportedBoard.snapshot.attachments[0]).not.toHaveProperty(
+      'objectKey',
+    );
     await alice.screenshot({
       path: 'docs/screenshots/board.png',
       fullPage: true,

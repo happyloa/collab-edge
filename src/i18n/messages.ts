@@ -166,6 +166,9 @@ export const zh = {
     '讓進度清楚可見，讓團隊保持同步。',
   'Board settings': '看板設定',
   Activity: '活動紀錄',
+  'Export board JSON': '匯出看板 JSON',
+  'Exports current board data without attachment files.':
+    '匯出目前看板資料，不含附件檔案內容。',
   'This board is archived. Its history and files remain available read-only.':
     '此看板已封存，歷史紀錄與檔案以唯讀方式保留。',
   'Retry my draft': '重試我的草稿',

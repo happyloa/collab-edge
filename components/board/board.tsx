@@ -27,6 +27,7 @@ import {
   MessageSquare,
   ArrowLeft,
   Activity,
+  Download,
 } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
@@ -202,6 +203,33 @@ function Board({ initial }: { initial: BoardData }) {
     }),
   );
   const columns = [...state.columns].sort((a, b) => a.position - b.position);
+  function exportBoard() {
+    if (live.status !== 'Connected' || live.pending.length > 0) return;
+    const file = new Blob(
+      [
+        JSON.stringify(
+          {
+            format: 'collabedge.board.v1',
+            exportedAt: new Date().toISOString(),
+            snapshot: state,
+            people: initial.people,
+            attachmentContentsIncluded: false,
+          },
+          null,
+          2,
+        ),
+      ],
+      { type: 'application/json' },
+    );
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `collabedge-board-${state.board.id}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   function dragEnd({ active, over }: DragEndEvent) {
     if (filtered || readOnly) return;
     if (!over || active.id === over.id) return;
@@ -279,6 +307,15 @@ function Board({ initial }: { initial: BoardData }) {
           >
             <Activity size={16} />
             {t('Activity')}
+          </button>
+          <button
+            className="button secondary"
+            onClick={exportBoard}
+            disabled={live.status !== 'Connected' || live.pending.length > 0}
+            title={t('Exports current board data without attachment files.')}
+          >
+            <Download size={16} />
+            {t('Export board JSON')}
           </button>
         </div>
       </div>
