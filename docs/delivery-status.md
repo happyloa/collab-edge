@@ -1,8 +1,14 @@
 # Delivery status
 
-Updated 2026-09-24. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
 
-## Current portfolio-hardening release
+## Current security-scanning release
+
+- Commits `1c38e62` (CodeQL for JavaScript/TypeScript and GitHub Actions), `b9a152c` (atomic local secret-file creation) and `230dd70` (high-severity dependency audit gate and report) were verified on `security-audit`, fast-forward merged and pushed to `main`. Both local and remote feature branches were deleted after merging.
+- CodeQL initially found one high-severity CWE-367 file race in `scripts/setup-local.mjs`; the `wx` exclusive-create fix passed a local create/preserve check. The final [CodeQL run](https://github.com/happyloa/collab-edge/actions/runs/36092721298) succeeded on `main` with zero open alerts. The [full CI run](https://github.com/happyloa/collab-edge/actions/runs/36092721340) passed, including the new `pnpm audit --audit-level high` gate, 33 Workers/core tests, 3 React tests and 11 browser scenarios. Local Semgrep Community Edition ran 70 applicable security/secrets rules over 107 tracked files with zero findings; `pnpm audit` reported no known vulnerabilities. These checks are static analysis, not a penetration test.
+- Native Cloudflare build `b48e9086-fb0f-4949-85c6-733126ee787b` succeeded for `230dd70232dcde14e8e5bfe0bace68dcee11ccaa`; Worker version `1a21b2f7-cc06-4b8a-9440-a914360e10d2` deployed at 2026-09-25 04:03 UTC. Post-deployment readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`; anonymous root still redirects to Access (302). No paid service or production R2 operation was enabled. Owner-authenticated production smoke remains pending.
+
+## Previous portfolio-hardening release
 
 - Separate commits `7842d74` (board performance, recipient authorization and regression tests) and `16ab94f` (documentation and scoped public-demo build triggers) were pushed to `main`. Native Cloudflare build `1f75afe5-0037-44b1-8400-abf38f54aa6b` succeeded for `16ab94fc493ef64d94ae564a6851dc32aa386a96`; Worker version `e60d28c8-d6bd-4e24-a876-2d3afcc9fb97` deployed at 2026-09-24 15:40 UTC. Its log records successful deployment to the production URL.
 - [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36021039993) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36021040360) both succeeded for that commit. Local `pnpm verify` passed 33 Workers/core tests, 3 React tests, strict typecheck, lint, formatting and production build; `pnpm test:e2e` passed 11 Chromium scenarios. The static demo build and its browser scenario passed. `pnpm audit` reported no known vulnerabilities.
