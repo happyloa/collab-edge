@@ -10,12 +10,13 @@ import {
   Users,
   LayoutDashboard,
   LogOut,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
-  user: { email: string } | null;
+  user: { id: string; email: string } | null;
   emailVerified?: boolean;
   verifiedEmail?: string | null;
   canVerifyEmail?: boolean;
@@ -23,11 +24,23 @@ type SessionState = {
 type Detail = {
   workspace: Workspace;
   boards: { id: string; name: string; revision: number; archived: boolean }[];
-  members: { userId: string; name: string; email: string; role: string }[];
+  members: {
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+    canReceiveOwnership: boolean;
+  }[];
   role: string;
+  canTransferOwnership: boolean;
+  transfer: {
+    fromUserId: string;
+    toUserId: string;
+    expiresAt: number;
+  } | null;
 };
 export function Dashboard() {
-  const { t, errorText } = useI18n();
+  const { t, errorText, locale } = useI18n();
 
   const client = useQueryClient();
   const [selected, setSelected] = useState('');
@@ -386,8 +399,166 @@ export function Dashboard() {
                         {t('Rename')}
                       </button>
                     </form>
+                    {detail.data.canTransferOwnership && (
+                      <div className="mt-8 border-t border-border pt-6">
+                        <h3 className="flex items-center gap-2 font-semibold">
+                          <ArrowRightLeft size={18} />
+                          {t('Transfer ownership')}
+                        </h3>
+                        <p className="mt-2 text-sm text-muted">
+                          {t(
+                            'The recipient must sign in and accept. You remain the owner until then and become an editor afterward.',
+                          )}
+                        </p>
+                        {detail.data.transfer ? (
+                          <div className="notice mt-4">
+                            <p>
+                              {t('Transfer pending for {name} until {date}.', {
+                                name:
+                                  detail.data.members.find(
+                                    (member) =>
+                                      member.userId ===
+                                      detail.data?.transfer?.toUserId,
+                                  )?.name ?? t('Former member'),
+                                date: new Date(
+                                  detail.data.transfer.expiresAt,
+                                ).toLocaleString(locale),
+                              })}
+                            </p>
+                            <button
+                              className="button secondary mt-4"
+                              onClick={() =>
+                                void run(() =>
+                                  action({ action: 'transfer.cancel' }),
+                                )
+                              }
+                            >
+                              {t('Cancel transfer')}
+                            </button>
+                          </div>
+                        ) : (
+                          <form
+                            className="mt-5 flex flex-wrap items-end gap-3"
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              const form = event.currentTarget;
+                              const fields = new FormData(form);
+                              void run(async () => {
+                                await action({
+                                  action: 'transfer.request',
+                                  userId: fields.get('userId'),
+                                  password: fields.get('password'),
+                                });
+                                form.reset();
+                              });
+                            }}
+                          >
+                            <label className="field flex-1">
+                              {t('Transfer to')}
+                              <select name="userId" required defaultValue="">
+                                <option value="" disabled>
+                                  {t('Choose a member')}
+                                </option>
+                                {detail.data.members
+                                  .filter(
+                                    (member) =>
+                                      member.role !== 'OWNER' &&
+                                      member.canReceiveOwnership,
+                                  )
+                                  .map((member) => (
+                                    <option
+                                      key={member.userId}
+                                      value={member.userId}
+                                    >
+                                      {member.name}
+                                    </option>
+                                  ))}
+                              </select>
+                            </label>
+                            <label className="field flex-1">
+                              {t('Confirm with your password')}
+                              <input
+                                type="password"
+                                name="password"
+                                required
+                                maxLength={128}
+                                autoComplete="current-password"
+                              />
+                            </label>
+                            <button
+                              className="button secondary"
+                              disabled={
+                                !detail.data.members.some(
+                                  (member) =>
+                                    member.role !== 'OWNER' &&
+                                    member.canReceiveOwnership,
+                                )
+                              }
+                            >
+                              {t('Request transfer')}
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
+                {detail.data.transfer &&
+                  detail.data.transfer.toUserId === session.data?.user?.id && (
+                    <div className="mt-8 border-t border-border pt-6">
+                      <h3 className="flex items-center gap-2 font-semibold">
+                        <ArrowRightLeft size={18} />
+                        {t('Ownership request')}
+                      </h3>
+                      <p className="mt-2 text-sm text-muted">
+                        {t(
+                          'Accept from your own account before {date}. You will become the owner.',
+                          {
+                            date: new Date(
+                              detail.data.transfer.expiresAt,
+                            ).toLocaleString(locale),
+                          },
+                        )}
+                      </p>
+                      <form
+                        className="mt-5 flex flex-wrap items-end gap-3"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          const form = event.currentTarget;
+                          const password = new FormData(form).get('password');
+                          void run(async () => {
+                            await action({
+                              action: 'transfer.accept',
+                              password,
+                            });
+                            form.reset();
+                          });
+                        }}
+                      >
+                        <label className="field flex-1">
+                          {t('Confirm with your password')}
+                          <input
+                            type="password"
+                            name="password"
+                            required
+                            maxLength={128}
+                            autoComplete="current-password"
+                          />
+                        </label>
+                        <button className="button">
+                          {t('Accept ownership')}
+                        </button>
+                      </form>
+                      <button
+                        className="mt-4 text-sm text-destructive"
+                        onClick={() =>
+                          void run(() => action({ action: 'transfer.decline' }))
+                        }
+                      >
+                        {t('Decline transfer')}
+                      </button>
+                    </div>
+                  )}
                 {detail.data.role !== 'OWNER' && (
                   <button
                     className="mt-5 text-sm text-destructive"

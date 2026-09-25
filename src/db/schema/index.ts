@@ -48,6 +48,18 @@ export const members = sqliteTable(
     index('members_user').on(t.userId),
   ],
 );
+export const workspaceTransfers = sqliteTable('workspace_transfers', {
+  workspaceId: text('workspace_id')
+    .primaryKey()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  fromUserId: text('from_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  toUserId: text('to_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: integer('expires_at').notNull(),
+});
 export const boards = sqliteTable(
   'boards',
   {

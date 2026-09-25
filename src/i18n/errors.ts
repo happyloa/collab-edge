@@ -38,6 +38,18 @@ const errors: Record<string, string> = {
   'Already a member': '此使用者已是成員',
   'Owners must retain workspace ownership': '擁有者目前無法離開自己的工作區',
   'The owner cannot be removed or demoted': '無法移除擁有者或降低其權限',
+  'Too many password confirmations. Try again later.':
+    '密碼確認次數過多，請稍後再試。',
+  'Incorrect password': '密碼不正確',
+  'Demo ownership cannot be transferred': '示範帳號或工作區無法轉移擁有權',
+  'Choose another workspace member': '請選擇其他工作區成員',
+  'Choose a current workspace member': '請選擇目前的工作區成員',
+  'Recipient owns the maximum number of workspaces':
+    '接收者擁有的工作區已達上限',
+  'Workspace membership changed. Reload and retry.':
+    '工作區成員狀態已變更，請重新載入後再試。',
+  'Transfer request is unavailable or expired': '轉移邀請已失效或過期',
+  'No pending ownership transfer': '目前沒有待處理的擁有權轉移',
   'Board not found': '找不到看板',
   'Card not found': '找不到卡片',
   'Card no longer exists': '此卡片已不存在',

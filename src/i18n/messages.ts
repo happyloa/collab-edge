@@ -156,6 +156,21 @@ export const zh = {
   'Role for {name}': '{name} 的權限',
   'Add member': '加入成員',
   'Workspace name': '工作區名稱',
+  'Transfer ownership': '轉移工作區擁有權',
+  'The recipient must sign in and accept. You remain the owner until then and become an editor afterward.':
+    '接收者必須登入自己的帳號並接受。在那之前你仍是擁有者；完成後你會成為編輯者。',
+  'Transfer pending for {name} until {date}.':
+    '等待 {name} 接受擁有權轉移，期限為 {date}。',
+  'Cancel transfer': '取消轉移',
+  'Transfer to': '轉移給',
+  'Choose a member': '選擇成員',
+  'Confirm with your password': '輸入密碼確認',
+  'Request transfer': '提出轉移申請',
+  'Ownership request': '擁有權轉移邀請',
+  'Accept from your own account before {date}. You will become the owner.':
+    '請在 {date} 前使用自己的帳號接受；完成後你會成為擁有者。',
+  'Accept ownership': '接受擁有權',
+  'Decline transfer': '拒絕轉移',
   Rename: '重新命名',
   'Leave workspace': '離開工作區',
   'Back to workspaces': '返回工作區',

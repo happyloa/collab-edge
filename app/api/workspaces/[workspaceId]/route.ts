@@ -6,14 +6,23 @@ import { workspaces, boards, members, users } from '../../../../src/db/schema';
 import { requireUser, workspaceRole } from '../../../../src/auth/session';
 import { body, route } from '../../../../src/lib/http';
 import { assert } from '../../../../src/lib/errors';
+import { DEMO } from '../../../../src/db/demo';
+import { confirmPassword } from '../../../../src/auth/reauth';
+import {
+  visibleTransfer,
+  proposeTransfer,
+  acceptTransfer,
+  cancelTransfer,
+} from '../../../../src/workspaces/ownership';
 const workspaceId = (request: Request) =>
   z.uuid().parse(new URL(request.url).pathname.split('/').at(-1));
+const demoUsers = new Set([DEMO.owner, DEMO.Alice, DEMO.Bob]);
 export const GET = route(async (request) => {
   const user = await requireUser(request);
   const id = workspaceId(request);
   const role = await workspaceRole(user.id, id);
   const db = drizzle(env.DB);
-  const [workspace, boardList, memberList] = await Promise.all([
+  const [workspace, boardList, memberList, transfer] = await Promise.all([
     db.select().from(workspaces).where(eq(workspaces.id, id)).get(),
     db.select().from(boards).where(eq(boards.workspaceId, id)),
     db
@@ -26,12 +35,22 @@ export const GET = route(async (request) => {
       .from(members)
       .innerJoin(users, eq(users.id, members.userId))
       .where(eq(members.workspaceId, id)),
+    visibleTransfer(env.DB, id, user.id, role),
   ]);
   return Response.json({
     workspace,
     boards: boardList,
-    members: memberList,
+    members: memberList.map((member) => ({
+      ...member,
+      canReceiveOwnership: !demoUsers.has(member.userId),
+    })),
     role,
+    transfer,
+    canTransferOwnership:
+      role === 'OWNER' &&
+      Boolean(workspace) &&
+      workspace?.id !== DEMO.workspace &&
+      !demoUsers.has(user.id),
   });
 });
 const action = z.discriminatedUnion('action', [
@@ -51,13 +70,49 @@ const action = z.discriminatedUnion('action', [
   }),
   z.object({ action: z.literal('remove'), userId: z.uuid() }),
   z.object({ action: z.literal('leave') }),
+  z.object({
+    action: z.literal('transfer.request'),
+    userId: z.uuid(),
+    password: z.string().min(1).max(128),
+  }),
+  z.object({
+    action: z.literal('transfer.accept'),
+    password: z.string().min(1).max(128),
+  }),
+  z.object({ action: z.literal('transfer.cancel') }),
+  z.object({ action: z.literal('transfer.decline') }),
 ]);
 export const PATCH = route(async (request) => {
   const user = await requireUser(request);
   const id = workspaceId(request);
   const data = await body(request, action);
   const db = drizzle(env.DB);
-  const role = await workspaceRole(user.id, id, false, data.action !== 'leave');
+  const role = await workspaceRole(
+    user.id,
+    id,
+    false,
+    !['leave', 'transfer.accept', 'transfer.decline'].includes(data.action),
+  );
+  if (data.action === 'transfer.request') {
+    await confirmPassword(env, user.id, data.password);
+    return Response.json({
+      transfer: await proposeTransfer(env.DB, id, user.id, data.userId),
+    });
+  }
+  if (data.action === 'transfer.accept') {
+    await confirmPassword(env, user.id, data.password);
+    await acceptTransfer(env.DB, id, user.id);
+    return Response.json({ ok: true });
+  }
+  if (data.action === 'transfer.cancel' || data.action === 'transfer.decline') {
+    await cancelTransfer(
+      env.DB,
+      id,
+      user.id,
+      data.action === 'transfer.cancel',
+    );
+    return Response.json({ ok: true });
+  }
   if (data.action === 'rename')
     await db
       .update(workspaces)
