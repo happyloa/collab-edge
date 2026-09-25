@@ -1,6 +1,12 @@
 # Delivery status
 
-Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Board JSON export, security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Current board-export release
+
+- Separate commits `359337f` (browser-only board JSON export and collaboration test) and `dce684d` (bilingual documentation and refreshed screenshots) were pushed to `main`. The export includes the synced board snapshot and member names, but not attachment files, full event history or a restore/import path. It is disabled while disconnected or when edits are pending. No new Cloudflare service, binding, migration or production R2 operation was added.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 33 Workers/core tests, 3 React tests, Vinext check and production build. `corepack pnpm test:e2e` passed all 11 Chromium scenarios, including verifying the downloaded JSON contains cards, comments and attachment metadata without private object keys. [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36150575322) and [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36150575039) passed for `dce684d`; the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36150496464) passed for `359337f`.
+- Native Cloudflare build `e266bf6e-314b-4960-a505-c92c6dcf87c0` succeeded for `359337f` and deployed Worker version `8800aec8-144f-49ad-9d1a-c68139a5258f` at 2026-09-25 14:57 UTC. Readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`. The Access app still has one Allow policy for that email only. An anonymous request to the Worker root returned 302 to Access; the public demo returned 200. The in-app browser connection was unavailable in this session, so owner-authenticated production smoke remains pending.
 
 ## Current security-scanning release
 
