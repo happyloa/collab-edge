@@ -18,6 +18,7 @@ jobs:
       - name: Enable pinned pnpm
         run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level high
       - run: node scripts/setup-local.mjs
       - run: pnpm cf:typegen
       - run: pnpm verify

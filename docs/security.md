@@ -12,6 +12,14 @@ Every write validates same-origin Origin and its payload. Socket upgrades valida
 
 Uploads authorize before reading the body, accept only PNG/JPEG/WebP/PDF/text, enforce bounded streaming and check signatures. Filenames are metadata; object keys are server UUIDs. Downloads always reauthorize and use Content-Disposition attachment, application/octet-stream, no-store and nosniff. R2 has no public URL. Text validation rejects NUL; this is not malware scanning.
 
+## Automated security checks
+
+GitHub Actions runs CodeQL's `security-extended` queries on JavaScript/TypeScript and workflow files, plus `pnpm audit --audit-level high` for dependencies. An independent local Semgrep Community Edition scan on 2026-09-25 ran the security-audit and secrets rulesets over 107 tracked files: 70 applicable rules, zero findings. The dependency audit also found no known vulnerabilities.
+
+The initial CodeQL scan found one high-severity CWE-367 race in `scripts/setup-local.mjs`: checking whether `.dev.vars` existed before writing could overwrite a file created between those operations. The script now creates the file atomically with exclusive `wx` mode and preserves an existing file. Local create/preserve checks and CodeQL reanalysis of the fix branch passed with no open findings. Static scans do not replace an authenticated production smoke test or a penetration test.
+
+## Resource limits
+
 | Resource                   | Hard application limit                                  |
 | -------------------------- | ------------------------------------------------------- |
 | Registered users           | 100 globally                                            |
