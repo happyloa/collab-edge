@@ -14,6 +14,7 @@ export const zh = {
   'Try editing a card, moving it, or simulating a teammate edit to see how a conflicting draft is preserved. Live collaboration is available in the private app and local setup.':
     '試著編輯或移動卡片，也可以模擬隊友修改，體驗發生衝突時如何保留草稿。真正的即時協作可在私人正式站或本機環境使用。',
   'View source': '查看原始碼',
+  'Two-browser test walkthrough': '雙瀏覽器測試導覽',
   'Revision {revision}': '版本 {revision}',
   'Reset demo': '重設展示',
   'Your changes will appear here.': '你的操作紀錄會顯示在這裡。',

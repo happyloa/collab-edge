@@ -12,6 +12,8 @@ A shared project workspace that makes realtime collaboration explicit: ordered c
 
 **Public interactive demo:** [Try it without signing in](https://happyloa.github.io/collab-edge/). This separate GitHub Pages site runs entirely in your browser: edit, assign, filter, move, archive and restore sample cards, or simulate a conflicting edit. Reload or reset to discard changes. It does not call the production API or demonstrate live multi-user synchronization. [Demo setup and boundaries](docs/public-demo.md).
 
+**Live collaboration evidence:** [Follow the two-browser test walkthrough](docs/realtime-walkthrough.md) to reproduce Alice and Bob using the real local Worker, WebSocket and database, including conflict recovery and reconnect. Authenticated production collaboration still needs an owner Access smoke test.
+
 ![CollabEdge seeded demo board captured in Chromium](docs/screenshots/demo-board.png)
 
 ## Why this exists

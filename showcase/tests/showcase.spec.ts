@@ -13,6 +13,12 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
+  await expect(
+    page.getByRole('link', { name: 'Two-browser test walkthrough' }),
+  ).toHaveAttribute(
+    'href',
+    'https://github.com/happyloa/collab-edge/blob/main/docs/realtime-walkthrough.md',
+  );
   await page
     .getByRole('button', { name: 'Write the launch story', exact: true })
     .click();
@@ -45,6 +51,9 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   ).toBeVisible();
   await page.getByLabel('Language / 語言').selectOption('zh-TW');
   await expect(page.getByRole('button', { name: '重設展示' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: '雙瀏覽器測試導覽' }),
+  ).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   const fonts = await page.evaluate(async () => {

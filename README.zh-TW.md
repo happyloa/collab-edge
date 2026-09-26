@@ -10,6 +10,8 @@
 
 **[免登入互動展示](https://happyloa.github.io/collab-edge/)**：可編輯、指派、篩選、移動、封存及還原示範卡片，也能模擬隊友修改造成的衝突。展示頁獨立部署在 GitHub Pages，資料只保留在目前分頁，重整或重設即清除，不呼叫正式站 API，也不提供真正的多人連線。[展示頁說明](docs/public-demo.md)。
 
+**真正的即時協作驗證**：參閱[雙瀏覽器測試導覽](docs/realtime-walkthrough.md)，可在本機重現 Alice 和 Bob 透過 Worker、WebSocket 與資料庫同步，並驗證衝突重試及斷線重連。正式站登入後的多人協作仍待擁有者通過 Access 驗收。
+
 > 正式網站目前只允許擁有者通過 Cloudflare Access 信箱驗證後進入。核心功能通過本機與 CI 測試；登入後的正式環境全流程驗收尚未完成。正式附件功能為控制費用而停用。
 
 ![CollabEdge 看板](docs/screenshots/demo-board.png)

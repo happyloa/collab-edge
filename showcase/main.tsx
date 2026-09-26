@@ -153,13 +153,22 @@ function Showcase() {
               )}
             </p>
           </div>
-          <a
-            className="button secondary"
-            href="https://github.com/happyloa/collab-edge"
-          >
-            {t('View source')}
-            <ArrowUpRight size={16} />
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              className="button secondary"
+              href="https://github.com/happyloa/collab-edge/blob/main/docs/realtime-walkthrough.md"
+            >
+              {t('Two-browser test walkthrough')}
+              <ArrowUpRight size={16} />
+            </a>
+            <a
+              className="button secondary"
+              href="https://github.com/happyloa/collab-edge"
+            >
+              {t('View source')}
+              <ArrowUpRight size={16} />
+            </a>
+          </div>
         </div>
         <div className="notice motion-reveal motion-delay-1 mb-6">
           {t(
