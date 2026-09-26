@@ -24,6 +24,15 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
   let alicePoster: Buffer | undefined;
   let bobPoster: Buffer | undefined;
   let passed = false;
+  async function waitForKeyboardDrag(page: Page) {
+    // dnd-kit measures droppables in the frames after keyboard activation.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }),
+    );
+  }
   for (const page of [alice, bob])
     page.on('pageerror', (error) => failures.push(error.message));
   async function register(page: Page, name: string) {
@@ -91,6 +100,8 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     });
     await dragHandle.focus();
     await dragHandle.press('Space');
+    await expect(dragHandle).toHaveAttribute('aria-pressed', 'true');
+    await waitForKeyboardDrag(alice);
     await dragHandle.press('ArrowRight');
     await expect(
       alice.getByRole('region', { name: 'Review', exact: true }),
@@ -102,8 +113,15 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
           .getByRole('region', { name: 'Review', exact: true })
           .getByRole('button', { name: 'Plan our launch', exact: true }),
       ).toBeVisible();
+    await expect(dragHandle).not.toHaveAttribute('aria-pressed');
+    await expect(dragHandle.locator('xpath=../..')).toHaveCSS(
+      'transform',
+      'none',
+    );
     await dragHandle.focus();
     await dragHandle.press('Space');
+    await expect(dragHandle).toHaveAttribute('aria-pressed', 'true');
+    await waitForKeyboardDrag(alice);
     await dragHandle.press('ArrowLeft');
     await expect(
       alice.getByRole('region', { name: 'In Progress', exact: true }),
