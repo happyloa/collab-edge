@@ -71,10 +71,16 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await alice
       .getByRole('button', { name: 'Plan our launch', exact: true })
       .click();
+    await expect(
+      bob.getByRole('img', { name: 'Alice · Viewing Plan our launch' }),
+    ).toBeVisible();
     await alice
       .getByRole('combobox', { name: 'Move to', exact: true })
       .selectOption({ label: 'In Progress' });
     await alice.getByRole('button', { name: 'Close card' }).click();
+    await expect(
+      bob.getByRole('img', { name: 'Alice · Active' }),
+    ).toBeVisible();
     await expect(
       bob
         .getByRole('region', { name: 'In Progress', exact: true })
@@ -86,6 +92,9 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await dragHandle.focus();
     await dragHandle.press('Space');
     await dragHandle.press('ArrowRight');
+    await expect(
+      alice.getByRole('region', { name: 'Review', exact: true }),
+    ).toHaveClass(/bg-border/);
     await dragHandle.press('Space');
     for (const page of [alice, bob])
       await expect(
@@ -96,6 +105,9 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await dragHandle.focus();
     await dragHandle.press('Space');
     await dragHandle.press('ArrowLeft');
+    await expect(
+      alice.getByRole('region', { name: 'In Progress', exact: true }),
+    ).toHaveClass(/bg-border/);
     await dragHandle.press('Space');
     for (const page of [alice, bob])
       await expect(
@@ -103,6 +115,21 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
           .getByRole('region', { name: 'In Progress', exact: true })
           .getByRole('button', { name: 'Plan our launch', exact: true }),
       ).toBeVisible();
+    await alice.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'hidden',
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(bob.getByRole('img', { name: 'Alice · Idle' })).toBeVisible();
+    await alice.evaluate(() => {
+      Reflect.deleteProperty(document, 'visibilityState');
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(
+      bob.getByRole('img', { name: 'Alice · Active' }),
+    ).toBeVisible();
     await bob
       .getByRole('button', { name: 'Plan our launch', exact: true })
       .click();

@@ -14,7 +14,11 @@ export type Pending = {
   state: 'pending' | 'failed' | 'conflicted';
   error?: string;
 };
-export function useBoard(initial: Snapshot, actorId: string) {
+export function useBoard(
+  initial: Snapshot,
+  actorId: string,
+  selectedCardId?: string,
+) {
   const [confirmed, setConfirmed] = useState(initial);
   const authoritative = useRef(initial);
   const [pending, setPending] = useState<Pending[]>([]);
@@ -24,6 +28,59 @@ export function useBoard(initial: Snapshot, actorId: string) {
   const [presence, setPresence] = useState<Presence[]>([]);
   const [activity, setActivity] = useState<BoardEvent[]>([]);
   const [error, setError] = useState('');
+  const ownPresence = useRef<Pick<Presence, 'status' | 'selectedCardId'>>({
+    status: 'active',
+  });
+  const lastSentPresence = useRef<{ socket: WebSocket; value: string } | null>(
+    null,
+  );
+  const sendPresence = useCallback(() => {
+    const ws = socket.current;
+    if (ws?.readyState !== WebSocket.OPEN) return;
+    const value = JSON.stringify({ type: 'presence', ...ownPresence.current });
+    if (
+      lastSentPresence.current?.socket === ws &&
+      lastSentPresence.current.value === value
+    )
+      return;
+    ws.send(value);
+    lastSentPresence.current = { socket: ws, value };
+  }, []);
+  useEffect(() => {
+    if (ownPresence.current.selectedCardId === selectedCardId) return;
+    ownPresence.current = { ...ownPresence.current, selectedCardId };
+    sendPresence();
+  }, [selectedCardId, sendPresence]);
+  useEffect(() => {
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const setPresenceStatus = (status: Presence['status']) => {
+      if (ownPresence.current.status === status) return;
+      ownPresence.current = { ...ownPresence.current, status };
+      sendPresence();
+    };
+    const active = () => {
+      if (document.visibilityState === 'hidden') return;
+      setPresenceStatus('active');
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => setPresenceStatus('idle'), 5 * 60_000);
+    };
+    const visibility = () => {
+      if (document.visibilityState === 'hidden') {
+        clearTimeout(idleTimer);
+        setPresenceStatus('idle');
+      } else active();
+    };
+    document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('pointerdown', active);
+    window.addEventListener('keydown', active);
+    visibility();
+    return () => {
+      clearTimeout(idleTimer);
+      document.removeEventListener('visibilitychange', visibility);
+      window.removeEventListener('pointerdown', active);
+      window.removeEventListener('keydown', active);
+    };
+  }, [sendPresence]);
   const updatePending = useCallback((fn: (items: Pending[]) => Pending[]) => {
     pendingRef.current = fn(pendingRef.current);
     setPending(pendingRef.current);
@@ -44,6 +101,10 @@ export function useBoard(initial: Snapshot, actorId: string) {
         `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/realtime/${initial.board.id}`,
       );
       socket.current = ws;
+      lastSentPresence.current = {
+        socket: ws,
+        value: JSON.stringify({ type: 'presence', status: 'active' }),
+      };
       let targetRevision = -1;
       let lastMessageAt = Date.now();
       const synchronize = () => {
@@ -81,6 +142,7 @@ export function useBoard(initial: Snapshot, actorId: string) {
               lastSeenRevision: authoritative.current.board.revision,
             }),
           );
+          sendPresence();
           synchronize();
         }
         if (message.type === 'snapshot') {
@@ -150,7 +212,9 @@ export function useBoard(initial: Snapshot, actorId: string) {
       };
       ws.onclose = (event) => {
         clearInterval(heartbeat);
-        if (stopped) return;
+        if (stopped || socket.current !== ws) return;
+        socket.current = null;
+        setPresence([]);
         if (event.code === 1008) {
           setStatus('Access expired');
           setError('Your session or membership expired. Please sign in again.');
@@ -183,6 +247,7 @@ export function useBoard(initial: Snapshot, actorId: string) {
     const offline = () => {
       clearTimeout(retry);
       socket.current?.close();
+      setPresence([]);
       setStatus('Offline');
     };
     window.addEventListener('online', online);
@@ -195,7 +260,7 @@ export function useBoard(initial: Snapshot, actorId: string) {
       window.removeEventListener('offline', offline);
       socket.current?.close();
     };
-  }, [initial.board.id, updatePending]);
+  }, [initial.board.id, sendPresence, updatePending]);
   const mutate = (
     command: Command,
     baseRevision = authoritative.current.board.revision,

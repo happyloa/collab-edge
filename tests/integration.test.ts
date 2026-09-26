@@ -385,6 +385,61 @@ it('revokes event and presence recipients after workspace access is removed', as
     f.ws.close();
   }
 });
+it('keeps a user active when only one of their board tabs is idle', async () => {
+  const f = await fixture();
+  let second: WebSocket | undefined;
+  function nextMessage(socket: WebSocket, type: ServerMessage['type']) {
+    return new Promise<ServerMessage>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        socket.removeEventListener('message', receive);
+        reject(new Error(`Missing ${type}`));
+      }, 5000);
+      function receive(event: MessageEvent) {
+        const message = serverMessage.parse(JSON.parse(String(event.data)));
+        if (message.type !== type) return;
+        clearTimeout(timeout);
+        socket.removeEventListener('message', receive);
+        resolve(message);
+      }
+      socket.addEventListener('message', receive);
+    });
+  }
+  try {
+    const cookie = (
+      await createSession(f.userId, new Request('https://test.dev'))
+    ).split(';')[0];
+    const response = await f.stub.fetch(
+      new Request(`https://test.dev/realtime/${f.boardId}`, {
+        headers: {
+          Upgrade: 'websocket',
+          Origin: 'https://test.dev',
+          Cookie: cookie,
+        },
+      }),
+    );
+    expect(response.status).toBe(101);
+    second = response.webSocket!;
+    second.accept();
+    const pong = nextMessage(second, 'pong');
+    second.send(JSON.stringify({ type: 'ping' }));
+    await pong;
+
+    const stillActive = nextMessage(second, 'presence');
+    second.send(JSON.stringify({ type: 'presence', status: 'idle' }));
+    expect(await stillActive).toMatchObject({
+      users: [{ userId: f.userId, status: 'active' }],
+    });
+
+    const nowIdle = nextMessage(second, 'presence');
+    f.ws.send(JSON.stringify({ type: 'presence', status: 'idle' }));
+    expect(await nowIdle).toMatchObject({
+      users: [{ userId: f.userId, status: 'idle' }],
+    });
+  } finally {
+    second?.close();
+    f.ws.close();
+  }
+});
 it('rolls back entity, revision and event if persistence fails', async () => {
   const f = await fixture();
   try {

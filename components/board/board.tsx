@@ -1,7 +1,7 @@
 'use client';
 import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   DndContext,
@@ -170,6 +170,7 @@ function Column({
 }
 function Board({ initial }: { initial: BoardData }) {
   const { t, errorText, locale } = useI18n();
+  const [selected, setSelected] = useState<Card | null>(null);
   const [showActivity, setShowActivity] = useState(false);
   const history = useInfiniteQuery({
     queryKey: ['activity', initial.snapshot.board.id],
@@ -181,7 +182,7 @@ function Board({ initial }: { initial: BoardData }) {
       ),
     getNextPageParam: (lastPage) => lastPage.nextBefore ?? undefined,
   });
-  const live = useBoard(initial.snapshot, initial.user.id);
+  const live = useBoard(initial.snapshot, initial.user.id, selected?.id);
   const { state } = live;
   const activity = [
     ...new Map(
@@ -191,7 +192,6 @@ function Board({ initial }: { initial: BoardData }) {
       ].map((event) => [event.eventId, event]),
     ).values(),
   ].sort((a, b) => b.revision - a.revision);
-  const [selected, setSelected] = useState<Card | null>(null);
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
@@ -200,36 +200,53 @@ function Board({ initial }: { initial: BoardData }) {
   const today = localToday();
   const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
   const readOnly = initial.role === 'VIEWER' || state.board.archived;
-  const columns = [...state.columns].sort((a, b) => a.position - b.position);
-  const keyboardCoordinates: KeyboardCoordinateGetter = (event, args) => {
-    // Target neighboring columns explicitly; the sortable getter can keep the
-    // previous empty-column target when a keyboard drag reverses direction.
-    if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight')
-      return sortableKeyboardCoordinates(event, args);
+  const columns = useMemo(
+    () => [...state.columns].sort((a, b) => a.position - b.position),
+    [state.columns],
+  );
+  const keyboardCoordinates = useCallback<KeyboardCoordinateGetter>(
+    (event, args) => {
+      // Target neighboring columns explicitly; the sortable getter can keep the
+      // previous empty-column target when a keyboard drag reverses direction.
+      if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight')
+        return sortableKeyboardCoordinates(event, args);
 
-    const { active, over, collisionRect, droppableRects } = args.context;
-    if (!active || !collisionRect) return;
-    event.preventDefault();
+      const {
+        active,
+        over,
+        collisionRect,
+        droppableRects,
+        droppableContainers,
+      } = args.context;
+      if (!active || !collisionRect) return;
+      event.preventDefault();
 
-    const currentTarget = String(over?.id ?? active.id);
-    const currentColumnId =
-      state.cards.find((card) => card.id === currentTarget)?.columnId ??
-      columns.find((column) => column.id === currentTarget)?.id ??
-      state.cards.find((card) => card.id === active.id)?.columnId;
-    const currentIndex = columns.findIndex(
-      (column) => column.id === currentColumnId,
-    );
-    if (currentIndex < 0) return;
-    const nextColumn =
-      columns[currentIndex + (event.code === 'ArrowRight' ? 1 : -1)];
-    const nextRect = nextColumn && droppableRects.get(nextColumn.id);
-    if (!nextRect) return;
+      const currentTarget = String(over?.id ?? active.id);
+      const currentColumnId =
+        state.cards.find((card) => card.id === currentTarget)?.columnId ??
+        columns.find((column) => column.id === currentTarget)?.id ??
+        state.cards.find((card) => card.id === active.id)?.columnId;
+      const currentIndex = columns.findIndex(
+        (column) => column.id === currentColumnId,
+      );
+      if (currentIndex < 0) return;
+      const nextColumn =
+        columns[currentIndex + (event.code === 'ArrowRight' ? 1 : -1)];
+      const nextRect =
+        nextColumn &&
+        (droppableRects.get(nextColumn.id) ??
+          droppableContainers
+            .get(nextColumn.id)
+            ?.node.current?.getBoundingClientRect());
+      if (!nextRect) return;
 
-    return {
-      x: nextRect.left + (nextRect.width - collisionRect.width) / 2,
-      y: nextRect.top + (nextRect.height - collisionRect.height) / 2,
-    };
-  };
+      return {
+        x: nextRect.left + (nextRect.width - collisionRect.width) / 2,
+        y: nextRect.top + (nextRect.height - collisionRect.height) / 2,
+      };
+    },
+    [columns, state.cards],
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
@@ -287,11 +304,29 @@ function Board({ initial }: { initial: BoardData }) {
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex -space-x-1">
-            {live.presence.map((p) => (
-              <span key={p.userId} title={p.displayName} className="avatar">
-                {p.displayName.slice(0, 2).toUpperCase()}
-              </span>
-            ))}
+            {live.presence.map((p) => {
+              const viewedCard = state.cards.find(
+                (card) => card.id === p.selectedCardId && !card.archived,
+              );
+              const detail =
+                p.status === 'idle'
+                  ? t('Idle')
+                  : viewedCard
+                    ? t('Viewing {title}', { title: viewedCard.title })
+                    : t('Active');
+              const label = `${p.displayName} · ${detail}`;
+              return (
+                <span
+                  key={p.userId}
+                  role="img"
+                  aria-label={label}
+                  title={label}
+                  className={`avatar ${p.status === 'idle' ? 'opacity-50' : ''}`}
+                >
+                  {p.displayName.slice(0, 2).toUpperCase()}
+                </span>
+              );
+            })}
           </div>
           <span
             role="status"

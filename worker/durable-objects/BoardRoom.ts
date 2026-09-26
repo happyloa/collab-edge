@@ -654,8 +654,19 @@ export class BoardRoom extends DurableObject<Env> {
   private async broadcastPresence(boardId: string) {
     const recipients = await this.authorizedSockets(boardId);
     const users = new Map<string, Presence>();
-    for (const { state } of recipients)
-      users.set(state.presence.userId, state.presence);
+    for (const { state } of recipients) {
+      const next = state.presence;
+      const current = users.get(next.userId);
+      // One hidden tab must not mark a user idle while another tab is active.
+      if (
+        !current ||
+        (current.status === 'idle' && next.status === 'active') ||
+        (current.status === next.status &&
+          !current.selectedCardId &&
+          next.selectedCardId)
+      )
+        users.set(next.userId, next);
+    }
     for (const { socket } of recipients)
       this.send(socket, { type: 'presence', users: [...users.values()] });
   }

@@ -6,6 +6,9 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  Active: '使用中',
+  Idle: '閒置中',
+  'Viewing {title}': '正在查看 {title}',
   'A little less friction. A lot more together.': '少一點阻礙，多一點默契。',
   Done: '已完成',
   'Interactive demo': '互動展示',
