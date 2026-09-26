@@ -1,6 +1,13 @@
 # Delivery status
 
-Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Browser tests now use isolated local state, while bounded activity browsing, transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. A public playground and reproducible two-browser walkthrough now show the portfolio behavior and its verification boundary. Browser tests use isolated local state, while bounded activity browsing, transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Public realtime walkthrough
+
+- Commit `92e6575` adds the [two-browser walkthrough](realtime-walkthrough.md), links it from both READMEs and the bilingual [public playground](https://happyloa.github.io/collab-edge/), and checks that link in Chromium. The playground remains a single-tab simulation; the walkthrough points to the real local WebSocket, Durable Object, D1 and R2 scenario. No new migration, Cloudflare resource, paid product or production R2 operation was added.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 47 Workers/core tests, 3 React tests, Vinext check and production build. `corepack pnpm build:showcase` and `corepack pnpm test:showcase` passed; `corepack pnpm test:e2e` passed all 13 Chromium scenarios against isolated local state. Browser-generated screenshots were restored after testing.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36224461545), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36224461541) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36224461650) succeeded for `92e6575`. The public demo returned HTTP 200 after the workflow finished.
+- Native Cloudflare build `6ab91c5f-fa2d-4395-bd26-75f47ea72b12` succeeded for `92e6575`. Its log confirms the zero-cost deployment gate, no pending remote migrations and completed deployment. Worker version `01be4f71-6a00-4f46-bea5-6133bc29602b` served 100% of traffic from 2026-09-26 06:42 UTC. Readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`; the Access app retained one Allow policy for that email, and an anonymous root request returned 302. Owner-authenticated production mutation and WebSocket smoke remain pending.
 
 ## Repeatable browser verification
 
