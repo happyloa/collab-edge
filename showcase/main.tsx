@@ -13,6 +13,7 @@ import {
 } from '../src/realtime/protocol';
 import { matchesCard, localToday } from '../src/realtime/card-filters';
 import { fixture, people } from './fixture';
+import { RecordedCollaboration } from './recordings';
 import '../app/globals.css';
 
 function CardModal({
@@ -154,11 +155,8 @@ function Showcase() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <a
-              className="button secondary"
-              href="https://github.com/happyloa/collab-edge/blob/main/docs/realtime-walkthrough.md"
-            >
-              {t('Two-browser test walkthrough')}
+            <a className="button secondary" href="#recorded-collaboration">
+              {t('Watch real two-browser test')}
               <ArrowUpRight size={16} />
             </a>
             <a
@@ -338,6 +336,7 @@ function Showcase() {
             </p>
           )}
         </aside>
+        <RecordedCollaboration />
         <footer className="mt-8 flex flex-wrap justify-between gap-3 text-sm text-muted">
           <p>{t('Browser-only demo · No Cloudflare API requests')}</p>
           <a

@@ -16,6 +16,8 @@ Board lifecycle tests verify rename patches retain their name revision, concurre
 
 The primary Playwright scenario registers Alice and Bob, creates a workspace and board, invites Bob, creates and moves a card, renames it, submits concurrent conflicting edits, retries a preserved draft, disconnects/reconnects Bob, posts a comment, uploads an attachment, checks anonymous download rejection, downloads a board JSON export and verifies its snapshot and absence of private object keys, then captures the board screenshot. Page errors fail the scenario.
 
+`pnpm capture:demo` runs this scenario alone against a new local workerd state and saves synchronized Alice/Bob recordings plus preview images to `showcase/media/`. The runner rejects `E2E_BASE_URL` in capture mode so a recording cannot accidentally exercise production. The static public demo serves these prerecorded clips on demand; it does not create a live connection.
+
 ```sh
 pnpm install --frozen-lockfile
 pnpm exec playwright install chromium

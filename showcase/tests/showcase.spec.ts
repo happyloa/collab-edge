@@ -14,10 +14,45 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(
+    page.getByRole('link', { name: 'Watch real two-browser test' }),
+  ).toHaveAttribute('href', '#recorded-collaboration');
+  await expect(
     page.getByRole('link', { name: 'Two-browser test walkthrough' }),
   ).toHaveAttribute(
     'href',
     'https://github.com/happyloa/collab-edge/blob/main/docs/realtime-walkthrough.md',
+  );
+  const videos = page.locator('video');
+  await expect(videos).toHaveCount(2);
+  const captions = page.locator('video track[kind="captions"]');
+  await expect(captions).toHaveCount(4);
+  await page.getByRole('button', { name: 'Play both recordings' }).click();
+  await captions.evaluateAll((elements) =>
+    elements.forEach(
+      (element) => ((element as HTMLTrackElement).track.mode = 'hidden'),
+    ),
+  );
+  await expect
+    .poll(() =>
+      captions.evaluateAll((elements) =>
+        elements.map(
+          (element) => (element as HTMLTrackElement).track.cues?.length ?? -1,
+        ),
+      ),
+    )
+    .toEqual([1, 1, 1, 1]);
+  await expect
+    .poll(() =>
+      videos.evaluateAll((elements) =>
+        elements.map((element) => {
+          const video = element as HTMLVideoElement;
+          return !video.paused && video.currentTime > 0;
+        }),
+      ),
+    )
+    .toEqual([true, true]);
+  await videos.evaluateAll((elements) =>
+    elements.forEach((element) => (element as HTMLVideoElement).pause()),
   );
   await page
     .getByRole('button', { name: 'Write the launch story', exact: true })
@@ -53,6 +88,9 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   await expect(page.getByRole('button', { name: '重設展示' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: '雙瀏覽器測試導覽' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '本機即時協作實錄' }),
   ).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');

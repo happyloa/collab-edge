@@ -2,6 +2,8 @@
 
 CollabEdge's [public playground](https://happyloa.github.io/collab-edge/) is a browser-only simulation. This walkthrough points to the separate **two-browser Workers test** that exercises the actual HTTP API, WebSocket, Durable Object, D1 and local R2 paths. It runs against local workerd, not the Access-protected production Worker. Owner-authenticated production behavior remains [unverified](delivery-status.md).
 
+[Watch Alice and Bob side by side](https://happyloa.github.io/collab-edge/#recorded-collaboration) in the prerecorded local test. The two video tracks were captured from one passing Playwright run; playback is not a live multi-user session on GitHub Pages.
+
 ![The real board during a local two-browser collaboration test, showing Alice and Bob online](screenshots/board.png)
 
 ## Reproduce it
@@ -13,6 +15,8 @@ corepack pnpm test:e2e
 ```
 
 The command migrates a fresh local D1 state, runs 13 Chromium scenarios and removes that temporary state afterward. It leaves the normal development database untouched. The [collaboration scenario](../e2e/collaboration.spec.ts) gives Alice and Bob independent browser contexts and accounts. The current [CI workflow](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml) runs the same suite on every push.
+
+To regenerate the public recordings and poster images from only the collaboration scenario, run `corepack pnpm capture:demo`. This command refuses `E2E_BASE_URL`, creates disposable local D1 state and writes the media under `showcase/media/` only after the test passes.
 
 ## What the test demonstrates
 
