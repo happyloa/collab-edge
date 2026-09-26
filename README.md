@@ -30,7 +30,7 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 - Per-field conflict detection and a preserved draft with an explicit retry action.
 - Reconnect replay, revision-gap detection and snapshot fallback.
 - Private, authorized R2 attachments with MIME/signature validation and bounded uploads; enabled locally, gated in production.
-- Persistent board activity, light/dark themes, responsive scrolling, keyboard controls, GSAP home-page storytelling, short in-app interaction animations, and reduced-motion support. See [motion direction](docs/motion-references.md).
+- Persistent board activity loaded on demand with older entries available in bounded pages; light/dark themes, responsive scrolling, keyboard controls, GSAP home-page storytelling, short in-app interaction animations, and reduced-motion support. See [motion direction](docs/motion-references.md).
 - Download a synced board snapshot as JSON directly in the browser, including cards, comments, assignees and attachment metadata. The export does not include attachment files or event history and is not an importable backup.
 - English and Traditional Chinese interface, including persistent language selection, server-rendered locale, statuses, common errors, accessibility labels and dates. User-authored content stays unchanged.
 - Self-hosted Google Fonts Noto Sans TC across the website, with Unicode subsets loaded on demand. [Font source and license](public/fonts/README.md).

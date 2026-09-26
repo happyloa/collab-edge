@@ -1,6 +1,13 @@
 # Delivery status
 
-Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Bounded activity browsing, transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Board activity browsing
+
+- Commit `e290780` adds on-demand, revision-cursor activity pages to the authorized board API and UI. A page reads at most 51 D1 rows to return at most 50 events plus a next-page cursor. The panel merges historical pages with live events without duplicates, and provides loading and retry states. The change adds no migration, binding, paid product or production R2 operation.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 47 Workers/core tests, 3 React tests, Vinext check and production build. The two new workerd tests cover cursor order, exclusive page boundaries, authorization and invalid limits/cursors. `corepack pnpm test:e2e` passed all 13 Chromium scenarios on fresh local D1 state. An earlier run hit the existing 100-user local quota after repeated tests; the original local state was preserved and restored after the clean run.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36222623152), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36222623155) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36222623195) succeeded for `e290780`. CI includes the high-severity dependency audit, full verification and 13 Chromium scenarios.
+- Native Cloudflare build `8396f72a-a333-4554-a8e9-f84058625548` succeeded for `e290780`. Its log confirms the zero-cost deployment gate, no pending remote migrations and completed deployment. Worker version `4c341f8c-19ac-49ad-a421-03c0b7827969` served 100% of traffic from 2026-09-26 06:05 UTC. Readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`; the Access app retained one Allow policy for that email, and an anonymous root request returned 302. Owner-authenticated production mutation and WebSocket smoke remain pending.
 
 ## Transactional workspace authorization
 
