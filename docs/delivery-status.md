@@ -1,6 +1,14 @@
 # Delivery status
 
-Updated 2026-09-25. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Ownership transfer, board JSON export, security scanning, portfolio hardening and account recovery are released; authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Password-confirmed account deletion is released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Account deletion
+
+- Commit `5ad1d01` adds password-confirmed deletion for non-demo users with no owned workspaces. One D1 batch anonymizes account credentials and revokes sessions and memberships while keeping shared comments and attachment metadata valid. Database triggers prevent deleted accounts from regaining sessions, membership or changed credentials. The UI explains that shared content remains and requires an explicit confirmation. No new Cloudflare product, paid feature or production R2 operation was added.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 38 Workers/core tests, 3 React tests, Vinext check and production build. `corepack pnpm test:e2e` passed 13 Chromium scenarios. A reconnect timing failure in the first full run was traced to an enabled restore button before its socket was ready; the button now waits for the connection and both the focused collaboration scenario and full browser suite passed afterward. Local Wrangler applied append-only migration `0004_needy_texas_twister.sql` successfully.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36219464271), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36219464264) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36219464231) succeeded for `5ad1d01`; GitHub reported zero open code-scanning alerts.
+- Native Cloudflare build `13f42fe5-700c-4cf5-bb32-15dfe7294301` succeeded. Its log records the budget gate, successful remote application of `0004_needy_texas_twister.sql` and deployment. Readback shows Worker version `43c01189-756c-4ef0-aa9a-33986717df83` serving 100% since 2026-09-26 05:01 UTC. The setup token cannot independently query remote D1 (`7403`), so migration confirmation comes from the successful build log.
+- Post-deployment readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`. The hostname Access application still has one Allow policy for that email, and an anonymous request returned 302 to Access. Cloudflare Builds had not reached its monthly minute limit. No account was deleted in production; owner-authenticated smoke remains pending.
 
 ## Workspace ownership transfer
 
@@ -62,7 +70,7 @@ The owner must complete Access email verification to validate authenticated prod
 
 ## Remaining product limits
 
-Production attachments remain disabled. Member invitations add registered application accounts without sending email; the outer Access allowlist still admits only the owner. New private registrations bind the account to the Access-verified email; existing accounts can explicitly adopt that email, and password reset revokes old sessions. The active Access session suffices for reset; there is no fresh app-specific code. Ownership transfer is implemented for existing non-demo members; account deletion and automatic event compaction are not implemented. The [branded verification email](email/README.md) includes HTML, plain text and desktop/mobile previews, but is not integrated into Access delivery.
+Production attachments remain disabled. Member invitations add registered application accounts without sending email; the outer Access allowlist still admits only the owner. New private registrations bind the account to the Access-verified email; existing accounts can explicitly adopt that email, and password reset revokes old sessions. The active Access session suffices for reset; there is no fresh app-specific code. Ownership transfer and password-confirmed account deletion are implemented for eligible non-demo users; automatic event compaction and full backup/restore are not. The [branded verification email](email/README.md) includes HTML, plain text and desktop/mobile previews, but is not integrated into Access delivery.
 
 All remote migrations are applied and immutable. Retain every migration and its metadata for fresh installations and future schema changes.
 
