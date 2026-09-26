@@ -1,6 +1,7 @@
 import { DEMO } from '../db/demo';
 import { AppError, assert } from '../lib/errors';
 import { LIMITS } from '../lib/limits';
+import type { ConfirmedAccount } from '../auth/reauth';
 
 export type OwnershipTransfer = {
   fromUserId: string;
@@ -10,6 +11,13 @@ export type OwnershipTransfer = {
 
 const demoUsers = new Set([DEMO.owner, DEMO.Alice, DEMO.Bob]);
 const transferLifetime = 7 * 24 * 60 * 60 * 1000;
+const reauthGuard = `AND EXISTS (
+  SELECT 1 FROM users AS account
+  JOIN sessions AS current_session ON current_session.user_id=account.id
+  WHERE account.id=? AND account.deleted_at IS NULL
+    AND account.password=? AND current_session.id=?
+    AND current_session.expires_at>?
+)`;
 
 function protectDemo(
   workspaceId: string,
@@ -81,6 +89,7 @@ export async function proposeTransfer(
   workspaceId: string,
   fromUserId: string,
   toUserId: string,
+  confirmed: ConfirmedAccount,
 ) {
   protectDemo(workspaceId, fromUserId, toUserId);
   assert(fromUserId !== toUserId, 400, 'Choose another workspace member');
@@ -108,9 +117,18 @@ export async function proposeTransfer(
              ON target.workspace_id=w.id AND target.user_id=?
            WHERE w.id=? AND w.owner_id=? AND source.role='OWNER'
              AND target.role IN ('EDITOR','VIEWER')
+             ${reauthGuard}
          ) THEN 1 ELSE 0 END`,
       )
-      .bind(toUserId, workspaceId, fromUserId),
+      .bind(
+        toUserId,
+        workspaceId,
+        fromUserId,
+        fromUserId,
+        confirmed.passwordHash,
+        confirmed.sessionId,
+        Date.now(),
+      ),
     binding
       .prepare(
         `INSERT INTO workspace_transfers(workspace_id,from_user_id,to_user_id,expires_at)
@@ -130,6 +148,7 @@ export async function acceptTransfer(
   binding: D1Database,
   workspaceId: string,
   toUserId: string,
+  confirmed: ConfirmedAccount,
 ) {
   const proposal = await binding
     .prepare(
@@ -175,6 +194,7 @@ export async function acceptTransfer(
              AND w.owner_id=transfer.from_user_id AND source.role='OWNER'
              AND target.role IN ('EDITOR','VIEWER')
              AND (SELECT count(*) FROM workspaces WHERE owner_id=?)<?
+             ${reauthGuard}
          ) THEN 1 ELSE 0 END`,
       )
       .bind(
@@ -184,6 +204,10 @@ export async function acceptTransfer(
         Date.now(),
         toUserId,
         LIMITS.workspacesPerUser,
+        toUserId,
+        confirmed.passwordHash,
+        confirmed.sessionId,
+        Date.now(),
       ),
     binding
       .prepare(

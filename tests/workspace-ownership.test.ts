@@ -1,6 +1,11 @@
 import { env } from 'cloudflare:workers';
 import { expect, it } from 'vitest';
-import { GET, PATCH } from '../app/api/workspaces/[workspaceId]/route';
+import {
+  GET,
+  PATCH,
+  patchFor,
+} from '../app/api/workspaces/[workspaceId]/route';
+import { POST as CREATE_BOARD, createBoardFor } from '../app/api/boards/route';
 import { createSession } from '../src/auth/session';
 import { hashPassword } from '../src/auth/crypto';
 
@@ -53,8 +58,8 @@ async function fixture() {
     );
   const transferFor = async (userId: string) =>
     ((await (await get(userId)).json()) as { transfer: unknown }).transfer;
-  const patch = (userId: string, data: object) =>
-    PATCH(
+  const patch = (userId: string, data: object, handler = PATCH) =>
+    handler(
       new Request(`${origin}/api/workspaces/${workspaceId}`, {
         method: 'PATCH',
         headers: {
@@ -65,6 +70,18 @@ async function fixture() {
         body: JSON.stringify(data),
       }),
     );
+  const createBoard = (userId: string, handler = CREATE_BOARD) =>
+    handler(
+      new Request(`${origin}/api/boards`, {
+        method: 'POST',
+        headers: {
+          Origin: origin,
+          'Content-Type': 'application/json',
+          Cookie: cookies.get(userId)!,
+        },
+        body: JSON.stringify({ workspaceId, name: 'New board' }),
+      }),
+    );
   return {
     ownerId,
     recipientId,
@@ -73,7 +90,49 @@ async function fixture() {
     get,
     transferFor,
     patch,
+    createBoard,
   };
+}
+
+function interruptWorkspaceWrite(change: (db: D1Database) => Promise<void>) {
+  let interrupted = false;
+  return new Proxy(env.DB, {
+    get(target, property) {
+      if (property === 'batch')
+        return async (statements: D1PreparedStatement[]) => {
+          if (!interrupted) {
+            interrupted = true;
+            await change(target);
+          }
+          return target.batch(statements);
+        };
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+}
+
+async function transferDuringWrite(
+  binding: D1Database,
+  workspaceId: string,
+  fromUserId: string,
+  toUserId: string,
+) {
+  await binding.batch([
+    binding
+      .prepare(
+        "UPDATE workspace_members SET role='EDITOR' WHERE workspace_id=? AND user_id=?",
+      )
+      .bind(workspaceId, fromUserId),
+    binding
+      .prepare(
+        "UPDATE workspace_members SET role='OWNER' WHERE workspace_id=? AND user_id=?",
+      )
+      .bind(workspaceId, toUserId),
+    binding
+      .prepare('UPDATE workspaces SET owner_id=? WHERE id=?')
+      .bind(toUserId, workspaceId),
+  ]);
 }
 
 it('transfers ownership only after the recipient signs in and confirms a password', async () => {
@@ -213,4 +272,203 @@ it('rejects expired or over-quota acceptance without partial role changes', asyn
       .bind(f.recipientId, f.workspaceId)
       .run(),
   ).rejects.toThrow(/Workspace quota reached/);
+});
+
+it('still allows current owners to manage workspaces and members', async () => {
+  const f = await fixture();
+  expect(
+    (await f.patch(f.ownerId, { action: 'rename', name: 'Current team' }))
+      .status,
+  ).toBe(200);
+  expect(
+    (
+      await f.patch(f.ownerId, {
+        action: 'role',
+        userId: f.recipientId,
+        role: 'VIEWER',
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    (await f.patch(f.recipientId, { action: 'rename', name: 'No access' }))
+      .status,
+  ).toBe(403);
+  expect(
+    (
+      await f.patch(f.ownerId, {
+        action: 'invite',
+        email: `${f.outsiderId}@example.com`,
+        role: 'EDITOR',
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    await env.DB.prepare('SELECT name FROM workspaces WHERE id=?')
+      .bind(f.workspaceId)
+      .first(),
+  ).toMatchObject({ name: 'Current team' });
+  expect(
+    await env.DB.prepare(
+      'SELECT role FROM workspace_members WHERE workspace_id=? AND user_id=?',
+    )
+      .bind(f.workspaceId, f.outsiderId)
+      .first(),
+  ).toMatchObject({ role: 'EDITOR' });
+  expect(
+    (await f.patch(f.ownerId, { action: 'remove', userId: f.outsiderId }))
+      .status,
+  ).toBe(200);
+  expect((await f.patch(f.recipientId, { action: 'leave' })).status).toBe(200);
+  expect(
+    await env.DB.prepare(
+      'SELECT 1 FROM workspace_members WHERE workspace_id=? AND user_id IN (?,?)',
+    )
+      .bind(f.workspaceId, f.recipientId, f.outsiderId)
+      .first(),
+  ).toBeNull();
+});
+
+it('rejects stale owner writes after ownership changes before the D1 transaction', async () => {
+  for (const action of ['rename', 'invite', 'role', 'remove'] as const) {
+    const f = await fixture();
+    const data =
+      action === 'rename'
+        ? { action, name: 'Stale rename' }
+        : action === 'invite'
+          ? {
+              action,
+              email: `${f.outsiderId}@example.com`,
+              role: 'EDITOR',
+            }
+          : action === 'role'
+            ? { action, userId: f.recipientId, role: 'VIEWER' }
+            : { action, userId: f.recipientId };
+    const db = interruptWorkspaceWrite((binding) =>
+      transferDuringWrite(binding, f.workspaceId, f.ownerId, f.recipientId),
+    );
+    const response = await f.patch(
+      f.ownerId,
+      data,
+      patchFor({ ...env, DB: db }),
+    );
+    expect(response.status).toBe(409);
+    expect(
+      await env.DB.prepare('SELECT owner_id,name FROM workspaces WHERE id=?')
+        .bind(f.workspaceId)
+        .first(),
+    ).toMatchObject({ owner_id: f.recipientId, name: 'Transfer test' });
+    expect(
+      await env.DB.prepare(
+        'SELECT role FROM workspace_members WHERE workspace_id=? AND user_id=?',
+      )
+        .bind(f.workspaceId, f.recipientId)
+        .first(),
+    ).toMatchObject({ role: 'OWNER' });
+    expect(
+      await env.DB.prepare(
+        'SELECT 1 FROM workspace_members WHERE workspace_id=? AND user_id=?',
+      )
+        .bind(f.workspaceId, f.outsiderId)
+        .first(),
+    ).toBeNull();
+  }
+});
+
+it('does not let a member leave after becoming the workspace owner', async () => {
+  const f = await fixture();
+  const db = interruptWorkspaceWrite((binding) =>
+    transferDuringWrite(binding, f.workspaceId, f.ownerId, f.recipientId),
+  );
+  const response = await f.patch(
+    f.recipientId,
+    { action: 'leave' },
+    patchFor({ ...env, DB: db }),
+  );
+  expect(response.status).toBe(409);
+  expect(
+    await env.DB.prepare(
+      'SELECT role FROM workspace_members WHERE workspace_id=? AND user_id=?',
+    )
+      .bind(f.workspaceId, f.recipientId)
+      .first(),
+  ).toMatchObject({ role: 'OWNER' });
+});
+
+it('rejects a transfer proposal when its password confirmation becomes stale', async () => {
+  const f = await fixture();
+  const db = interruptWorkspaceWrite(async (binding) => {
+    await binding
+      .prepare('UPDATE users SET password=? WHERE id=?')
+      .bind('password-reset-before-commit', f.ownerId)
+      .run();
+  });
+  const response = await f.patch(
+    f.ownerId,
+    { action: 'transfer.request', userId: f.recipientId, password },
+    patchFor({ ...env, DB: db }),
+  );
+  expect(response.status).toBe(409);
+  expect(await f.transferFor(f.ownerId)).toBeNull();
+});
+
+it('rejects transfer acceptance if its app session is revoked before commit', async () => {
+  const f = await fixture();
+  expect(
+    (
+      await f.patch(f.ownerId, {
+        action: 'transfer.request',
+        userId: f.recipientId,
+        password,
+      })
+    ).status,
+  ).toBe(200);
+  const db = interruptWorkspaceWrite(async (binding) => {
+    await binding
+      .prepare('DELETE FROM sessions WHERE user_id=?')
+      .bind(f.recipientId)
+      .run();
+  });
+  const response = await f.patch(
+    f.recipientId,
+    { action: 'transfer.accept', password },
+    patchFor({ ...env, DB: db }),
+  );
+  expect(response.status).toBe(409);
+  expect(
+    await env.DB.prepare('SELECT owner_id FROM workspaces WHERE id=?')
+      .bind(f.workspaceId)
+      .first(),
+  ).toMatchObject({ owner_id: f.ownerId });
+});
+
+it('checks board-creation membership again inside its D1 transaction', async () => {
+  const f = await fixture();
+  expect((await f.createBoard(f.outsiderId)).status).toBe(403);
+  const db = interruptWorkspaceWrite(async (binding) => {
+    await binding
+      .prepare(
+        'DELETE FROM workspace_members WHERE workspace_id=? AND user_id=?',
+      )
+      .bind(f.workspaceId, f.recipientId)
+      .run();
+  });
+  expect(
+    (await f.createBoard(f.recipientId, createBoardFor({ ...env, DB: db })))
+      .status,
+  ).toBe(409);
+  expect(
+    await env.DB.prepare('SELECT 1 FROM boards WHERE workspace_id=?')
+      .bind(f.workspaceId)
+      .first(),
+  ).toBeNull();
+  const created = await f.createBoard(f.ownerId);
+  expect(created.status).toBe(201);
+  const { id } = (await created.json()) as { id: string };
+  expect(
+    await env.DB.prepare(
+      'SELECT count(*) AS total FROM board_columns WHERE board_id=?',
+    )
+      .bind(id)
+      .first(),
+  ).toMatchObject({ total: 4 });
 });

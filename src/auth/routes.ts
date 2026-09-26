@@ -187,14 +187,12 @@ export const deleteAccountFor = (authEnv: Env = env) =>
         confirm: z.literal(true),
       }),
     );
-    const confirmedPassword = await confirmPassword(
+    const confirmed = await confirmPassword(
       authEnv,
+      request,
       user.id,
       data.password,
     );
-    const token = tokenFrom(request);
-    assert(token, 401, 'Please sign in');
-    const sessionId = await sessionHash(token, authEnv.SESSION_SECRET);
     const owned = await authEnv.DB.prepare(
       'SELECT 1 FROM workspaces WHERE owner_id=? LIMIT 1',
     )
@@ -218,7 +216,13 @@ export const deleteAccountFor = (authEnv: Env = env) =>
            ) AND NOT EXISTS(
              SELECT 1 FROM workspaces WHERE owner_id=?
            ) THEN 1 ELSE 0 END`,
-        ).bind(user.id, confirmedPassword, sessionId, Date.now(), user.id),
+        ).bind(
+          user.id,
+          confirmed.passwordHash,
+          confirmed.sessionId,
+          Date.now(),
+          user.id,
+        ),
         authEnv.DB.prepare(
           `UPDATE users SET email=?, name='Deleted account',
            password='disabled-deleted-account-login', created_at=0, deleted_at=?

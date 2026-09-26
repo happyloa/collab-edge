@@ -51,6 +51,7 @@ const errors: Record<string, string> = {
   'Choose a current workspace member': '請選擇目前的工作區成員',
   'Recipient owns the maximum number of workspaces':
     '接收者擁有的工作區已達上限',
+  'This account is unavailable': '此帳號已無法使用',
   'Workspace membership changed. Reload and retry.':
     '工作區成員狀態已變更，請重新載入後再試。',
   'Transfer request is unavailable or expired': '轉移邀請已失效或過期',

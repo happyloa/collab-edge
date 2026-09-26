@@ -14,6 +14,11 @@ import {
   acceptTransfer,
   cancelTransfer,
 } from '../../../../src/workspaces/ownership';
+import {
+  guardedWorkspaceWrite,
+  leaveWriteGuard,
+  ownerWriteGuard,
+} from '../../../../src/workspaces/guarded-writes';
 const workspaceId = (request: Request) =>
   z.uuid().parse(new URL(request.url).pathname.split('/').at(-1));
 const demoUsers = new Set([DEMO.owner, DEMO.Alice, DEMO.Bob]);
@@ -82,89 +87,128 @@ const action = z.discriminatedUnion('action', [
   z.object({ action: z.literal('transfer.cancel') }),
   z.object({ action: z.literal('transfer.decline') }),
 ]);
-export const PATCH = route(async (request) => {
-  const user = await requireUser(request);
-  const id = workspaceId(request);
-  const data = await body(request, action);
-  const db = drizzle(env.DB);
-  const role = await workspaceRole(
-    user.id,
-    id,
-    false,
-    !['leave', 'transfer.accept', 'transfer.decline'].includes(data.action),
-  );
-  if (data.action === 'transfer.request') {
-    await confirmPassword(env, user.id, data.password);
-    return Response.json({
-      transfer: await proposeTransfer(env.DB, id, user.id, data.userId),
-    });
-  }
-  if (data.action === 'transfer.accept') {
-    await confirmPassword(env, user.id, data.password);
-    await acceptTransfer(env.DB, id, user.id);
-    return Response.json({ ok: true });
-  }
-  if (data.action === 'transfer.cancel' || data.action === 'transfer.decline') {
-    await cancelTransfer(
-      env.DB,
-      id,
+export const patchFor = (workspaceEnv: Env = env) =>
+  route(async (request) => {
+    const user = await requireUser(request);
+    const id = workspaceId(request);
+    const data = await body(request, action);
+    const db = drizzle(workspaceEnv.DB);
+    const role = await workspaceRole(
       user.id,
-      data.action === 'transfer.cancel',
+      id,
+      false,
+      !['leave', 'transfer.accept', 'transfer.decline'].includes(data.action),
     );
+    if (data.action === 'transfer.request') {
+      const confirmed = await confirmPassword(
+        workspaceEnv,
+        request,
+        user.id,
+        data.password,
+      );
+      return Response.json({
+        transfer: await proposeTransfer(
+          workspaceEnv.DB,
+          id,
+          user.id,
+          data.userId,
+          confirmed,
+        ),
+      });
+    }
+    if (data.action === 'transfer.accept') {
+      const confirmed = await confirmPassword(
+        workspaceEnv,
+        request,
+        user.id,
+        data.password,
+      );
+      await acceptTransfer(workspaceEnv.DB, id, user.id, confirmed);
+      return Response.json({ ok: true });
+    }
+    if (
+      data.action === 'transfer.cancel' ||
+      data.action === 'transfer.decline'
+    ) {
+      await cancelTransfer(
+        workspaceEnv.DB,
+        id,
+        user.id,
+        data.action === 'transfer.cancel',
+      );
+      return Response.json({ ok: true });
+    }
+    if (data.action === 'rename')
+      await guardedWorkspaceWrite(
+        workspaceEnv.DB,
+        ownerWriteGuard(workspaceEnv.DB, id, user.id),
+        workspaceEnv.DB.prepare('UPDATE workspaces SET name=? WHERE id=?').bind(
+          data.name,
+          id,
+        ),
+      );
+    if (data.action === 'invite') {
+      const target = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, data.email))
+        .get();
+      assert(target, 404, 'This user must register first');
+      const exists = await db
+        .select()
+        .from(members)
+        .where(and(eq(members.workspaceId, id), eq(members.userId, target.id)))
+        .get();
+      assert(!exists, 409, 'Already a member');
+      await guardedWorkspaceWrite(
+        workspaceEnv.DB,
+        ownerWriteGuard(workspaceEnv.DB, id, user.id, {
+          userId: target.id,
+          membership: 'absent',
+        }),
+        workspaceEnv.DB.prepare(
+          'INSERT INTO workspace_members(workspace_id,user_id,role) VALUES(?,?,?)',
+        ).bind(id, target.id, data.role),
+      );
+    }
+    if (data.action === 'leave') {
+      assert(role !== 'OWNER', 409, 'Owners must retain workspace ownership');
+      await guardedWorkspaceWrite(
+        workspaceEnv.DB,
+        leaveWriteGuard(workspaceEnv.DB, id, user.id),
+        workspaceEnv.DB.prepare(
+          'DELETE FROM workspace_members WHERE workspace_id=? AND user_id=?',
+        ).bind(id, user.id),
+      );
+    }
+    if (data.action === 'role' || data.action === 'remove') {
+      const target = await db
+        .select()
+        .from(members)
+        .where(
+          and(eq(members.workspaceId, id), eq(members.userId, data.userId)),
+        )
+        .get();
+      assert(
+        target && target.role !== 'OWNER',
+        409,
+        'The owner cannot be removed or demoted',
+      );
+      await guardedWorkspaceWrite(
+        workspaceEnv.DB,
+        ownerWriteGuard(workspaceEnv.DB, id, user.id, {
+          userId: data.userId,
+          membership: 'non-owner',
+        }),
+        data.action === 'role'
+          ? workspaceEnv.DB.prepare(
+              'UPDATE workspace_members SET role=? WHERE workspace_id=? AND user_id=?',
+            ).bind(data.role, id, data.userId)
+          : workspaceEnv.DB.prepare(
+              'DELETE FROM workspace_members WHERE workspace_id=? AND user_id=?',
+            ).bind(id, data.userId),
+      );
+    }
     return Response.json({ ok: true });
-  }
-  if (data.action === 'rename')
-    await db
-      .update(workspaces)
-      .set({ name: data.name })
-      .where(eq(workspaces.id, id));
-  if (data.action === 'invite') {
-    const target = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, data.email))
-      .get();
-    assert(target, 404, 'This user must register first');
-    const exists = await db
-      .select()
-      .from(members)
-      .where(and(eq(members.workspaceId, id), eq(members.userId, target.id)))
-      .get();
-    assert(!exists, 409, 'Already a member');
-    await db
-      .insert(members)
-      .values({ workspaceId: id, userId: target.id, role: data.role });
-  }
-  if (data.action === 'leave') {
-    assert(role !== 'OWNER', 409, 'Owners must retain workspace ownership');
-    await db
-      .delete(members)
-      .where(and(eq(members.workspaceId, id), eq(members.userId, user.id)));
-  }
-  if (data.action === 'role' || data.action === 'remove') {
-    const target = await db
-      .select()
-      .from(members)
-      .where(and(eq(members.workspaceId, id), eq(members.userId, data.userId)))
-      .get();
-    assert(
-      target && target.role !== 'OWNER',
-      409,
-      'The owner cannot be removed or demoted',
-    );
-    if (data.action === 'role')
-      await db
-        .update(members)
-        .set({ role: data.role })
-        .where(
-          and(eq(members.workspaceId, id), eq(members.userId, data.userId)),
-        );
-    else
-      await db
-        .delete(members)
-        .where(
-          and(eq(members.workspaceId, id), eq(members.userId, data.userId)),
-        );
-  }
-  return Response.json({ ok: true });
-});
+  });
+export const PATCH = patchFor();
