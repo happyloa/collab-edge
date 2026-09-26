@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { drizzle } from 'drizzle-orm/d1';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
 import { sessions, users, members, boards } from '../db/schema';
 import { sessionHash } from './crypto';
 import { assert } from '../lib/errors';
@@ -25,6 +25,7 @@ export async function currentUser(request: Request) {
       and(
         eq(sessions.id, await sessionHash(token, env.SESSION_SECRET)),
         gt(sessions.expiresAt, Date.now()),
+        isNull(users.deletedAt),
       ),
     )
     .get();

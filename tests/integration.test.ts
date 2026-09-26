@@ -17,13 +17,9 @@ async function fixture(role = 'OWNER') {
     boardId = crypto.randomUUID(),
     columnId = crypto.randomUUID();
   await env.DB.batch([
-    env.DB.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(
-      userId,
-      `${userId}@test.dev`,
-      'Alice',
-      'unused',
-      Date.now(),
-    ),
+    env.DB.prepare(
+      'INSERT INTO users(id,email,name,password,created_at) VALUES(?,?,?,?,?)',
+    ).bind(userId, `${userId}@test.dev`, 'Alice', 'unused', Date.now()),
     env.DB.prepare('INSERT INTO workspaces VALUES(?,?,?)').bind(
       workspaceId,
       'Acme',
@@ -330,13 +326,9 @@ it('revokes event and presence recipients after workspace access is removed', as
   let other: WebSocket | undefined;
   try {
     await env.DB.batch([
-      env.DB.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(
-        otherId,
-        `${otherId}@test.dev`,
-        'Bob',
-        'unused',
-        Date.now(),
-      ),
+      env.DB.prepare(
+        'INSERT INTO users(id,email,name,password,created_at) VALUES(?,?,?,?,?)',
+      ).bind(otherId, `${otherId}@test.dev`, 'Bob', 'unused', Date.now()),
       env.DB.prepare('INSERT INTO workspace_members VALUES(?,?,?)').bind(
         f.workspaceId,
         otherId,

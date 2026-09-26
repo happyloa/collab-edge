@@ -19,13 +19,9 @@ async function fixture() {
       [recipientId, 'Recipient'],
       [outsiderId, 'Outsider'],
     ].map(([id, name]) =>
-      env.DB.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(
-        id,
-        `${id}@example.com`,
-        name,
-        hashed,
-        Date.now(),
-      ),
+      env.DB.prepare(
+        'INSERT INTO users(id,email,name,password,created_at) VALUES(?,?,?,?,?)',
+      ).bind(id, `${id}@example.com`, name, hashed, Date.now()),
     ),
     env.DB.prepare('INSERT INTO workspaces VALUES(?,?,?)').bind(
       workspaceId,

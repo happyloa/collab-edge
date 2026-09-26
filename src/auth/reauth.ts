@@ -11,9 +11,10 @@ export async function confirmPassword(
   password: string,
 ) {
   assert(
-    await authEnv.AUTH_LIMITER.getByName(
-      `ownership-password:${userId}`,
-    ).consume({ limit: 5, windowMs: 60_000 }),
+    await authEnv.AUTH_LIMITER.getByName(`reauth-password:${userId}`).consume({
+      limit: 5,
+      windowMs: 60_000,
+    }),
     429,
     'Too many password confirmations. Try again later.',
   );

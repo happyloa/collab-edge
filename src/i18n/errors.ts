@@ -41,6 +41,11 @@ const errors: Record<string, string> = {
   'Too many password confirmations. Try again later.':
     '密碼確認次數過多，請稍後再試。',
   'Incorrect password': '密碼不正確',
+  'Demo accounts cannot be deleted': '示範帳號無法刪除',
+  'Transfer ownership of your workspaces before deleting your account':
+    '請先轉移工作區擁有權，再刪除帳號',
+  'Account or workspace state changed. Reload and retry.':
+    '帳號或工作區狀態已變更，請重新載入後再試。',
   'Demo ownership cannot be transferred': '示範帳號或工作區無法轉移擁有權',
   'Choose another workspace member': '請選擇其他工作區成員',
   'Choose a current workspace member': '請選擇目前的工作區成員',

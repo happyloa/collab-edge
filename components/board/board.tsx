@@ -330,6 +330,7 @@ function Board({ initial }: { initial: BoardData }) {
         {state.board.archived && initial.role !== 'VIEWER' && (
           <button
             className="button mb-4"
+            disabled={live.status !== 'Connected'}
             onClick={() =>
               live.mutate({
                 type: 'board.restore',

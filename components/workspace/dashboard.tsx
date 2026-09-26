@@ -17,6 +17,7 @@ import { ThemeToggle } from '../ui/theme';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
+  canDeleteAccount?: boolean;
   emailVerified?: boolean;
   verifiedEmail?: string | null;
   canVerifyEmail?: boolean;
@@ -46,6 +47,8 @@ export function Dashboard() {
   const [selected, setSelected] = useState('');
   const [error, setError] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const session = useQuery({
     queryKey: ['auth', 'session'],
     queryFn: () => api<SessionState>('/api/auth/session'),
@@ -148,6 +151,87 @@ export function Dashboard() {
           <p className="mt-4 text-xs text-muted">
             {t('Up to 3 workspaces per account.')}
           </p>
+          {session.data?.canDeleteAccount && list.data && (
+            <section className="mt-8 border-t border-border pt-5">
+              <button
+                type="button"
+                className="text-sm text-destructive"
+                aria-expanded={showDeleteAccount}
+                onClick={() => setShowDeleteAccount((value) => !value)}
+              >
+                {t('Delete my account')}
+              </button>
+              {showDeleteAccount && (
+                <div className="mt-4 space-y-3 text-sm">
+                  <p className="text-muted">
+                    {t(
+                      'Your email, name, password and sessions will be removed. Shared cards, comments and files remain, while your author identity is anonymized. This cannot be undone.',
+                    )}
+                  </p>
+                  {list.data?.some(
+                    (workspace) => workspace.role === 'OWNER',
+                  ) ? (
+                    <p className="notice">
+                      {t('Transfer ownership of every workspace first.')}
+                    </p>
+                  ) : (
+                    <form
+                      className="space-y-3"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const password = new FormData(event.currentTarget).get(
+                          'password',
+                        );
+                        void (async () => {
+                          try {
+                            setDeleteError('');
+                            await api('/api/auth/account', {
+                              method: 'DELETE',
+                              body: JSON.stringify({ password, confirm: true }),
+                            });
+                            location.href = '/login';
+                          } catch (error) {
+                            setDeleteError(
+                              error instanceof Error
+                                ? error.message
+                                : 'Request failed',
+                            );
+                          }
+                        })();
+                      }}
+                    >
+                      <label className="field">
+                        {t('Confirm with your password')}
+                        <input
+                          name="password"
+                          type="password"
+                          required
+                          maxLength={128}
+                          autoComplete="current-password"
+                        />
+                      </label>
+                      <label className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          required
+                          className="mt-1 w-auto"
+                        />
+                        {t('I understand this cannot be undone.')}
+                      </label>
+                      {deleteError && (
+                        <p role="alert" className="text-destructive">
+                          {errorText(deleteError)}
+                        </p>
+                      )}
+                      <button className="button secondary" type="submit">
+                        {t('Permanently delete account')}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
         </aside>
         <main className="motion-reveal motion-delay-1 lg:col-span-3">
           {session.data?.user &&

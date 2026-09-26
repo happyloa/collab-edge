@@ -13,6 +13,7 @@ export const users = sqliteTable('users', {
   name: text().notNull(),
   password: text().notNull(),
   createdAt: integer('created_at').notNull(),
+  deletedAt: integer('deleted_at'),
 });
 export const sessions = sqliteTable(
   'sessions',

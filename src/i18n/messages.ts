@@ -173,6 +173,13 @@ export const zh = {
   'Decline transfer': '拒絕轉移',
   Rename: '重新命名',
   'Leave workspace': '離開工作區',
+  'Delete my account': '刪除我的帳號',
+  'Your email, name, password and sessions will be removed. Shared cards, comments and files remain, while your author identity is anonymized. This cannot be undone.':
+    '你的信箱、名稱、密碼與登入階段會被移除。已分享的卡片、留言與檔案會保留，作者身分會匿名化。此操作無法復原。',
+  'Transfer ownership of every workspace first.':
+    '請先轉移你擁有的所有工作區。',
+  'I understand this cannot be undone.': '我了解此操作無法復原。',
+  'Permanently delete account': '永久刪除帳號',
   'Back to workspaces': '返回工作區',
   'Opening your shared space…': '正在開啟協作空間…',
   'Connection status': '連線狀態',

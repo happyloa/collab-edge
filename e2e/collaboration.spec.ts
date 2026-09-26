@@ -249,9 +249,13 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     ).toHaveCount(0);
     await alice.getByLabel('Show archived boards').check();
     await alice.getByRole('link', { name: /Launch shipped/ }).click();
-    await alice
-      .getByRole('button', { name: 'Restore board', exact: true })
-      .click();
+    const restoreBoard = alice.getByRole('button', {
+      name: 'Restore board',
+      exact: true,
+    });
+    await expect(restoreBoard).toBeEnabled();
+    await restoreBoard.click();
+    await expect(alice.getByLabel('New card in Backlog')).toBeVisible();
     await expect(bob.getByLabel('New card in Backlog')).toBeVisible();
     expect(failures).toEqual([]);
   } finally {

@@ -1,14 +1,15 @@
 import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { users, sessions } from '../db/schema';
 import { body, route } from '../lib/http';
-import { assert } from '../lib/errors';
+import { AppError, assert } from '../lib/errors';
 import { hashPassword, verifyPassword, sessionHash } from './crypto';
 import { createSession, currentUser, requireUser, tokenFrom } from './session';
 import { verifiedAccessEmail } from './access';
 import { DEMO } from '../db/demo';
+import { confirmPassword } from './reauth';
 
 const demoIds = new Set([DEMO.owner, DEMO.Alice, DEMO.Bob]);
 const credentials = z.object({
@@ -83,7 +84,7 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.email, data.email))
+      .where(and(eq(users.email, data.email), isNull(users.deletedAt)))
       .get();
     const valid = await verifyPassword(
       data.password,
@@ -106,7 +107,7 @@ export const resetPasswordFor = (authEnv: Env = env) =>
     const user = await drizzle(authEnv.DB)
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, email))
+      .where(and(eq(users.email, email), isNull(users.deletedAt)))
       .get();
     assert(user, 404, 'No account uses your verified email');
     const password = await hashPassword(data.password);
@@ -158,14 +159,92 @@ export const logout = route(async (request) => {
 export const sessionFor = (authEnv: Env = env) =>
   route(async (request) => {
     const user = await currentUser(request);
-    if (!user || authEnv.ACCESS_REQUIRED !== 'true')
-      return Response.json({ user });
+    if (!user) return Response.json({ user });
+    if (authEnv.ACCESS_REQUIRED !== 'true')
+      return Response.json({
+        user,
+        canDeleteAccount: !demoIds.has(user.id),
+      });
     const verifiedEmail = await verifiedAccessEmail(request, authEnv);
     return Response.json({
       user,
       emailVerified: user.email === verifiedEmail,
       verifiedEmail,
       canVerifyEmail: !demoIds.has(user.id),
+      canDeleteAccount: !demoIds.has(user.id),
     });
   });
 export const session = sessionFor();
+
+export const deleteAccountFor = (authEnv: Env = env) =>
+  route(async (request) => {
+    const user = await requireUser(request);
+    assert(!demoIds.has(user.id), 403, 'Demo accounts cannot be deleted');
+    const data = await body(
+      request,
+      z.object({
+        password: z.string().min(1).max(128),
+        confirm: z.literal(true),
+      }),
+    );
+    await confirmPassword(authEnv, user.id, data.password);
+    const owned = await authEnv.DB.prepare(
+      'SELECT 1 FROM workspaces WHERE owner_id=? LIMIT 1',
+    )
+      .bind(user.id)
+      .first();
+    assert(
+      !owned,
+      409,
+      'Transfer ownership of your workspaces before deleting your account',
+    );
+    try {
+      await authEnv.DB.batch([
+        authEnv.DB.prepare(
+          `INSERT INTO mutation_guard(value)
+           SELECT CASE WHEN EXISTS(
+             SELECT 1 FROM users WHERE id=? AND deleted_at IS NULL
+           ) AND NOT EXISTS(
+             SELECT 1 FROM workspaces WHERE owner_id=?
+           ) THEN 1 ELSE 0 END`,
+        ).bind(user.id, user.id),
+        authEnv.DB.prepare(
+          `UPDATE users SET email=?, name='Deleted account',
+           password='disabled-deleted-account-login', created_at=0, deleted_at=?
+           WHERE id=? AND deleted_at IS NULL`,
+        ).bind(
+          `deleted-${crypto.randomUUID()}@collabedge.invalid`,
+          Date.now(),
+          user.id,
+        ),
+        authEnv.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(
+          user.id,
+        ),
+        authEnv.DB.prepare(
+          'DELETE FROM workspace_members WHERE user_id=?',
+        ).bind(user.id),
+        authEnv.DB.prepare(
+          'DELETE FROM workspace_transfers WHERE from_user_id=? OR to_user_id=?',
+        ).bind(user.id, user.id),
+        authEnv.DB.prepare('DELETE FROM mutation_guard'),
+      ]);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
+      )
+        throw new AppError(
+          409,
+          'Account or workspace state changed. Reload and retry.',
+        );
+      throw error;
+    }
+    return Response.json(
+      { ok: true },
+      {
+        headers: {
+          'Set-Cookie': `ce_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${new URL(request.url).protocol === 'https:' ? '; Secure' : ''}`,
+        },
+      },
+    );
+  });
