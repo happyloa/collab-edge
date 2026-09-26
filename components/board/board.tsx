@@ -11,6 +11,7 @@ import {
   useSensors,
   useDroppable,
   type DragEndEvent,
+  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -199,13 +200,42 @@ function Board({ initial }: { initial: BoardData }) {
   const today = localToday();
   const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
   const readOnly = initial.role === 'VIEWER' || state.board.archived;
+  const columns = [...state.columns].sort((a, b) => a.position - b.position);
+  const keyboardCoordinates: KeyboardCoordinateGetter = (event, args) => {
+    // Target neighboring columns explicitly; the sortable getter can keep the
+    // previous empty-column target when a keyboard drag reverses direction.
+    if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight')
+      return sortableKeyboardCoordinates(event, args);
+
+    const { active, over, collisionRect, droppableRects } = args.context;
+    if (!active || !collisionRect) return;
+    event.preventDefault();
+
+    const currentTarget = String(over?.id ?? active.id);
+    const currentColumnId =
+      state.cards.find((card) => card.id === currentTarget)?.columnId ??
+      columns.find((column) => column.id === currentTarget)?.id ??
+      state.cards.find((card) => card.id === active.id)?.columnId;
+    const currentIndex = columns.findIndex(
+      (column) => column.id === currentColumnId,
+    );
+    if (currentIndex < 0) return;
+    const nextColumn =
+      columns[currentIndex + (event.code === 'ArrowRight' ? 1 : -1)];
+    const nextRect = nextColumn && droppableRects.get(nextColumn.id);
+    if (!nextRect) return;
+
+    return {
+      x: nextRect.left + (nextRect.width - collisionRect.width) / 2,
+      y: nextRect.top + (nextRect.height - collisionRect.height) / 2,
+    };
+  };
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: keyboardCoordinates,
     }),
   );
-  const columns = [...state.columns].sort((a, b) => a.position - b.position);
   function exportBoard() {
     if (live.status !== 'Connected' || live.pending.length > 0) return;
     const file = new Blob(

@@ -80,6 +80,29 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
         .getByRole('region', { name: 'In Progress', exact: true })
         .getByRole('button', { name: 'Plan our launch', exact: true }),
     ).toBeVisible();
+    const dragHandle = alice.getByRole('button', {
+      name: 'Move Plan our launch',
+    });
+    await dragHandle.focus();
+    await dragHandle.press('Space');
+    await dragHandle.press('ArrowRight');
+    await dragHandle.press('Space');
+    for (const page of [alice, bob])
+      await expect(
+        page
+          .getByRole('region', { name: 'Review', exact: true })
+          .getByRole('button', { name: 'Plan our launch', exact: true }),
+      ).toBeVisible();
+    await dragHandle.focus();
+    await dragHandle.press('Space');
+    await dragHandle.press('ArrowLeft');
+    await dragHandle.press('Space');
+    for (const page of [alice, bob])
+      await expect(
+        page
+          .getByRole('region', { name: 'In Progress', exact: true })
+          .getByRole('button', { name: 'Plan our launch', exact: true }),
+      ).toBeVisible();
     await bob
       .getByRole('button', { name: 'Plan our launch', exact: true })
       .click();
