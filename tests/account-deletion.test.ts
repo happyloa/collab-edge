@@ -4,6 +4,7 @@ import { authenticate, deleteAccountFor, session } from '../src/auth/routes';
 import { loadSnapshot } from '../src/db/queries/snapshot';
 import { DEMO, seedDemo } from '../src/db/demo';
 import { createSession } from '../src/auth/session';
+import { hashPassword } from '../src/auth/crypto';
 
 const origin = 'https://account.test';
 const password = 'A-valid-account-password-2026';
@@ -47,6 +48,20 @@ const remove = (cookie: string, passwordValue = password, confirm = true) =>
       cookie,
     ),
   );
+
+function interruptDeletion(change: (db: D1Database) => Promise<unknown>) {
+  return new Proxy(env.DB, {
+    get(target, property) {
+      if (property === 'batch')
+        return async (statements: D1PreparedStatement[]) => {
+          await change(target);
+          return target.batch(statements);
+        };
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+}
 
 it('does not allow seeded demo identities to delete their accounts', async () => {
   await seedDemo(env.DB);
@@ -94,6 +109,39 @@ it('requires confirmation and refuses to delete a workspace owner', async () => 
       .bind(owner.id)
       .first(),
   ).not.toBeNull();
+});
+
+it('rejects deletion if a password reset or session revocation wins the race', async () => {
+  for (const changed of ['password', 'session'] as const) {
+    const account = await register(`Race ${changed}`);
+    const replacement = await hashPassword('A-new-account-password-2026');
+    const db = interruptDeletion(async (binding) => {
+      if (changed === 'password')
+        await binding
+          .prepare('UPDATE users SET password=? WHERE id=?')
+          .bind(replacement, account.id)
+          .run();
+      else
+        await binding
+          .prepare('DELETE FROM sessions WHERE user_id=?')
+          .bind(account.id)
+          .run();
+    });
+    const response = await deleteAccountFor({ ...env, DB: db })(
+      request(
+        '/api/auth/account',
+        'DELETE',
+        { password, confirm: true },
+        account.cookie,
+      ),
+    );
+    expect(response.status).toBe(409);
+    expect(
+      await env.DB.prepare('SELECT email,deleted_at FROM users WHERE id=?')
+        .bind(account.id)
+        .first(),
+    ).toMatchObject({ email: account.email, deleted_at: null });
+  }
 });
 
 it('anonymizes a member, revokes sessions, and keeps shared board history usable', async () => {

@@ -4,7 +4,7 @@ import { users } from '../db/schema';
 import { assert } from '../lib/errors';
 import { verifyPassword } from './crypto';
 
-/** Require the account password again before changing workspace ownership. */
+/** Require the account password again before sensitive account changes. */
 export async function confirmPassword(
   authEnv: Env,
   userId: string,
@@ -28,4 +28,5 @@ export async function confirmPassword(
     401,
     'Incorrect password',
   );
+  return user.password;
 }

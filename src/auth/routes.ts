@@ -187,7 +187,14 @@ export const deleteAccountFor = (authEnv: Env = env) =>
         confirm: z.literal(true),
       }),
     );
-    await confirmPassword(authEnv, user.id, data.password);
+    const confirmedPassword = await confirmPassword(
+      authEnv,
+      user.id,
+      data.password,
+    );
+    const token = tokenFrom(request);
+    assert(token, 401, 'Please sign in');
+    const sessionId = await sessionHash(token, authEnv.SESSION_SECRET);
     const owned = await authEnv.DB.prepare(
       'SELECT 1 FROM workspaces WHERE owner_id=? LIMIT 1',
     )
@@ -203,11 +210,15 @@ export const deleteAccountFor = (authEnv: Env = env) =>
         authEnv.DB.prepare(
           `INSERT INTO mutation_guard(value)
            SELECT CASE WHEN EXISTS(
-             SELECT 1 FROM users WHERE id=? AND deleted_at IS NULL
+             SELECT 1 FROM users AS account
+             JOIN sessions AS current_session ON current_session.user_id=account.id
+             WHERE account.id=? AND account.deleted_at IS NULL
+               AND account.password=? AND current_session.id=?
+               AND current_session.expires_at>?
            ) AND NOT EXISTS(
              SELECT 1 FROM workspaces WHERE owner_id=?
            ) THEN 1 ELSE 0 END`,
-        ).bind(user.id, user.id),
+        ).bind(user.id, confirmedPassword, sessionId, Date.now(), user.id),
         authEnv.DB.prepare(
           `UPDATE users SET email=?, name='Deleted account',
            password='disabled-deleted-account-login', created_at=0, deleted_at=?
