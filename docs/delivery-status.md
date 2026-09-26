@@ -1,6 +1,13 @@
 # Delivery status
 
-Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Password-confirmed account deletion is released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Transactional workspace authorization
+
+- Commit `e5f3b28` rechecks workspace ownership, target membership and board-creation write access inside the same D1 batch as each HTTP write. A stale owner cannot rename a workspace, invite or change members, or remove someone who became the owner. A member promoted to owner cannot leave through a stale request. Ownership-transfer proposals and acceptance additionally verify the confirmed password hash and current app session at commit time. No new Cloudflare binding, product, migration or production R2 operation was added.
+- Local `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 45 Workers/core tests, 3 React tests, Vinext check and production build. `corepack pnpm test:e2e` passed all 13 Chromium scenarios. `corepack pnpm audit --audit-level high` found no known vulnerabilities. The workerd tests simulate intervening ownership, membership, password and session changes and verify affected writes roll back.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36221590284), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36221590280) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36221590283) succeeded for `e5f3b28`.
+- Native Cloudflare build `a20a2d1a-70cc-4579-8838-5fb60ab89ea5` succeeded for `e5f3b28`. Its log confirms the zero-cost deployment gate, no pending remote migrations and completed deployment. Worker version `d08e37e4-2b9f-44ea-81f1-61f5bdefc72f` served 100% of traffic from 2026-09-26 05:43 UTC. Readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`; the Access app retained one Allow policy for that email, and an anonymous root request returned 302. Owner-authenticated production mutation and WebSocket smoke remain pending.
 
 ## Account deletion
 

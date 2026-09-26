@@ -21,7 +21,7 @@ One SQLite-backed BoardRoom coordinates each board. A promise queue serializes s
 
 Every successful mutation batches the entity changes, board revision and event insert. A CHECK constraint guard aborts a stale revision; unique `(board_id, revision)` and `(board_id, client_mutation_id)` indexes protect ordering and deduplication. Broadcast and acknowledgment occur after persistence. A crash between commit and broadcast is repaired by replay; clients reuse mutation IDs when retrying uncertain commands.
 
-SQL triggers enforce cross-object quotas atomically. Per-board limits are checked inside the serialized coordinator. AuthRateLimiter uses persistent SQLite counters. Presence lives in hibernatable socket attachments, not D1. Recipients are reauthorized before board event broadcasts.
+SQL triggers enforce cross-object quotas atomically. Per-board limits are checked inside the serialized coordinator. Workspace management, membership changes and board creation guard the current role inside the same D1 batch as their write, so a concurrent ownership or membership change cannot authorize a stale HTTP mutation. Password-confirmed ownership transfer also validates the same account password hash and active app session at commit time. AuthRateLimiter uses persistent SQLite counters. Presence lives in hibernatable socket attachments, not D1. Recipients are reauthorized before board event broadcasts.
 
 HTTP snapshots use a D1 batch and pass through the board queue, preventing a snapshot from mixing different revisions. React Query manages workspace/session-independent HTTP reads; the realtime reducer owns board state.
 
