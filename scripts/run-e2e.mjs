@@ -6,6 +6,12 @@ import { fileURLToPath, URL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const stateParent = join(root, '.wrangler');
+const captureDemo = process.argv.slice(2).includes('--capture-demo');
+if (captureDemo && process.env.E2E_BASE_URL)
+  throw new Error('Demo recording must use isolated local workerd state');
+const playwrightCommand = captureDemo
+  ? 'corepack pnpm exec playwright test e2e/collaboration.spec.ts'
+  : 'corepack pnpm exec playwright test';
 let activeChild;
 
 function run(command, env) {
@@ -68,7 +74,7 @@ process.on('SIGTERM', terminate);
 let statePath;
 try {
   if (process.env.E2E_BASE_URL) {
-    await run('corepack pnpm exec playwright test', process.env);
+    await run(playwrightCommand, process.env);
   } else {
     await mkdir(stateParent, { recursive: true });
     statePath = await mkdtemp(join(stateParent, 'e2e-'));
@@ -79,12 +85,13 @@ try {
       ...process.env,
       COLLABEDGE_E2E_STATE_PATH: statePath,
       COLLABEDGE_E2E_PORT: String(await availablePort()),
+      COLLABEDGE_CAPTURE_DEMO: captureDemo ? '1' : undefined,
     };
     await run(
       `corepack pnpm exec wrangler d1 migrations apply DB --local --persist-to .wrangler/${stateName}`,
       env,
     );
-    await run('corepack pnpm exec playwright test', env);
+    await run(playwrightCommand, env);
   }
 } finally {
   process.off('SIGINT', interrupt);

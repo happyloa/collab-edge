@@ -1,17 +1,29 @@
 import { test, expect, isolatedContext } from './fixture';
 import type { Page } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { Snapshot } from '../src/realtime/protocol';
 test('two people synchronize, resolve conflicts, reconnect, and share private files', async ({
   browser,
 }, testInfo) => {
-  const aliceContext = await isolatedContext(browser, testInfo);
-  const bobContext = await isolatedContext(browser, testInfo);
+  const captureDemo = process.env.COLLABEDGE_CAPTURE_DEMO === '1';
+  const videoOptions = captureDemo
+    ? {
+        recordVideo: {
+          dir: 'test-results/collaboration-video',
+          size: { width: 1280, height: 720 },
+        },
+      }
+    : {};
+  const aliceContext = await isolatedContext(browser, testInfo, videoOptions);
+  const bobContext = await isolatedContext(browser, testInfo, videoOptions);
   const alice = await aliceContext.newPage();
   const bob = await bobContext.newPage();
   const suffix = crypto.randomUUID().slice(0, 8);
   const email = (name: string) => `${name.toLowerCase()}-${suffix}@example.com`;
   const failures: string[] = [];
+  let alicePoster: Buffer | undefined;
+  let bobPoster: Buffer | undefined;
+  let passed = false;
   for (const page of [alice, bob])
     page.on('pageerror', (error) => failures.push(error.message));
   async function register(page: Page, name: string) {
@@ -204,6 +216,12 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       animations: 'disabled',
     });
     await bob.getByRole('button', { name: 'Close card' }).click();
+    if (captureDemo) {
+      [alicePoster, bobPoster] = await Promise.all([
+        alice.screenshot(),
+        bob.screenshot(),
+      ]);
+    }
     await alice
       .getByRole('button', { name: 'Ready for launch', exact: true })
       .click();
@@ -259,8 +277,18 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await expect(alice.getByLabel('New card in Backlog')).toBeVisible();
     await expect(bob.getByLabel('New card in Backlog')).toBeVisible();
     expect(failures).toEqual([]);
+    passed = true;
   } finally {
     await aliceContext.close();
     await bobContext.close();
+    if (captureDemo && passed && alicePoster && bobPoster) {
+      await mkdir('showcase/media', { recursive: true });
+      await Promise.all([
+        writeFile('showcase/media/alice.png', alicePoster),
+        writeFile('showcase/media/bob.png', bobPoster),
+        alice.video()!.saveAs('showcase/media/alice.webm'),
+        bob.video()!.saveAs('showcase/media/bob.webm'),
+      ]);
+    }
   }
 });
