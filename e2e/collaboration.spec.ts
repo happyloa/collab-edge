@@ -1,11 +1,12 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, isolatedContext } from './fixture';
+import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import type { Snapshot } from '../src/realtime/protocol';
 test('two people synchronize, resolve conflicts, reconnect, and share private files', async ({
   browser,
-}) => {
-  const aliceContext = await browser.newContext();
-  const bobContext = await browser.newContext();
+}, testInfo) => {
+  const aliceContext = await isolatedContext(browser, testInfo);
+  const bobContext = await isolatedContext(browser, testInfo);
   const alice = await aliceContext.newPage();
   const bob = await bobContext.newPage();
   const suffix = crypto.randomUUID().slice(0, 8);
@@ -152,7 +153,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     const download = bob.getByRole('link', { name: 'launch-notes.txt' });
     await expect(download).toBeVisible();
     const fileUrl = await download.getAttribute('href');
-    const anonymous = await browser.newContext();
+    const anonymous = await isolatedContext(browser, testInfo);
     const denied = await anonymous.request.get(
       new URL(fileUrl!, boardUrl).href,
     );

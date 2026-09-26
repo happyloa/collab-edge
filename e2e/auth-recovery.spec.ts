@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 
 test('recovery is reachable from login and validates both passwords', async ({
   page,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 
 test('motion follows user preference without shifting draggable cards', async ({
   page,

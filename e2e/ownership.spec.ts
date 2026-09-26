@@ -1,12 +1,13 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, isolatedContext } from './fixture';
+import type { Page } from '@playwright/test';
 
 const password = 'Portfolio-transfer-password-2026';
 
 test('owner and recipient confirm an ownership transfer from separate accounts', async ({
   browser,
-}) => {
-  const ownerContext = await browser.newContext();
-  const recipientContext = await browser.newContext();
+}, testInfo) => {
+  const ownerContext = await isolatedContext(browser, testInfo);
+  const recipientContext = await isolatedContext(browser, testInfo);
   const owner = await ownerContext.newPage();
   const recipient = await recipientContext.newPage();
   const suffix = crypto.randomUUID().slice(0, 8);

@@ -1,12 +1,13 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, isolatedContext } from './fixture';
+import type { Page } from '@playwright/test';
 
 const password = 'Portfolio-account-password-2026';
 
 test('a member can delete their login while a workspace owner keeps access', async ({
   browser,
-}) => {
-  const ownerContext = await browser.newContext();
-  const memberContext = await browser.newContext();
+}, testInfo) => {
+  const ownerContext = await isolatedContext(browser, testInfo);
+  const memberContext = await isolatedContext(browser, testInfo);
   const owner = await ownerContext.newPage();
   const member = await memberContext.newPage();
   const suffix = crypto.randomUUID().slice(0, 8);

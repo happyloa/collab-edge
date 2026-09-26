@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, isolatedContext } from './fixture';
 
 test('language persists across routes and reloads without losing drafts or reconnecting the board', async ({
   page,
@@ -85,8 +85,10 @@ test('language persists across routes and reloads without losing drafts or recon
 
 test('saved locale renders on the server and invalid cookies fall back to English', async ({
   browser,
-}) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
+}, testInfo) => {
+  const context = await isolatedContext(browser, testInfo, {
+    javaScriptEnabled: false,
+  });
   await context.addCookies([
     { name: 'collabedge_locale', value: 'zh-TW', url: 'http://localhost:3000' },
   ]);

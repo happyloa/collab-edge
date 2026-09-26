@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 test('public demo supports keyboard entry, mobile layout, and dark theme', async ({
   page,
 }) => {

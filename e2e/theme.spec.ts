@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, isolatedContext } from './fixture';
 
 for (const scheme of ['dark', 'light'] as const) {
   test(`theme follows ${scheme} preference before hydration and toggles once`, async ({
@@ -21,8 +21,8 @@ for (const scheme of ['dark', 'light'] as const) {
 
 test('system theme changes update icons without JavaScript', async ({
   browser,
-}) => {
-  const context = await browser.newContext({
+}, testInfo) => {
+  const context = await isolatedContext(browser, testInfo, {
     javaScriptEnabled: false,
     colorScheme: 'dark',
   });
