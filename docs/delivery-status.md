@@ -1,6 +1,13 @@
 # Delivery status
 
-Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Bounded activity browsing, transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+Updated 2026-09-26. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Browser tests now use isolated local state, while bounded activity browsing, transactional workspace authorization and password-confirmed account deletion are released. Authenticated production interaction still requires the owner to complete Access email verification and is not claimed as tested automatically.
+
+## Repeatable browser verification
+
+- Commit `5e040c4` makes `pnpm test:e2e` create a unique local Cloudflare state directory and port, apply the committed D1 migrations there, run Chromium, then clean up only that temporary directory. Normal `.wrangler/state` development data is untouched; a pre-existing dev server cannot silently substitute its state. CI uses this same entrypoint and no longer migrates a separate unused local database. No new migration, production binding, paid product or production R2 operation was added.
+- Two consecutive local runs passed all 13 Chromium scenarios, including two-browser realtime collaboration. Both temporary directories were removed and the pre-existing local D1 user count remained 100. `corepack pnpm verify` passed formatting, ESLint, strict typecheck, 47 Workers/core tests, 3 React tests, Vinext check and production build. `corepack pnpm audit --audit-level high` found no known vulnerabilities.
+- [GitHub CI](https://github.com/happyloa/collab-edge/actions/runs/36223606320), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/36223606302) and the [public demo workflow](https://github.com/happyloa/collab-edge/actions/runs/36223606325) succeeded for `5e040c4`. CI ran the new isolated browser entrypoint and passed all 13 Chromium scenarios.
+- Native Cloudflare build `723cd7ca-7dc9-4d03-a360-8aab11ce42ad` succeeded for `5e040c4`. Its log confirms the zero-cost deployment gate, no pending remote migrations and completed deployment. Worker version `00c9c7cb-dd88-4789-93e7-510853aa8e00` served 100% of traffic from 2026-09-26 06:25 UTC. Readback confirmed `ACCESS_REQUIRED=true`, `ACCESS_ALLOWED_EMAIL=piafyoyo06@gmail.com`, `ATTACHMENTS_ENABLED=false` and `REGISTRATION_ENABLED=true`; the Access app retained one Allow policy for that email, and an anonymous root request returned 302. Owner-authenticated production mutation and WebSocket smoke remain pending because no browser session was available in this run.
 
 ## Board activity browsing
 

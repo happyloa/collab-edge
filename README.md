@@ -147,6 +147,8 @@ pnpm audit
 
 Workers integration uses real local workerd, D1, R2 and DOs. Tests cover atomic rollback, idempotency, revision increments, viewer rejection, hibernation, replay and conflict rules. React Testing Library checks UI permissions and validation. The two-browser Playwright test covers synchronization, conflicting edits, reconnect, comments and private attachments, and captures the screenshot above. [Test details →](docs/testing.md)
 
+`pnpm test:e2e` migrates and uses its own disposable local Cloudflare state and port, so repeated browser runs do not consume the normal development database's quotas.
+
 ## Security
 
 PBKDF2-HMAC-SHA256 uses 600,000 iterations, a unique 128-bit salt and a 256-bit result. Sessions use random tokens, HMAC digests, seven-day expiry, server-side logout invalidation and HttpOnly cookies. All write origins and payloads are validated. RBAC is enforced on the server, including event recipients. R2 stays private and downloads are authorized. Persistent rate limits and atomic quotas bound usage. [Parameters, limits and caveats →](docs/security.md)

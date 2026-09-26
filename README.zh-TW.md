@@ -116,7 +116,7 @@ corepack pnpm test:e2e
 corepack pnpm audit
 ```
 
-`verify` 包含格式、lint、型別、Workers／React 測試、Vinext 相容性與正式建置。Playwright 另驗證雙人協作、衝突、重連、手機版、主題與語言切換。測試使用本機模擬環境，不等同正式環境登入後驗收。
+`verify` 包含格式、lint、型別、Workers／React 測試、Vinext 相容性與正式建置。Playwright 另驗證雙人協作、衝突、重連、手機版、主題與語言切換。`test:e2e` 每次會自動建立、遷移並清理獨立的本機測試資料，不消耗平常開發資料庫的配額。測試使用本機模擬環境，不等同正式環境登入後驗收。
 
 GitHub Actions 負責 CI；Cloudflare 原生 Workers Builds 連接本 repo，在 `main` 更新時驗證、套用遠端 migrations 並部署。不要另外啟用第二套自動部署。完整操作、bindings、權限與安全檢查見 [部署文件](docs/deployment.md)。GitHub About 已設定正式網址。
 

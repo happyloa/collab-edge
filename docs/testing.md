@@ -2,6 +2,8 @@
 
 `pnpm verify` checks formatting, ESLint, strict TypeScript, Workers tests, React DOM tests, lint compatibility probes, Vinext compatibility and production build. `pnpm test:e2e` separately runs Chromium against two independent browser contexts. CI runs both gates without production credentials.
 
+Each local `pnpm test:e2e` run creates a fresh, ignored Cloudflare state directory and selects an unused local port. The runner applies the committed D1 migrations to that directory, starts Vinext against the same state, and removes only that directory after the browser suite exits. It does not touch the normal `.wrangler/state` development database. An explicitly set `E2E_BASE_URL` instead targets the named environment and skips local migration and cleanup.
+
 Workers tests use @cloudflare/vitest-plugin and actual local D1/R2/SQLite Durable Objects. They cover PBKDF2, session digest binding, validation, field-level conflicts, stale creates, server ordering, reducer gaps, idempotency, atomic rollback, viewer rejection, event replay, snapshot fallback, limiter persistence, hibernation and R2 write authorization.
 
 Activity tests verify newest-first revision cursors, bounded pages, authorization and invalid cursor rejection. The activity panel fetches only when opened and can load older pages without affecting WebSocket replay.
@@ -17,11 +19,10 @@ The primary Playwright scenario registers Alice and Bob, creates a workspace and
 ```sh
 pnpm install --frozen-lockfile
 pnpm exec playwright install chromium
-pnpm db:migrate:local
 pnpm verify
 pnpm test:e2e
 ```
 
-The test creates real local users and boards. Playwright gives each scenario a distinct test-only IP so one local loopback bucket does not exhaust the production-sized per-IP limit for the rest of the suite. Repeated runs still count against local data quotas by design. Use a separate local persistence directory or intentionally reset only the disposable local test database when capacity is exhausted. Never run cleanup against remote D1.
+The test creates real users and boards in its disposable local state. Playwright gives each scenario a distinct test-only IP so one local loopback bucket does not exhaust the production-sized per-IP limit for the rest of the suite. Repeated `pnpm test:e2e` runs start with fresh quota counters and leave existing development data untouched. Never run cleanup against remote D1.
 
 Set E2E_BASE_URL only for an explicitly authorized test environment. The complete scenario uploads files and therefore must not be used against production while attachments are disabled for cost control. Production smoke checks must respect its configured feature gates.
