@@ -27,7 +27,7 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 - Boards with columns, cards, descriptions, archive, comments, column ordering and pointer/keyboard card dragging.
 - Synchronized board renaming, archival and restoration. Archived boards retain history and files, become read-only, and still count toward quotas. The shared demo cannot be archived.
 - Card assignees restricted to current workspace members, calendar due dates, title/description search and assignee/date filters. Archived cards can be restored with their metadata and history intact. Clear filters to re-enable dragging.
-- Hibernating WebSockets, online presence and ordered event delivery.
+- Hibernating WebSockets, live active/idle and viewed-card presence, and ordered event delivery.
 - Optimistic creation, edits and moves, with explicit pending, failed and conflicted states.
 - Per-field conflict detection and a preserved draft with an explicit retry action.
 - Reconnect replay, revision-gap detection and snapshot fallback.
