@@ -2,7 +2,7 @@
 import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   DndContext,
   KeyboardSensor,
@@ -46,6 +46,7 @@ type BoardData = {
   people: { id: string; name: string }[];
 };
 type Card = Snapshot['cards'][number];
+type ActivityPage = { events: BoardEvent[]; nextBefore: number | null };
 export function BoardLoader({ id }: { id: string }) {
   const { t, errorText } = useI18n();
 
@@ -168,26 +169,28 @@ function Column({
 }
 function Board({ initial }: { initial: BoardData }) {
   const { t, errorText, locale } = useI18n();
-
-  const history = useQuery({
+  const [showActivity, setShowActivity] = useState(false);
+  const history = useInfiniteQuery({
     queryKey: ['activity', initial.snapshot.board.id],
-    queryFn: () =>
-      api<BoardEvent[]>(`/api/boards/${initial.snapshot.board.id}/activity`),
+    enabled: showActivity,
+    initialPageParam: undefined as number | undefined,
+    queryFn: ({ pageParam }) =>
+      api<ActivityPage>(
+        `/api/boards/${initial.snapshot.board.id}/activity?limit=30${pageParam === undefined ? '' : `&before=${pageParam}`}`,
+      ),
+    getNextPageParam: (lastPage) => lastPage.nextBefore ?? undefined,
   });
   const live = useBoard(initial.snapshot, initial.user.id);
   const { state } = live;
   const activity = [
     ...new Map(
-      [...(history.data ?? []), ...live.activity].map((event) => [
-        event.eventId,
-        event,
-      ]),
+      [
+        ...(history.data?.pages.flatMap((page) => page.events) ?? []),
+        ...live.activity,
+      ].map((event) => [event.eventId, event]),
     ).values(),
-  ]
-    .sort((a, b) => b.revision - a.revision)
-    .slice(0, 30);
+  ].sort((a, b) => b.revision - a.revision);
   const [selected, setSelected] = useState<Card | null>(null);
-  const [showActivity, setShowActivity] = useState(false);
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
@@ -685,7 +688,27 @@ function Board({ initial }: { initial: BoardData }) {
         {showActivity && (
           <section className="surface motion-reveal p-6">
             <h2 className="font-semibold">{t('Recent activity')}</h2>
-            {activity.length === 0 && (
+            {history.isPending && (
+              <p role="status" className="mt-3 text-sm text-muted">
+                {t('Loading activity…')}
+              </p>
+            )}
+            {history.error && (
+              <div role="alert" className="notice error mt-3">
+                {errorText(history.error.message)}
+                <button
+                  className="button secondary ml-3"
+                  onClick={() => {
+                    if (history.isFetchNextPageError)
+                      void history.fetchNextPage();
+                    else void history.refetch();
+                  }}
+                >
+                  {t('Retry activity')}
+                </button>
+              </div>
+            )}
+            {!history.isPending && !history.error && activity.length === 0 && (
               <p className="mt-3 text-sm text-muted">
                 {t('Board updates will appear here.')}
               </p>
@@ -706,6 +729,17 @@ function Board({ initial }: { initial: BoardData }) {
                 </li>
               ))}
             </ol>
+            {history.hasNextPage && !history.error && (
+              <button
+                className="button secondary mt-4"
+                disabled={history.isFetchingNextPage}
+                onClick={() => void history.fetchNextPage()}
+              >
+                {history.isFetchingNextPage
+                  ? t('Loading older activity…')
+                  : t('Load older activity')}
+              </button>
+            )}
           </section>
         )}
       </main>
