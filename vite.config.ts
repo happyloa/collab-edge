@@ -8,6 +8,10 @@ export default defineConfig({
     vinext(),
     tailwindcss(),
     cloudflare({
+      persistState: process.env.COLLABEDGE_E2E_STATE_PATH
+        ? { path: process.env.COLLABEDGE_E2E_STATE_PATH }
+        : undefined,
+      inspectorPort: process.env.COLLABEDGE_E2E_STATE_PATH ? false : undefined,
       viteEnvironment: {
         name: 'rsc',
         childEnvironments: ['ssr'],

@@ -22,7 +22,6 @@ jobs:
       - run: node scripts/setup-local.mjs
       - run: pnpm cf:typegen
       - run: pnpm verify
-      - run: pnpm db:migrate:local
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v7

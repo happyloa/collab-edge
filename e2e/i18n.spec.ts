@@ -85,12 +85,14 @@ test('language persists across routes and reloads without losing drafts or recon
 
 test('saved locale renders on the server and invalid cookies fall back to English', async ({
   browser,
+  baseURL,
 }, testInfo) => {
+  if (!baseURL) throw new Error('Missing E2E base URL');
   const context = await isolatedContext(browser, testInfo, {
     javaScriptEnabled: false,
   });
   await context.addCookies([
-    { name: 'collabedge_locale', value: 'zh-TW', url: 'http://localhost:3000' },
+    { name: 'collabedge_locale', value: 'zh-TW', url: baseURL },
   ]);
   const page = await context.newPage();
   await page.goto('/');
@@ -100,7 +102,7 @@ test('saved locale renders on the server and invalid cookies fall back to Englis
     {
       name: 'collabedge_locale',
       value: 'unsupported',
-      url: 'http://localhost:3000',
+      url: baseURL,
     },
   ]);
   await page.goto('/login');

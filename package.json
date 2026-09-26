@@ -63,7 +63,7 @@
     "format:check": "prettier --check .",
     "test": "vitest",
     "test:run": "vitest run && vitest run --config vitest.ui.config.ts && node tests/lint-tooling.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-e2e.mjs",
     "build:showcase": "vite build --config showcase/vite.config.ts",
     "test:showcase": "playwright test --config showcase/playwright.config.ts",
     "cf:typegen": "wrangler types --strict-vars=false",
