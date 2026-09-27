@@ -28,7 +28,7 @@ it('registers, signs in and invalidates a session server-side on logout', async 
     .bind(email)
     .first<{ password: string }>();
   expect(row?.password).not.toBe(password);
-  expect(row?.password).toMatch(/^pbkdf2-sha256\$600000/);
+  expect(row?.password).toMatch(/^pbkdf2-sha256-peppered\$100000/);
   const loggedIn = await authenticate(false)(
     request('/api/auth/login', { email, password }),
   );

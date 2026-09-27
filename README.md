@@ -153,7 +153,7 @@ Workers integration uses real local workerd, D1, R2 and DOs. Tests cover atomic 
 
 ## Security
 
-PBKDF2-HMAC-SHA256 uses 600,000 iterations, a unique 128-bit salt and a 256-bit result. Sessions use random tokens, HMAC digests, seven-day expiry, server-side logout invalidation and HttpOnly cookies. All write origins and payloads are validated. RBAC is enforced on the server, including event recipients. R2 stays private and downloads are authorized. Persistent rate limits and atomic quotas bound usage. [Parameters, limits and caveats →](docs/security.md)
+Passwords use a server-secret HMAC followed by PBKDF2-HMAC-SHA256 with 100,000 iterations, a unique 128-bit salt and a 256-bit result. Cloudflare Workers rejects higher PBKDF2 counts; this is below OWASP's general 600,000-iteration guidance, so the private site's Access gate and persistent auth limits remain important. Sessions use random tokens, HMAC digests, seven-day expiry, server-side logout invalidation and HttpOnly cookies. All write origins and payloads are validated. RBAC is enforced on the server, including event recipients. R2 stays private and downloads are authorized. Persistent rate limits and atomic quotas bound usage. [Parameters, limits and caveats →](docs/security.md)
 
 ## Engineering decisions and tradeoffs
 

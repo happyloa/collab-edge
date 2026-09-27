@@ -70,7 +70,7 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
         id,
         email: data.email,
         name: data.name,
-        password: await hashPassword(data.password),
+        password: await hashPassword(data.password, authEnv.SESSION_SECRET),
         createdAt: Date.now(),
       });
       return Response.json(
@@ -89,7 +89,8 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
     const valid = await verifyPassword(
       data.password,
       user?.password ??
-        'pbkdf2-sha256$600000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000',
+        'pbkdf2-sha256-peppered$100000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000',
+      authEnv.SESSION_SECRET,
     );
     assert(user && valid, 401, 'Invalid email or password');
     return Response.json(
@@ -110,7 +111,7 @@ export const resetPasswordFor = (authEnv: Env = env) =>
       .where(and(eq(users.email, email), isNull(users.deletedAt)))
       .get();
     assert(user, 404, 'No account uses your verified email');
-    const password = await hashPassword(data.password);
+    const password = await hashPassword(data.password, authEnv.SESSION_SECRET);
     await authEnv.DB.batch([
       authEnv.DB.prepare('UPDATE users SET password = ? WHERE id = ?').bind(
         password,

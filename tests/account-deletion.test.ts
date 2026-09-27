@@ -114,7 +114,10 @@ it('requires confirmation and refuses to delete a workspace owner', async () => 
 it('rejects deletion if a password reset or session revocation wins the race', async () => {
   for (const changed of ['password', 'session'] as const) {
     const account = await register(`Race ${changed}`);
-    const replacement = await hashPassword('A-new-account-password-2026');
+    const replacement = await hashPassword(
+      'A-new-account-password-2026',
+      env.SESSION_SECRET,
+    );
     const db = interruptDeletion(async (binding) => {
       if (changed === 'password')
         await binding

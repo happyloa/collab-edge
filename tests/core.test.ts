@@ -163,10 +163,27 @@ describe('security and synchronization', () => {
     ).toThrow('This board is archived');
   });
   it('salts passwords and verifies in the Workers runtime', async () => {
-    const hash = await hashPassword('correct-horse-battery');
-    expect(await verifyPassword('correct-horse-battery', hash)).toBe(true);
-    expect(await verifyPassword('wrong-password', hash)).toBe(false);
-    expect(await hashPassword('correct-horse-battery')).not.toBe(hash);
+    const secret = 'a-test-secret-with-at-least-thirty-two-characters';
+    const hash = await hashPassword('correct-horse-battery', secret);
+    expect(await verifyPassword('correct-horse-battery', hash, secret)).toBe(
+      true,
+    );
+    expect(await verifyPassword('wrong-password', hash, secret)).toBe(false);
+    expect(
+      await verifyPassword(
+        'correct-horse-battery',
+        hash,
+        'a-different-secret-with-at-least-thirty-two-characters',
+      ),
+    ).toBe(false);
+    expect(await hashPassword('correct-horse-battery', secret)).not.toBe(hash);
+    expect(
+      await verifyPassword(
+        'correct-horse-battery',
+        'pbkdf2-sha256$600000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000',
+        secret,
+      ),
+    ).toBe(false);
   });
   it('binds session hashes to the secret', async () => {
     expect(await sessionHash('token', 'secret1')).not.toBe(

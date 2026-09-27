@@ -28,7 +28,8 @@ export async function confirmPassword(
     .where(eq(users.id, userId))
     .get();
   assert(
-    user && (await verifyPassword(password, user.password)),
+    user &&
+      (await verifyPassword(password, user.password, authEnv.SESSION_SECRET)),
     401,
     'Incorrect password',
   );

@@ -17,7 +17,7 @@ async function fixture() {
   const recipientId = crypto.randomUUID();
   const outsiderId = crypto.randomUUID();
   const workspaceId = crypto.randomUUID();
-  const hashed = await hashPassword(password);
+  const hashed = await hashPassword(password, env.SESSION_SECRET);
   await env.DB.batch([
     ...[
       [ownerId, 'Owner'],
