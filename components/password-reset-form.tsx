@@ -7,7 +7,11 @@ import { useHydrated } from './ui/use-hydrated';
 import { api } from './ui/providers';
 import { PasswordInput } from './ui/password-input';
 
-export function PasswordResetForm() {
+export function PasswordResetForm({
+  signedIn = false,
+}: {
+  signedIn?: boolean;
+}) {
   const { t, errorText } = useI18n();
   const hydrated = useHydrated();
   const [password, setPassword] = useState('');
@@ -110,8 +114,11 @@ export function PasswordResetForm() {
           </form>
         )}
         <p className="mt-6 text-center text-sm">
-          <Link href="/login" className="text-primary">
-            {t('Back to sign in')}
+          <Link
+            href={signedIn && !done ? '/workspaces' : '/login'}
+            className="text-primary"
+          >
+            {t(signedIn && !done ? 'Back to workspaces' : 'Back to sign in')}
           </Link>
         </p>
       </div>

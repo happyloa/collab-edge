@@ -88,6 +88,11 @@ export function Dashboard() {
           CollabEdge
         </Link>
         <div className="flex gap-3">
+          {session.data?.user && (
+            <span className="hidden self-center text-sm text-muted sm:inline">
+              {session.data.user.email}
+            </span>
+          )}
           <LanguageSelect />
           <ThemeToggle />
           <button
@@ -96,7 +101,7 @@ export function Dashboard() {
             onClick={() =>
               void run(async () => {
                 await api('/api/auth/logout', { method: 'POST' });
-                location.href = '/login';
+                location.replace('/login');
               })
             }
           >
