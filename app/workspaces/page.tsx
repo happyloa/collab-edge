@@ -1,4 +1,7 @@
 import { Dashboard } from '../../components/workspace/dashboard';
-export default function Page() {
+import { requirePageUser } from '../../src/auth/page-session';
+
+export default async function Page() {
+  await requirePageUser('/workspaces');
   return <Dashboard />;
 }

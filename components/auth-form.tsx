@@ -1,7 +1,6 @@
 'use client';
 import { useI18n, LanguageSelect } from './ui/i18n';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useHydrated } from './ui/use-hydrated';
 import { useForm } from 'react-hook-form';
@@ -18,12 +17,18 @@ const schema = z.object({
     .max(128, 'Use at most 128 characters'),
   name: z.string().max(80, 'Use at most 80 characters').optional(),
 });
-export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
+export function AuthForm({
+  registerMode = false,
+  returnTo = '/workspaces',
+}: {
+  registerMode?: boolean;
+  returnTo?: string;
+}) {
   const { t, errorText } = useI18n();
 
   const hydrated = useHydrated();
-  const router = useRouter();
   const [error, setError] = useState('');
+  const switchModeHref = `${registerMode ? '/login' : '/register'}${returnTo === '/workspaces' ? '' : `?next=${encodeURIComponent(returnTo)}`}`;
   const {
     register,
     handleSubmit,
@@ -59,7 +64,7 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
                 method: 'POST',
                 body: JSON.stringify(values),
               });
-              router.push('/workspaces');
+              location.replace(returnTo);
             } catch (e) {
               setError(e instanceof Error ? e.message : 'Sign in failed');
             }
@@ -137,10 +142,7 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
         </form>
         <p className="mt-6 text-center text-sm text-muted">
           {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
-          <Link
-            className="text-primary"
-            href={registerMode ? '/login' : '/register'}
-          >
+          <Link className="text-primary" href={switchModeHref}>
             {t(registerMode ? 'Sign in' : 'Create an account')}
           </Link>
         </p>

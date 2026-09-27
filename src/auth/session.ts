@@ -13,8 +13,7 @@ export function tokenFrom(request: Request) {
     .find((v) => v.startsWith('ce_session='))
     ?.slice(11);
 }
-export async function currentUser(request: Request) {
-  const token = tokenFrom(request);
+export async function currentUserForToken(token: string | undefined) {
   if (!token) return null;
   const db = drizzle(env.DB);
   const result = await db
@@ -30,6 +29,9 @@ export async function currentUser(request: Request) {
     )
     .get();
   return result ?? null;
+}
+export async function currentUser(request: Request) {
+  return currentUserForToken(tokenFrom(request));
 }
 export async function requireUser(request: Request) {
   const user = await currentUser(request);
