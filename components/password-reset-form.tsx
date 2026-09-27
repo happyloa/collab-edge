@@ -5,6 +5,7 @@ import { Layers3 } from 'lucide-react';
 import { useI18n, LanguageSelect } from './ui/i18n';
 import { useHydrated } from './ui/use-hydrated';
 import { api } from './ui/providers';
+import { PasswordInput } from './ui/password-input';
 
 export function PasswordResetForm() {
   const { t, errorText } = useI18n();
@@ -72,10 +73,10 @@ export function PasswordResetForm() {
             onSubmit={(event) => void submit(event)}
             className="mt-8 space-y-5"
           >
-            <label className="field">
-              {t('New password')}
-              <input
-                type="password"
+            <div className="field">
+              <label htmlFor="new-password">{t('New password')}</label>
+              <PasswordInput
+                id="new-password"
                 autoComplete="new-password"
                 required
                 minLength={12}
@@ -83,11 +84,13 @@ export function PasswordResetForm() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-            </label>
-            <label className="field">
-              {t('Confirm new password')}
-              <input
-                type="password"
+            </div>
+            <div className="field">
+              <label htmlFor="confirm-new-password">
+                {t('Confirm new password')}
+              </label>
+              <PasswordInput
+                id="confirm-new-password"
                 autoComplete="new-password"
                 required
                 minLength={12}
@@ -95,7 +98,7 @@ export function PasswordResetForm() {
                 value={confirmation}
                 onChange={(event) => setConfirmation(event.target.value)}
               />
-            </label>
+            </div>
             {error && (
               <p role="alert" className="notice error">
                 {errorText(error)}

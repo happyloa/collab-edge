@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Layers3 } from 'lucide-react';
 import { api } from './ui/providers';
+import { PasswordInput } from './ui/password-input';
 const schema = z.object({
   email: z.email('Enter a valid email address'),
   password: z
@@ -96,10 +97,10 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
               </span>
             )}
           </label>
-          <label className="field">
-            {t('Password')}
-            <input
-              type="password"
+          <div className="field">
+            <label htmlFor="account-password">{t('Password')}</label>
+            <PasswordInput
+              id="account-password"
               autoComplete={registerMode ? 'new-password' : 'current-password'}
               {...register('password')}
             />
@@ -108,7 +109,7 @@ export function AuthForm({ registerMode = false }: { registerMode?: boolean }) {
                 {t(errors.password.message ?? 'Use at least 12 characters')}
               </span>
             )}
-          </label>
+          </div>
           {!registerMode && (
             <div className="text-right text-sm">
               <Link href="/reset-password" className="text-primary">

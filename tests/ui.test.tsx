@@ -3,7 +3,23 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { Attachments } from '../components/board/attachments';
 import { ThemeToggle } from '../components/ui/theme';
+import { PasswordInput } from '../components/ui/password-input';
 afterEach(cleanup);
+it('toggles password visibility without clearing the value or submitting', () => {
+  render(
+    <PasswordInput aria-label="Password" defaultValue="a private phrase" />,
+  );
+  const input = screen.getByLabelText('Password') as HTMLInputElement;
+  expect(input.type).toBe('password');
+  const show = screen.getByRole('button', { name: 'Show password' });
+  expect(show).toHaveAttribute('type', 'button');
+  fireEvent.click(show);
+  expect(input.type).toBe('text');
+  expect(input).toHaveValue('a private phrase');
+  fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
+  expect(input.type).toBe('password');
+  expect(input).toHaveValue('a private phrase');
+});
 it('viewers can download attachments but cannot upload or remove', () => {
   render(
     <Attachments

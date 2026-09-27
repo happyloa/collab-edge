@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
+import { PasswordInput } from '../ui/password-input';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
@@ -200,16 +201,18 @@ export function Dashboard() {
                         })();
                       }}
                     >
-                      <label className="field">
-                        {t('Confirm with your password')}
-                        <input
+                      <div className="field">
+                        <label htmlFor="delete-account-password">
+                          {t('Confirm with your password')}
+                        </label>
+                        <PasswordInput
+                          id="delete-account-password"
                           name="password"
-                          type="password"
                           required
                           maxLength={128}
                           autoComplete="current-password"
                         />
-                      </label>
+                      </div>
                       <label className="flex items-start gap-2">
                         <input
                           type="checkbox"
@@ -559,16 +562,18 @@ export function Dashboard() {
                                   ))}
                               </select>
                             </label>
-                            <label className="field flex-1">
-                              {t('Confirm with your password')}
-                              <input
-                                type="password"
+                            <div className="field flex-1">
+                              <label htmlFor="transfer-propose-password">
+                                {t('Confirm with your password')}
+                              </label>
+                              <PasswordInput
+                                id="transfer-propose-password"
                                 name="password"
                                 required
                                 maxLength={128}
                                 autoComplete="current-password"
                               />
-                            </label>
+                            </div>
                             <button
                               className="button secondary"
                               disabled={
@@ -619,16 +624,18 @@ export function Dashboard() {
                           });
                         }}
                       >
-                        <label className="field flex-1">
-                          {t('Confirm with your password')}
-                          <input
-                            type="password"
+                        <div className="field flex-1">
+                          <label htmlFor="transfer-accept-password">
+                            {t('Confirm with your password')}
+                          </label>
+                          <PasswordInput
+                            id="transfer-accept-password"
                             name="password"
                             required
                             maxLength={128}
                             autoComplete="current-password"
                           />
-                        </label>
+                        </div>
                         <button className="button">
                           {t('Accept ownership')}
                         </button>

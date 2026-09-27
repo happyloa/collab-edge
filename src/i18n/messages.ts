@@ -104,6 +104,8 @@ export const zh = {
   'Your name': '你的姓名',
   'Email address': '電子郵件',
   Password: '密碼',
+  'Show password': '顯示密碼',
+  'Hide password': '隱藏密碼',
   'Portfolio environment · limited capacity. Keep sensitive information out of shared demo boards.':
     '作品展示環境，使用量有限。請勿在共用示範看板中填入敏感資訊。',
   'Try as {person}': '以 {person} 體驗',
