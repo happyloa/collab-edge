@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
+  outputDir: '../showcase-test-results',
   workers: 1,
   use: {
     baseURL: 'http://localhost:4173/collab-edge/',
