@@ -96,7 +96,7 @@ Vinext 處理頁面與 HTTP API。每個看板由一個 BoardRoom 序列化變�
 
 ## 技術與目錄
 
-Vinext 1.0.0-beta.10、React 19.3.0、Vite 8.3.0、TypeScript 6.0.3、Tailwind CSS 4.3.3，搭配 Drizzle、Zod、TanStack Query 與 dnd-kit。實際鎖定版本以 [package.json](package.json) 與 [pnpm-lock.yaml](pnpm-lock.yaml) 為準；相容性取捨見 [dependencies.md](docs/dependencies.md)。
+Vinext 1.0.1、React 19.3.0、Vite 8.3.2、TypeScript 6.0.3、Tailwind CSS 4.3.3，搭配 Drizzle、Zod、TanStack Query 與 dnd-kit。實際鎖定版本以 [package.json](package.json) 與 [pnpm-lock.yaml](pnpm-lock.yaml) 為準；相容性取捨見 [dependencies.md](docs/dependencies.md)。
 
 | 目錄                   | 用途                          |
 | ---------------------- | ----------------------------- |
@@ -128,10 +128,11 @@ GitHub Actions 負責 CI；Cloudflare 原生 Workers Builds 連接本 repo，在
 
 系統設有每 IP 限流、每 24 小時最多 5,000 次動態請求、每日 2,000 次看板變更，以及工作區、卡片、事件與檔案配額。超過上限會拒絕操作；封存資料仍占配額。應用程式限制不是整個 Cloudflare 帳戶的帳單保證。
 
-正式網站的新帳號必須使用 Cloudflare Access 已驗證的信箱註冊。既有帳號可先登入，再於工作區畫面改用 Access 已驗證的信箱；示範帳號不能改用正式信箱。[密碼重設頁](app/reset-password/page.tsx)以同一個 Access 身分核對帳號，並撤銷所有舊的應用程式登入階段。有效的 Access 登入階段即可重設，不會另外寄送一次新驗證碼；未設定 Access 的本機環境不能使用重設功能。Access 仍是外層門禁，不會自動登入應用程式帳號。工作區擁有者可向現有成員提出轉移邀請；雙方須各自輸入帳號密碼，接收者須於七天內登入接受。正式站外層仍只允許擁有者指定信箱通過 Access，轉移邀請不會寄信，示範帳號無法轉移。非示範帳號可在先轉移所有工作區擁有權後，輸入密碼刪除帳號；系統會移除登入資料與成員資格，但已分享的卡片、留言及檔案會保留，作者資料匿名化。已刪除帳號仍占用終身帳號總額。尚未提供自動清理孤立附件與事件壓縮。富文字共同編輯、看板範本、通知、游標同步及組織管理是未來方向。Vinext 仍為 beta，升級前需驗證相容性。
+正式網站的新帳號必須使用 Cloudflare Access 已驗證的信箱註冊。既有帳號可先登入，再於工作區畫面改用 Access 已驗證的信箱；示範帳號不能改用正式信箱。[密碼重設頁](app/reset-password/page.tsx)以同一個 Access 身分核對帳號，並撤銷所有舊的應用程式登入階段。有效的 Access 登入階段即可重設，不會另外寄送一次新驗證碼；未設定 Access 的本機環境不能使用重設功能。Access 仍是外層門禁，不會自動登入應用程式帳號。工作區擁有者可向現有成員提出轉移邀請；雙方須各自輸入帳號密碼，接收者須於七天內登入接受。正式站外層仍只允許擁有者指定信箱通過 Access，轉移邀請不會寄信，示範帳號無法轉移。非示範帳號可在先轉移所有工作區擁有權後，輸入密碼刪除帳號；系統會移除登入資料與成員資格，但已分享的卡片、留言及檔案會保留，作者資料匿名化。已刪除帳號仍占用終身帳號總額。尚未提供自動清理孤立附件與事件壓縮。富文字共同編輯、看板範本、通知、游標同步及組織管理是未來方向。Vinext 已使用穩定版 1.0.1，升級前仍需驗證相容性。
 
 ## 延伸文件
 
+- [本次專案審查與改善順序](docs/project-review.md)：登入可靠性、錯誤恢復、資料成長與維護建議
 - [架構](docs/architecture.md)、[即時協定](docs/realtime-protocol.md)、[衝突處理](docs/conflict-resolution.md)
 - [安全與配額](docs/security.md)、[測試](docs/testing.md)、[部署](docs/deployment.md)
 - [交付狀態與未完成驗收](docs/delivery-status.md)、[開發規則](AGENTS.md)

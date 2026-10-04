@@ -79,20 +79,20 @@ The browser tracks lastSeenRevision and retries with exponential backoff and jit
 
 ## Technology stack
 
-| Layer                              | Installed version            |
-| ---------------------------------- | ---------------------------- |
-| Vinext / Cloudflare adapter        | 1.0.0-beta.10 / 1.0.0-beta.8 |
-| React / React DOM / RSC runtime    | 19.3.0                       |
-| Vite / TypeScript                  | 8.3.0 / 6.0.3                |
-| Tailwind / Vite integration        | 4.3.3                        |
-| Wrangler / Cloudflare Vite plugin  | 4.135.0 / 1.56.0             |
-| Drizzle ORM / Kit                  | 0.45.2 / 0.31.10             |
-| Zod / TanStack Query               | 4.6.5 / 5.103.1              |
-| React Hook Form / resolvers        | 7.88.0 / 5.9.1               |
-| dnd-kit core / sortable            | 6.3.1 / 10.0.0               |
-| Vitest / Cloudflare test plugin    | 4.1.11 / 1.1.13              |
-| Playwright / React Testing Library | 1.63.0 / 16.3.3              |
-| ESLint / Prettier / pnpm           | 10.11.0 / 3.9.8 / 12.5.1     |
+| Layer                              | Installed version        |
+| ---------------------------------- | ------------------------ |
+| Vinext / Cloudflare adapter        | 1.0.1 / 1.0.1            |
+| React / React DOM / RSC runtime    | 19.3.0                   |
+| Vite / TypeScript                  | 8.3.2 / 6.0.3            |
+| Tailwind / Vite integration        | 4.3.3                    |
+| Wrangler / Cloudflare Vite plugin  | 4.147.0 / 1.62.5         |
+| Drizzle ORM / Kit                  | 0.45.3 / 0.31.11         |
+| Zod / TanStack Query               | 4.6.5 / 5.104.1          |
+| React Hook Form / resolvers        | 7.89.0 / 5.9.1           |
+| dnd-kit core / sortable            | 6.3.1 / 10.0.0           |
+| Vitest / Cloudflare test plugin    | 4.1.11 / 1.3.6           |
+| Playwright / React Testing Library | 1.63.0 / 16.3.3          |
+| ESLint / Prettier / pnpm           | 10.12.0 / 3.9.9 / 12.5.1 |
 
 The exact reproducible graph lives in pnpm-lock.yaml. Compatibility pins, the ESLint bridge and Drizzle loader override are explained in [dependency decisions](docs/dependencies.md).
 
@@ -157,7 +157,7 @@ Passwords use a server-secret HMAC followed by PBKDF2-HMAC-SHA256 with 100,000 i
 
 ## Engineering decisions and tradeoffs
 
-- **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. Its beta compatibility surface remains an upstream risk.
+- **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. The project uses stable 1.0.1 and checks its App Router compatibility on every release.
 - **Durable Objects:** a natural coordination boundary per board, with explicit serialization across asynchronous I/O and hibernating sockets.
 - **D1:** one durable source of truth and atomic event/entity batches. Full-column card moves write changed positions with one JSON-expanded SQL statement inside the batch, avoiding a per-card query burst on Workers Free. A large move still counts every changed row toward D1's daily write allowance. Event and presence broadcasts reauthorize all recipients with one batched D1 query; the room remains capped at 20 sockets.
 - **R2:** private binary storage with random keys. R2 and D1 are not a distributed transaction; crashes can leave inaccessible objects, bounded by the upload budget.
@@ -167,6 +167,8 @@ Passwords use a server-secret HMAC followed by PBKDF2-HMAC-SHA256 with 100,000 i
 On the private site, new registrations must use the email verified by Cloudflare Access. Existing accounts using another email can sign in and adopt that verified address from the workspace screen; demo identities cannot adopt it. The [password reset page](app/reset-password/page.tsx) uses the same Access identity and revokes all previous app sessions. The current Access session is sufficient; resetting does not send a fresh code. Local development without Access cannot reset passwords. Access remains a separate outer gate and does not automatically sign users into an app account. Member invitations target existing app accounts, while ownership transfers target existing workspace members. Both recipients must be able to pass the outer Access gate; neither flow sends email. Demo identities cannot transfer ownership or delete their accounts. Account deletion requires transferring every owned workspace first; it removes login details and membership, but shared cards, comments, files and an anonymous author record remain. Deleted accounts still count against the lifetime user cap. Rich-text CRDTs, automated orphan cleanup and event compaction remain unimplemented. Archived cards remain retained and count toward quotas. The [custom verification email](docs/email/README.md) is a design artifact, not the production Access email.
 
 ## Roadmap
+
+See the [2026-10-05 project review](docs/project-review.md) for code-backed priorities and acceptance criteria covering authentication, error recovery, data growth and maintainability.
 
 CRDT rich text, board templates, notifications, cursor presence, a durable offline write queue, event compaction and organization administration.
 
