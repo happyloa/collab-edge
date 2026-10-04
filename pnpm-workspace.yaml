@@ -3,3 +3,11 @@ allowBuilds:
   workerd: true
 overrides:
   '@esbuild-kit/esm-loader': 'npm:tsx@4.23.15'
+  'fflate@>=0.7.0 <0.7.5': '0.7.5'
+audit:
+  # No upstream release fixes this advisory yet. The version-scoped patch bounds
+  # parser/walker nesting; CI checks the pinned graph and guard before the audit.
+  ignore:
+    - GHSA-vfj7-8cjw-p6xm
+patchedDependencies:
+  braces@3.0.3: patches/braces@3.0.3.patch
