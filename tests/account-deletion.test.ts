@@ -93,7 +93,11 @@ it('requires confirmation and refuses to delete a workspace owner', async () => 
   ]);
 
   expect((await remove(owner.cookie, password, false)).status).toBe(400);
-  expect((await remove(owner.cookie, 'wrong-password')).status).toBe(401);
+  const wrongPassword = await remove(owner.cookie, 'wrong-password');
+  expect(wrongPassword.status).toBe(401);
+  expect(await wrongPassword.json()).toMatchObject({
+    code: 'INVALID_CREDENTIALS',
+  });
   const blocked = await remove(owner.cookie);
   expect(blocked.status).toBe(409);
   expect(await blocked.json()).toEqual({

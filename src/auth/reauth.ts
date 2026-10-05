@@ -32,6 +32,7 @@ export async function confirmPassword(
       (await verifyPassword(password, user.password, authEnv.SESSION_SECRET)),
     401,
     'Incorrect password',
+    'INVALID_CREDENTIALS',
   );
   const token = tokenFrom(request);
   assert(token, 401, 'Please sign in');
