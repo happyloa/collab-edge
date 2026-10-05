@@ -10,7 +10,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command:
-      'corepack pnpm exec vite preview --config showcase/vite.config.ts --port 4173',
+      'node node_modules/vite/bin/vite.js preview --config showcase/vite.config.ts --port 4173',
     cwd: '..',
     url: 'http://localhost:4173/collab-edge/',
     timeout: 30000,
