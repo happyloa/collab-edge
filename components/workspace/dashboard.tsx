@@ -19,6 +19,7 @@ import { asError } from '../../src/lib/api-client';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { useHydrated } from '../ui/use-hydrated';
 import { Usage } from './usage';
+import { Restore } from './restore';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
@@ -318,6 +319,13 @@ export function Dashboard() {
                 <Usage
                   key={detail.data.workspace.id}
                   workspaceId={detail.data.workspace.id}
+                />
+              )}
+              {detail.data.role === 'OWNER' && session.data?.user && (
+                <Restore
+                  key={`${detail.data.workspace.id}:${session.data.user.id}`}
+                  workspaceId={detail.data.workspace.id}
+                  members={detail.data.members}
                 />
               )}
               <label className="mt-6 flex items-center gap-2 text-sm">

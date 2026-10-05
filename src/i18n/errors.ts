@@ -1,6 +1,45 @@
 import type { Locale } from './messages';
 
 const errors: Record<string, string> = {
+  'Temporary backup cleanup is incomplete. Try again.':
+    '暫存備份資料尚未清完，請再試一次。',
+  'Select the original backup file to resume this restore.':
+    '請選取原本的備份檔案，以繼續這次還原。',
+  'This restore has expired or belongs to another account. Cancel it before starting again.':
+    '這次還原已過期或由另一個帳號建立。請先取消，再重新開始。',
+  'Cancel this restore and clean up its temporary data before starting again.':
+    '請先取消這次還原並清除暫存資料，再重新開始。',
+  'Backup file exceeds 96 MiB.': '備份檔案超過 96 MiB 上限。',
+  'Select a valid CollabEdge JSON backup.':
+    '請選取有效的 CollabEdge JSON 備份。',
+  'Backup is invalid, damaged or exceeds board limits.':
+    '備份格式不符、內容損壞，或資料超過看板上限。',
+  'Board export failed. Please try again.': '看板匯出失敗，請再試一次。',
+  'Invalid backup payload': '備份資料格式不符。',
+  'Database daily capacity reached. Try again tomorrow.':
+    '資料庫已達每日限額，請保留備份並於明天再試。',
+  'Restore capacity reached. Keep the backup and try again later.':
+    '還原已達容量上限，請保留備份並稍後再試。',
+  'Another restore needs to finish or be cleaned up first.':
+    '請先完成其他還原，或清除其暫存資料。',
+  'Restore state or workspace ownership changed.':
+    '還原狀態或工作空間擁有者已變更，請重新確認後再試。',
+  'Backup contains duplicate IDs': '備份包含重複的資料 ID。',
+  'Restore failed. Keep the backup and try again.':
+    '還原失敗，請保留備份並再試一次。',
+  'Restore access denied': '只有目前的工作空間擁有者可以操作還原。',
+  'Restore belongs to another account': '這次還原由另一個帳號建立。',
+  'Restore is no longer accepting uploads': '這次還原已停止接受上傳。',
+  'Restore upload expired': '這次還原已過期，請取消後重新開始。',
+  'Upload backup records in order': '請依序上傳備份資料。',
+  'Backup upload is incomplete': '備份尚未上傳完成。',
+  'Backup transfer proof does not match': '上傳的資料與原備份不符。',
+  'Backup contains invalid revisions': '備份中的資料版本不符。',
+  'Backup contains broken relationships': '備份中的資料關聯不符。',
+  'A completed restore cannot be cancelled': '已完成的還原無法取消。',
+  'Finish or cancel the restore before cleanup':
+    '請先完成或取消還原，再清除暫存資料。',
+  'Backup record exceeds request limits': '單筆備份資料超過請求大小上限。',
   'Sign in to the original account to recover this draft.':
     '請登入原本的帳號，才能繼續處理這份草稿。',
   'Connection lost. Check your network and try again.':

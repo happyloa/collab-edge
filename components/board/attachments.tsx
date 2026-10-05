@@ -8,10 +8,12 @@ import { ApiErrorNotice } from '../ui/api-error-notice';
 export function Attachments({
   cardId,
   items,
+  references = [],
   readOnly,
 }: {
   cardId: string;
   items: Snapshot['attachments'];
+  references?: Snapshot['attachmentReferences'];
   readOnly: boolean;
 }) {
   const { t } = useI18n();
@@ -54,6 +56,29 @@ export function Attachments({
             </li>
           ))}
       </ul>
+      {references.some((item) => item.cardId === cardId) && (
+        <div className="mb-4 text-sm">
+          <p className="text-muted">
+            {t(
+              'Backup file references only. Original files are not available for download.',
+            )}
+          </p>
+          <ul className="mt-3 space-y-2">
+            {references
+              .filter((item) => item.cardId === cardId)
+              .map((item) => (
+                <li key={item.id} className="rounded-lg bg-background p-3">
+                  <span className="break-all">{item.filename}</span>
+                  <span className="ml-2 text-xs text-muted">
+                    {t('{bytes} bytes · File unavailable', {
+                      bytes: item.size,
+                    })}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
       <ApiErrorNotice error={error} />
       {!readOnly && (
         <label className="field">

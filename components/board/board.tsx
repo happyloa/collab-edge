@@ -31,7 +31,8 @@ import {
 } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ApiErrorNotice } from '../ui/api-error-notice';
-import { ApiError } from '../../src/lib/api-client';
+import { ApiError, asError } from '../../src/lib/api-client';
+import { createBoardBackup } from '../../src/backups/format';
 import { ThemeToggle } from '../ui/theme';
 import { CardDialog } from './card-dialog';
 import { useBoardDrafts } from './use-board-drafts';
@@ -275,32 +276,33 @@ function Board({ initial }: { initial: BoardData }) {
       coordinateGetter: keyboardCoordinates,
     }),
   );
-  function exportBoard() {
-    if (live.status !== 'Connected' || live.pending.length > 0) return;
-    const file = new Blob(
-      [
-        JSON.stringify(
-          {
-            format: 'collabedge.board.v1',
-            exportedAt: new Date().toISOString(),
-            snapshot: state,
-            people: initial.people,
-            attachmentContentsIncluded: false,
-          },
-          null,
-          2,
-        ),
-      ],
-      { type: 'application/json' },
-    );
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `collabedge-board-${state.board.id}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<Error | null>(null);
+  async function exportBoard() {
+    if (exporting || live.status !== 'Connected' || live.pending.length > 0)
+      return;
+    setExporting(true);
+    setExportError(null);
+    const snapshot = structuredClone(state);
+    const people = structuredClone(initial.people);
+    try {
+      const backup = await createBoardBackup(snapshot, people);
+      const file = new Blob([JSON.stringify(backup, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `collabedge-board-${snapshot.board.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (caught) {
+      setExportError(asError(caught, 'Board export failed. Please try again.'));
+    } finally {
+      setExporting(false);
+    }
   }
   function dragEnd({ active, over }: DragEndEvent) {
     if (filtered || readOnly) return;
@@ -407,7 +409,12 @@ function Board({ initial }: { initial: BoardData }) {
           <button
             className="button secondary"
             onClick={exportBoard}
-            disabled={live.status !== 'Connected' || live.pending.length > 0}
+            disabled={
+              exporting ||
+              live.status !== 'Connected' ||
+              live.pending.length > 0
+            }
+            aria-busy={exporting}
             title={t('Exports current board data without attachment files.')}
           >
             <Download size={16} />
@@ -416,6 +423,7 @@ function Board({ initial }: { initial: BoardData }) {
         </div>
       </div>
       <main className="p-4 sm:p-6">
+        <ApiErrorNotice error={exportError} className="mb-4" />
         {state.board.archived && (
           <p className="notice mb-4">
             {t(

@@ -255,10 +255,13 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       await readFile(await boardDownload.path(), 'utf8'),
     ) as {
       format: string;
+      checksum: { algorithm: string; value: string };
       snapshot: Snapshot;
       attachmentContentsIncluded: boolean;
     };
-    expect(exportedBoard.format).toBe('collabedge.board.v1');
+    expect(exportedBoard.format).toBe('collabedge.board.v2');
+    expect(exportedBoard.checksum.algorithm).toBe('SHA-256');
+    expect(exportedBoard.checksum.value).toMatch(/^[a-f0-9]{64}$/);
     expect(exportedBoard.snapshot.cards).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ title: 'Ready for launch' }),

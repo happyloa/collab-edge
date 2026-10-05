@@ -6,6 +6,8 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'Imported copies share a 64 MiB lifetime payload budget across the site. Archiving a board does not reset it.':
+    '全站匯入副本共用 64 MiB 的累計資料上限。封存看板不會重設這項用量。',
   'Capacity and limits': '容量與使用限制',
   Archived: '已封存',
   Columns: '欄位',
@@ -324,6 +326,42 @@ export const zh = {
     '草稿儲存空間已滿，請移除舊草稿，或保持此分頁開啟。',
   'Draft storage is unavailable. Keep this tab open or copy your edits.':
     '無法儲存草稿，請保持此分頁開啟，或複製修改內容。',
+  'Restore a board backup': '還原看板備份',
+  'Creates a separate board in this workspace. Existing boards stay unchanged. Attachment files and previous activity are not included.':
+    '在此工作空間建立獨立的看板，原看板會保留。備份不包含附件檔案與過去的活動紀錄。',
+  'Checking pending restores…': '正在檢查待完成的還原…',
+  'Uploaded {received} of {expected} records.':
+    '已上傳 {received} / {expected} 筆資料。',
+  'Backup upload progress': '備份上傳進度',
+  'Resume before {date} with the same file. The original assignee choices are retained.':
+    '請在 {date} 前選取同一份檔案續傳，原先選擇的指派對象會保留。',
+  'Open restored board': '開啟還原的看板',
+  'Clean up temporary backup data': '清除暫存備份資料',
+  'Cancel pending restore': '取消待完成的還原',
+  'Board backup file': '看板備份檔案',
+  '{columns} columns · {cards} cards · {comments} comments · {files} file references':
+    '{columns} 個欄位 · {cards} 張卡片 · {comments} 則留言 · {files} 筆檔案參照',
+  'Checksum verified. This detects file changes, not the identity of its author.':
+    '檔案校驗通過，可用來檢查內容是否變動；作者身分未經驗證。',
+  'Legacy backup: no checksum is available. Restore only files you trust.':
+    '這是舊版備份，沒有校驗碼。請只還原可信任的檔案。',
+  'Imported comments show the author name from the file as unverified history. File references cannot be downloaded.':
+    '匯入留言會顯示檔案中的作者名稱，並標示身分未經驗證。檔案參照無法下載。',
+  'Assign imported tasks from {name}': '將 {name} 原本的任務指派給',
+  'Select the original backup file to resume this restore.':
+    '請選取原本的備份檔案，以繼續這次還原。',
+  'I understand this creates a new board and uses the workspace capacity.':
+    '我了解這會建立新看板，並占用工作空間的容量。',
+  'Resume restore': '繼續還原',
+  'Restore as new board': '還原為新看板',
+  'One restore at a time across the site. Temporary data is limited to 80 MiB and seven days. Usage limits can pause a large restore; keep your file and retry after the limit resets.':
+    '全站同時只接受一筆還原。暫存資料上限為 80 MiB，保留七天。大型還原可能因使用限額而暫停；請保留檔案，待限額重設後再試。',
+  'Processing backup… Keep this page open.': '正在處理備份… 請保持此頁開啟。',
+  'Backup file references only. Original files are not available for download.':
+    '以下只保留備份中的檔案參照，無法下載原始檔案。',
+  '{bytes} bytes · File unavailable': '{bytes} 位元組 · 檔案無法取得',
+  'Imported author: {name} (unverified)': '匯入作者：{name}（身分未驗證）',
+  'board.import': '匯入看板',
 } as const;
 
 export type MessageKey = keyof typeof zh;

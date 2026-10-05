@@ -452,6 +452,13 @@ export function CardDialog({
             .map((c) => (
               <li key={c.id} className="rounded-lg bg-background p-3 text-sm">
                 <p className="whitespace-pre-wrap">{c.body}</p>
+                {c.importedAuthorName && (
+                  <p className="mt-2 text-xs text-muted">
+                    {t('Imported author: {name} (unverified)', {
+                      name: c.importedAuthorName,
+                    })}
+                  </p>
+                )}
                 <time className="mt-2 block text-xs text-muted">
                   {new Date(c.createdAt).toLocaleString(locale)}
                 </time>
@@ -509,6 +516,7 @@ export function CardDialog({
       <Attachments
         cardId={initial.id}
         items={state.attachments}
+        references={state.attachmentReferences}
         readOnly={readOnly}
       />
     </dialog>
