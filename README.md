@@ -145,6 +145,7 @@ Native Workers Builds verifies the app, checks deployment safety gates, applies 
 pnpm verify
 pnpm exec playwright install chromium
 pnpm test:e2e
+pnpm test:perf
 pnpm outdated
 pnpm audit
 ```
@@ -152,6 +153,8 @@ pnpm audit
 Workers integration uses real local workerd, D1, R2 and DOs. Tests cover atomic rollback, idempotency, revision increments, viewer rejection, hibernation, replay and conflict rules. React Testing Library checks UI permissions and validation. The two-browser Playwright test covers synchronization, conflicting edits, reconnect, comments and private attachments, and captures the screenshot above. [Test details →](docs/testing.md)
 
 `pnpm test:e2e` migrates and uses its own disposable local Cloudflare state and port, so repeated browser runs do not consume the normal development database's quotas.
+
+`pnpm test:perf` measures 25/100/200-card fixtures with up to 4,000 comments in isolated local Chromium. It records snapshot bytes, paint samples and interactions, and confirms keyboard moves persist without losing comments. See the [browser baseline and limits](docs/snapshot-performance.md) and [card keyboard acceptance](docs/keyboard-accessibility.md). These local measurements do not establish authenticated production latency.
 
 Registration commits the account and session together. API failures retain status and retry metadata; sign-in recovery opens a separate tab to keep current edits. Query cancellation, bounded retries and same-account board reconnection are described in [error recovery](docs/error-recovery.md).
 
