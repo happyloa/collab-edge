@@ -30,6 +30,7 @@ Realtime collaboration is more than broadcasting a new card title. Two people ca
 - Hibernating WebSockets, live active/idle and viewed-card presence, and ordered event delivery.
 - Optimistic creation, edits and moves, with explicit pending, failed and conflicted states.
 - Per-field conflict detection and a preserved draft with an explicit retry action.
+- Browser draft recovery across reloads, with seven-day expiry, shared count/size limits, separate tab records and account cleanup. Recovered mutations require review and retain their original UUID for deduplication. [Storage behavior and limits](docs/local-drafts.md).
 - Reconnect replay, revision-gap detection and snapshot fallback.
 - Private, authorized R2 attachments with MIME/signature validation and bounded uploads; enabled locally, gated in production.
 - Persistent board activity loaded on demand with older entries available in bounded pages; light/dark themes, responsive scrolling, keyboard controls, GSAP home-page storytelling, short in-app interaction animations, and reduced-motion support. See [motion direction](docs/motion-references.md).
