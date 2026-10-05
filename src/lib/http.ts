@@ -38,6 +38,7 @@ export async function body<T>(
 }
 export function route(fn: (request: Request) => Promise<Response>) {
   return async (request: Request) => {
+    let response: Response;
     try {
       if (!['GET', 'HEAD'].includes(request.method)) {
         assert(
@@ -46,44 +47,60 @@ export function route(fn: (request: Request) => Promise<Response>) {
           'Invalid request origin',
         );
       }
-      const response = await fn(request);
-      response.headers.set('Cache-Control', 'no-store');
-      response.headers.set('X-Content-Type-Options', 'nosniff');
-      return response;
+      response = await fn(request);
     } catch (error) {
       if (
         error instanceof Error &&
         /(?:quota|budget|capacity|limit) reached/i.test(error.message)
       ) {
-        return Response.json(
+        response = Response.json(
           {
             error:
               'This demo has reached its usage limit. Please try again later or contact the owner.',
+            code: 'USAGE_LIMIT',
           },
-          { status: 429, headers: { 'Cache-Control': 'no-store' } },
+          { status: 429 },
         );
-      }
-      if (error instanceof AppError)
-        return Response.json(
-          { error: error.message },
-          { status: error.status },
+      } else if (error instanceof AppError) {
+        response = Response.json(
+          { error: error.message, code: error.code },
+          {
+            status: error.status,
+            headers:
+              error.status === 429 && /^Too many/i.test(error.message)
+                ? { 'Retry-After': '60' }
+                : undefined,
+          },
         );
-      if (error instanceof z.ZodError)
-        return Response.json(
-          { error: 'Invalid request payload' },
+      } else if (error instanceof z.ZodError) {
+        response = Response.json(
+          { error: 'Invalid request payload', code: 'INVALID_REQUEST' },
           { status: 400 },
         );
-      console.error(
-        JSON.stringify({
-          event: 'request_failed',
-          path: new URL(request.url).pathname,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        }),
-      );
-      return Response.json(
-        { error: 'Request failed. Please try again.' },
-        { status: 500 },
-      );
+      } else {
+        console.error(
+          JSON.stringify({
+            event: 'request_failed',
+            path: new URL(request.url).pathname,
+            error: error instanceof Error ? error.name : 'Unknown error',
+          }),
+        );
+        response = Response.json(
+          {
+            error: 'Request failed. Please try again.',
+            code: 'INTERNAL_ERROR',
+          },
+          { status: 500 },
+        );
+      }
     }
+    const headers = new Headers(response.headers);
+    headers.set('Cache-Control', 'no-store');
+    headers.set('X-Content-Type-Options', 'nosniff');
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   };
 }

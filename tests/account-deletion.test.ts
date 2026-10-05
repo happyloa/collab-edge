@@ -97,6 +97,7 @@ it('requires confirmation and refuses to delete a workspace owner', async () => 
   const blocked = await remove(owner.cookie);
   expect(blocked.status).toBe(409);
   expect(await blocked.json()).toEqual({
+    code: 'CONFLICT',
     error: 'Transfer ownership of your workspaces before deleting your account',
   });
   expect(

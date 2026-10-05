@@ -3,12 +3,21 @@ export async function requestBudget(
   request: Request,
   env: Env,
 ): Promise<Response | null> {
-  const reject = (message: string, status: number, retryAfter: string) =>
+  const reject = (
+    message: string,
+    status: number,
+    retryAfter: string,
+    code = httpErrorCode(status),
+  ) =>
     Response.json(
-      { error: message },
+      { error: message, code },
       {
         status,
-        headers: { 'Cache-Control': 'no-store', 'Retry-After': retryAfter },
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'Retry-After': retryAfter,
+        },
       },
     );
   try {
@@ -24,6 +33,7 @@ export async function requestBudget(
         'The site has reached its daily usage limit. Please try again tomorrow.',
         429,
         '86400',
+        'USAGE_LIMIT',
       );
     return null;
   } catch {
@@ -34,3 +44,4 @@ export async function requestBudget(
     );
   }
 }
+import { httpErrorCode } from './errors';
