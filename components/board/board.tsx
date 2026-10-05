@@ -2,7 +2,7 @@
 import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useState, useMemo, useCallback } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   DndContext,
   KeyboardSensor,
@@ -35,15 +35,12 @@ import { ApiError, asError } from '../../src/lib/api-client';
 import { createBoardBackup } from '../../src/backups/format';
 import { ThemeToggle } from '../ui/theme';
 import { CardDialog } from './card-dialog';
+import { ActivityPanel } from './activity-panel';
 import { useBoardDrafts } from './use-board-drafts';
 import type { CardDraft } from '../../src/drafts/store';
 import { useBoard } from '../../src/realtime/socket-client';
 import { matchesCard, localToday } from '../../src/realtime/card-filters';
-import type {
-  Snapshot,
-  Command,
-  BoardEvent,
-} from '../../src/realtime/protocol';
+import type { Snapshot, Command } from '../../src/realtime/protocol';
 type BoardData = {
   snapshot: Snapshot;
   role: string;
@@ -51,7 +48,6 @@ type BoardData = {
   people: { id: string; name: string }[];
 };
 type Card = Snapshot['cards'][number];
-type ActivityPage = { events: BoardEvent[]; nextBefore: number | null };
 export function BoardLoader({ id }: { id: string }) {
   const { t } = useI18n();
 
@@ -188,17 +184,6 @@ function Board({ initial }: { initial: BoardData }) {
   const [restoredDraft, setRestoredDraft] = useState<CardDraft | null>(null);
   const drafts = useBoardDrafts(initial.user.id, initial.snapshot.board.id);
   const [showActivity, setShowActivity] = useState(false);
-  const history = useInfiniteQuery({
-    queryKey: ['activity', initial.snapshot.board.id],
-    enabled: showActivity,
-    initialPageParam: undefined as number | undefined,
-    queryFn: ({ pageParam, signal }) =>
-      api<ActivityPage>(
-        `/api/boards/${initial.snapshot.board.id}/activity?limit=30${pageParam === undefined ? '' : `&before=${pageParam}`}`,
-        { signal },
-      ),
-    getNextPageParam: (lastPage) => lastPage.nextBefore ?? undefined,
-  });
   const live = useBoard(
     initial.snapshot,
     initial.user.id,
@@ -206,14 +191,6 @@ function Board({ initial }: { initial: BoardData }) {
     drafts.lease,
   );
   const { state } = live;
-  const activity = [
-    ...new Map(
-      [
-        ...(history.data?.pages.flatMap((page) => page.events) ?? []),
-        ...live.activity,
-      ].map((event) => [event.eventId, event]),
-    ).values(),
-  ].sort((a, b) => b.revision - a.revision);
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
@@ -857,57 +834,11 @@ function Board({ initial }: { initial: BoardData }) {
             )}
           </div>
         </DndContext>
-        {showActivity && (
-          <section className="surface motion-reveal p-6">
-            <h2 className="font-semibold">{t('Recent activity')}</h2>
-            {history.isPending && (
-              <p role="status" className="mt-3 text-sm text-muted">
-                {t('Loading activity…')}
-              </p>
-            )}
-            <ApiErrorNotice
-              error={history.error}
-              className="mt-3"
-              retryLabel="Retry activity"
-              onRetry={() => {
-                if (history.isFetchNextPageError) void history.fetchNextPage();
-                else void history.refetch();
-              }}
-            />
-            {!history.isPending && !history.error && activity.length === 0 && (
-              <p className="mt-3 text-sm text-muted">
-                {t('Board updates will appear here.')}
-              </p>
-            )}
-            <ol className="mt-3 space-y-3">
-              {activity.map((e) => (
-                <li
-                  key={e.eventId}
-                  className="motion-reveal flex gap-4 text-sm"
-                >
-                  <span className="text-muted">#{e.revision}</span>
-                  <span>
-                    {locale === 'en' ? e.type.replace('.', ' · ') : t(e.type)}
-                  </span>
-                  <time className="ml-auto text-xs text-muted">
-                    {new Date(e.createdAt).toLocaleTimeString(locale)}
-                  </time>
-                </li>
-              ))}
-            </ol>
-            {history.hasNextPage && !history.error && (
-              <button
-                className="button secondary mt-4"
-                disabled={history.isFetchingNextPage}
-                onClick={() => void history.fetchNextPage()}
-              >
-                {history.isFetchingNextPage
-                  ? t('Loading older activity…')
-                  : t('Load older activity')}
-              </button>
-            )}
-          </section>
-        )}
+        <ActivityPanel
+          boardId={state.board.id}
+          open={showActivity}
+          liveEvents={live.activity}
+        />
       </main>
       {selected && (
         <CardDialog
