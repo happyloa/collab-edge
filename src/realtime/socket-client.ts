@@ -9,15 +9,23 @@ import {
   type BoardEvent,
 } from './protocol';
 import { applyEvent, optimistic } from './board-reducer';
+import {
+  listStoredDrafts,
+  saveDraft,
+  removeDraft,
+  type DraftLease,
+  draftErrorMessage,
+} from '../drafts/store';
 export type Pending = {
   mutation: Mutation;
-  state: 'pending' | 'failed' | 'conflicted';
+  state: 'pending' | 'failed' | 'conflicted' | 'recovered';
   error?: string;
 };
 export function useBoard(
   initial: Snapshot,
   actorId: string,
   selectedCardId?: string,
+  draftLease: DraftLease | null = null,
 ) {
   const [confirmed, setConfirmed] = useState(initial);
   const authoritative = useRef(initial);
@@ -30,6 +38,19 @@ export function useBoard(
   const [error, setError] = useState('');
   const [connectionVersion, setConnectionVersion] = useState(0);
   const [role, setRole] = useState<'OWNER' | 'EDITOR' | 'VIEWER' | null>(null);
+  const [draftError, setDraftError] = useState('');
+  const draftLeaseRef = useRef(draftLease);
+  useEffect(() => {
+    draftLeaseRef.current = draftLease;
+  }, [draftLease]);
+  const persistence = useRef(Promise.resolve());
+  const persist = useCallback((action: () => Promise<void>) => {
+    const next = persistence.current.then(action);
+    persistence.current = next.catch((error) =>
+      setDraftError(draftErrorMessage(error)),
+    );
+    return next;
+  }, []);
   const ownPresence = useRef<Pick<Presence, 'status' | 'selectedCardId'>>({
     status: 'active',
   });
@@ -83,10 +104,73 @@ export function useBoard(
       window.removeEventListener('keydown', active);
     };
   }, [sendPresence]);
-  const updatePending = useCallback((fn: (items: Pending[]) => Pending[]) => {
-    pendingRef.current = fn(pendingRef.current);
-    setPending(pendingRef.current);
-  }, []);
+  const updatePending = useCallback(
+    (fn: (items: Pending[]) => Pending[]) => {
+      const before = pendingRef.current;
+      pendingRef.current = fn(pendingRef.current);
+      setPending(pendingRef.current);
+      const lease = draftLeaseRef.current;
+      if (!lease) return;
+      const after = pendingRef.current;
+      for (const item of before) {
+        const next = after.find(
+          (entry) =>
+            entry.mutation.clientMutationId === item.mutation.clientMutationId,
+        );
+        if (!next)
+          void persist(() =>
+            removeDraft(lease, item.mutation.clientMutationId),
+          ).catch(() => {});
+        else if (next !== item && next.state !== 'recovered')
+          void persist(() =>
+            saveDraft(lease, {
+              kind: 'mutation',
+              version: 1,
+              id: next.mutation.clientMutationId,
+              ownerId: actorId,
+              boardId: initial.board.id,
+              mutation: next.mutation,
+              state: next.state === 'recovered' ? 'pending' : next.state,
+              error: next.error?.slice(0, 1000),
+              updatedAt: Date.now(),
+            }),
+          ).catch(() => {});
+      }
+    },
+    [actorId, initial.board.id, persist],
+  );
+  useEffect(() => {
+    if (!draftLease) return;
+    let active = true;
+    void listStoredDrafts(draftLease, initial.board.id)
+      .then((entries) => {
+        if (!active) return;
+        const restored: Pending[] = entries
+          .filter((entry) => entry.kind === 'mutation')
+          .map((entry) => ({
+            mutation: entry.mutation,
+            state: entry.state === 'pending' ? 'recovered' : entry.state,
+            error: entry.error,
+          }));
+        updatePending((items) => [
+          ...items,
+          ...restored.filter(
+            (entry) =>
+              !items.some(
+                (item) =>
+                  item.mutation.clientMutationId ===
+                  entry.mutation.clientMutationId,
+              ),
+          ),
+        ]);
+      })
+      .catch((error) => {
+        if (active) setDraftError(draftErrorMessage(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [draftLease, initial.board.id, updatePending]);
   useEffect(() => {
     let stopped = false;
     let attempt = 0;
@@ -283,25 +367,65 @@ export function useBoard(
     sendPresence,
     updatePending,
   ]);
-  const mutate = (
-    command: Command,
-    baseRevision = authoritative.current.board.revision,
-  ) => {
-    if (
-      socket.current?.readyState !== WebSocket.OPEN ||
-      status !== 'Connected'
-    ) {
+  const submitMutation = async (mutation: Mutation) => {
+    const ws = socket.current;
+    if (ws?.readyState !== WebSocket.OPEN || status !== 'Connected') {
       setError('Reconnect before submitting. Your draft is preserved.');
       return false;
     }
+    if (!draftLease) {
+      setDraftError(
+        'Draft storage is unavailable. Keep this tab open or copy your edits.',
+      );
+      return false;
+    }
+    try {
+      await persist(() =>
+        saveDraft(draftLease, {
+          kind: 'mutation',
+          version: 1,
+          id: mutation.clientMutationId,
+          ownerId: actorId,
+          boardId: initial.board.id,
+          mutation,
+          state: 'pending',
+          updatedAt: Date.now(),
+        }),
+      );
+    } catch {
+      return false;
+    }
+    setDraftError('');
+    // The session/socket may change while the device transaction commits.
+    if (socket.current !== ws || ws.readyState !== WebSocket.OPEN) {
+      updatePending((items) => [
+        ...items.filter(
+          (item) =>
+            item.mutation.clientMutationId !== mutation.clientMutationId,
+        ),
+        { mutation, state: 'recovered' },
+      ]);
+      return true;
+    }
+    updatePending((items) => [
+      ...items.filter(
+        (item) => item.mutation.clientMutationId !== mutation.clientMutationId,
+      ),
+      { mutation, state: 'pending' },
+    ]);
+    ws.send(JSON.stringify({ type: 'mutate', mutation }));
+    return true;
+  };
+  const mutate = async (
+    command: Command,
+    baseRevision = authoritative.current.board.revision,
+  ) => {
     const mutation = {
       clientMutationId: crypto.randomUUID(),
       baseRevision,
       command,
     };
-    updatePending((items) => [...items, { mutation, state: 'pending' }]);
-    socket.current.send(JSON.stringify({ type: 'mutate', mutation }));
-    return true;
+    return submitMutation(mutation);
   };
   let state = confirmed;
   for (const item of pending)
@@ -319,15 +443,26 @@ export function useBoard(
     pending,
     activity,
     error,
+    draftError,
     role,
     reconnect: () => setConnectionVersion((version) => version + 1),
     mutate,
-    dismiss: (id: string) =>
-      updatePending((items) =>
-        items.filter((item) => item.mutation.clientMutationId !== id),
-      ),
-    retry: (item: Pending) => {
-      if (mutate(item.mutation.command))
+    dismiss: async (id: string) => {
+      if (!draftLease) return;
+      try {
+        await persist(() => removeDraft(draftLease, id));
+        updatePending((items) =>
+          items.filter((item) => item.mutation.clientMutationId !== id),
+        );
+      } catch {
+        /* Retain the visible draft when its device copy cannot be deleted. */
+      }
+    },
+    retry: async (item: Pending) => {
+      // An uncertain recovered write retains its UUID and original revision.
+      // First let the server deduplicate it or report a real field conflict.
+      if (item.state === 'recovered') return submitMutation(item.mutation);
+      if (await mutate(item.mutation.command))
         updatePending((items) => items.filter((v) => v !== item));
     },
   };

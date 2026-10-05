@@ -1,7 +1,6 @@
 'use client';
 import { useI18n } from './ui/i18n';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { api } from './ui/providers';
 import { useHydrated } from './ui/use-hydrated';
 import { asError } from '../src/lib/api-client';
@@ -12,7 +11,6 @@ export function DemoEntry() {
   const hydrated = useHydrated();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const router = useRouter();
   return (
     <div className="mt-6">
       <div className="flex flex-wrap gap-3">
@@ -29,7 +27,7 @@ export function DemoEntry() {
                   '/api/auth/demo',
                   { method: 'POST', body: JSON.stringify({ person }) },
                 );
-                router.push(`/boards/${result.boardId}`);
+                location.assign(`/boards/${result.boardId}`);
               } catch (e) {
                 setError(asError(e, 'Unable to open demo'));
                 setBusy(false);

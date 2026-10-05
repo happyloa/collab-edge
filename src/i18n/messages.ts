@@ -285,6 +285,28 @@ export const zh = {
   'Card moved.': '已移動卡片。',
   'Card dropped.': '已放下卡片。',
   'Drag cancelled.': '已取消拖曳。',
+  'Drafts on this device': '此裝置上的草稿',
+  'Saved for seven days in this browser. Review a draft before sending it.':
+    '草稿會在此瀏覽器保存七天，送出前請先確認內容。',
+  'Review draft': '檢視草稿',
+  'Review draft for {title}': '檢視 {title} 的草稿',
+  'Untitled draft': '未命名草稿',
+  'Draft status': '草稿狀態',
+  'Unsent comment': '尚未送出的留言',
+  'Saving draft on this device…': '正在此裝置保存草稿…',
+  'Draft saved on this device.': '草稿已保存在此裝置。',
+  'Keep your edits on this device before closing?':
+    '關閉前，要將修改保存在此裝置嗎？',
+  'Keep draft and close': '保留草稿並關閉',
+  'Discard and close': '捨棄修改並關閉',
+  'Continue editing': '繼續編輯',
+  'Recovered edit — review before sending': '已找回修改，送出前請先確認',
+  'The account changed. This tab cannot save drafts on this device.':
+    '帳號已切換，此分頁無法再將草稿保存在裝置上。',
+  'Draft storage is full. Remove an older draft or keep this tab open.':
+    '草稿儲存空間已滿，請移除舊草稿，或保持此分頁開啟。',
+  'Draft storage is unavailable. Keep this tab open or copy your edits.':
+    '無法儲存草稿，請保持此分頁開啟，或複製修改內容。',
 } as const;
 
 export type MessageKey = keyof typeof zh;

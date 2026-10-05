@@ -1,4 +1,5 @@
 import { httpErrorCode } from './errors';
+import { activateDraftOwner, clearDrafts } from '../drafts/store';
 
 export class ApiError extends Error {
   readonly retryAt: number | null;
@@ -141,6 +142,33 @@ export async function api<T>(url: string, options?: RequestInit): Promise<T> {
       code,
       retryAfter(response.headers.get('Retry-After')),
     );
+  }
+  if (typeof window !== 'undefined') {
+    const method = options?.method?.toUpperCase();
+    try {
+      if (
+        method === 'POST' &&
+        ['/api/auth/login', '/api/auth/register', '/api/auth/demo'].includes(
+          url,
+        )
+      ) {
+        const result = data as {
+          user?: { id?: unknown };
+          userId?: unknown;
+        } | null;
+        const ownerId = result?.user?.id ?? result?.userId;
+        if (typeof ownerId === 'string') await activateDraftOwner(ownerId);
+      } else if (
+        (method === 'POST' &&
+          ['/api/auth/logout', '/api/auth/password-reset'].includes(url)) ||
+        (method === 'DELETE' && url === '/api/auth/account')
+      ) {
+        await clearDrafts();
+      }
+    } catch {
+      // Storage restrictions must not turn a successful authentication into a
+      // failed login. Board draft reads/writes report storage failures visibly.
+    }
   }
   return data as T;
 }

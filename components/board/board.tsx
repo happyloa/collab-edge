@@ -1,7 +1,7 @@
 'use client';
 import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   DndContext,
@@ -24,7 +24,6 @@ import {
   Layers3,
   Plus,
   GripVertical,
-  X,
   MessageSquare,
   ArrowLeft,
   Activity,
@@ -34,7 +33,9 @@ import { api } from '../ui/providers';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError } from '../../src/lib/api-client';
 import { ThemeToggle } from '../ui/theme';
-import { Attachments } from './attachments';
+import { CardDialog } from './card-dialog';
+import { useBoardDrafts } from './use-board-drafts';
+import type { CardDraft } from '../../src/drafts/store';
 import { useBoard } from '../../src/realtime/socket-client';
 import { matchesCard, localToday } from '../../src/realtime/card-filters';
 import type {
@@ -183,6 +184,8 @@ function Column({
 function Board({ initial }: { initial: BoardData }) {
   const { t, errorText, locale } = useI18n();
   const [selected, setSelected] = useState<Card | null>(null);
+  const [restoredDraft, setRestoredDraft] = useState<CardDraft | null>(null);
+  const drafts = useBoardDrafts(initial.user.id, initial.snapshot.board.id);
   const [showActivity, setShowActivity] = useState(false);
   const history = useInfiniteQuery({
     queryKey: ['activity', initial.snapshot.board.id],
@@ -195,7 +198,12 @@ function Board({ initial }: { initial: BoardData }) {
       ),
     getNextPageParam: (lastPage) => lastPage.nextBefore ?? undefined,
   });
-  const live = useBoard(initial.snapshot, initial.user.id, selected?.id);
+  const live = useBoard(
+    initial.snapshot,
+    initial.user.id,
+    selected?.id,
+    drafts.lease,
+  );
   const { state } = live;
   const activity = [
     ...new Map(
@@ -363,7 +371,13 @@ function Board({ initial }: { initial: BoardData }) {
             <ArrowLeft size={13} />
             {t('Workspace')}
           </Link>
-          <h1 className="text-2xl font-semibold">{state.board.name}</h1>
+          <h1
+            data-board-heading
+            tabIndex={-1}
+            className="text-2xl font-semibold"
+          >
+            {state.board.name}
+          </h1>
           <p className="mt-2 text-sm text-muted">
             {t('Make progress visible. Keep your team in sync.')}
           </p>
@@ -379,7 +393,7 @@ function Board({ initial }: { initial: BoardData }) {
           )}
           <span className="badge">
             {t('{role} · Revision {revision}', {
-              role: t(initial.role),
+              role: t(live.role ?? initial.role),
               revision: state.board.revision,
             })}
           </span>
@@ -409,7 +423,7 @@ function Board({ initial }: { initial: BoardData }) {
             )}
           </p>
         )}
-        {state.board.archived && initial.role !== 'VIEWER' && (
+        {state.board.archived && (live.role ?? initial.role) !== 'VIEWER' && (
           <button
             className="button mb-4"
             disabled={live.status !== 'Connected'}
@@ -532,6 +546,64 @@ function Board({ initial }: { initial: BoardData }) {
           retryLabel="Reconnect board"
           onRetry={live.reconnect}
         />
+        {(drafts.error || live.draftError) && (
+          <p role="alert" className="notice mb-4">
+            {t(drafts.error || live.draftError)}
+          </p>
+        )}
+        {drafts.drafts.length > 0 && (
+          <section
+            aria-label={t('Drafts on this device')}
+            className="surface mb-4 space-y-3 p-4"
+          >
+            <h2 className="font-semibold">{t('Drafts on this device')}</h2>
+            <p className="text-sm text-muted">
+              {t(
+                'Saved for seven days in this browser. Review a draft before sending it.',
+              )}
+            </p>
+            {drafts.drafts.map((draft) => {
+              const card = state.cards.find((item) => item.id === draft.cardId);
+              return (
+                <article
+                  key={draft.id}
+                  className="flex flex-wrap items-center gap-3"
+                >
+                  <div className="min-w-0 flex-1 text-sm">
+                    <p>{draft.fields.title || t('Untitled draft')}</p>
+                    <p className="line-clamp-1 text-xs text-muted">
+                      {(draft.comment || draft.fields.description).slice(
+                        0,
+                        120,
+                      )}
+                    </p>
+                  </div>
+                  <time className="text-xs text-muted">
+                    {new Date(draft.updatedAt).toLocaleString(locale)}
+                  </time>
+                  <button
+                    className="button secondary"
+                    disabled={!card}
+                    aria-label={t('Review draft for {title}', {
+                      title: draft.fields.title || t('Untitled draft'),
+                    })}
+                    onClick={() => {
+                      if (card) {
+                        setRestoredDraft(draft);
+                        setSelected({ ...card });
+                      }
+                    }}
+                  >
+                    {t('Review draft')}
+                  </button>
+                  <button onClick={() => void drafts.discard(draft.id)}>
+                    {t('Discard draft')}
+                  </button>
+                </article>
+              );
+            })}
+          </section>
+        )}
         {live.pending
           .filter((p) => p.state !== 'pending')
           .map((p) => (
@@ -542,7 +614,11 @@ function Board({ initial }: { initial: BoardData }) {
             >
               <strong>
                 {t(
-                  p.state === 'conflicted' ? 'Edit conflict' : 'Could not save',
+                  p.state === 'conflicted'
+                    ? 'Edit conflict'
+                    : p.state === 'recovered'
+                      ? 'Recovered edit — review before sending'
+                      : 'Could not save',
                 )}
               </strong>
               <p className="my-2">{errorText(p.error)}</p>
@@ -684,7 +760,10 @@ function Board({ initial }: { initial: BoardData }) {
                         card={card}
                         readOnly={readOnly || filtered}
                         people={initial.people}
-                        open={() => setSelected({ ...card })}
+                        open={() => {
+                          setRestoredDraft(null);
+                          setSelected({ ...card });
+                        }}
                         pending={live.pending.some(
                           (p) =>
                             p.state === 'pending' &&
@@ -704,11 +783,11 @@ function Board({ initial }: { initial: BoardData }) {
                   )}
                   {!readOnly && (
                     <form
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
                         const form = e.currentTarget;
                         if (
-                          live.mutate({
+                          await live.mutate({
                             type: 'card.create',
                             payload: {
                               id: crypto.randomUUID(),
@@ -741,11 +820,11 @@ function Board({ initial }: { initial: BoardData }) {
             {!readOnly && (
               <form
                 className="w-64 shrink-0 p-2"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   const form = e.currentTarget;
                   if (
-                    live.mutate({
+                    await live.mutate({
                       type: 'column.create',
                       payload: {
                         id: crypto.randomUUID(),
@@ -824,16 +903,22 @@ function Board({ initial }: { initial: BoardData }) {
       </main>
       {selected && (
         <CardDialog
-          key={selected.id}
+          key={`${selected.id}:${restoredDraft?.id ?? 'new'}`}
           initial={selected}
           state={state}
-          readOnly={readOnly}
+          readOnly={readOnly || selected.archived}
           people={initial.people}
           mutate={live.mutate}
           reconnect={live.reconnect}
           connectionStatus={live.status}
           connectionError={live.error}
-          close={() => setSelected(null)}
+          ownerId={initial.user.id}
+          draftLease={drafts.lease}
+          restoredDraft={restoredDraft}
+          close={() => {
+            setSelected(null);
+            setRestoredDraft(null);
+          }}
         />
       )}
     </div>
@@ -845,7 +930,7 @@ function BoardSettings({
   close,
 }: {
   initial: Snapshot['board'];
-  mutate: (command: Command, base?: number) => boolean;
+  mutate: (command: Command, base?: number) => Promise<boolean>;
   close: () => void;
 }) {
   const { t } = useI18n();
@@ -859,10 +944,10 @@ function BoardSettings({
     >
       <form
         className="flex flex-wrap items-end gap-3"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           if (
-            mutate(
+            await mutate(
               { type: 'board.rename', payload: { id: initial.id, title } },
               initial.revision,
             )
@@ -893,9 +978,9 @@ function BoardSettings({
           </p>
           <button
             className="button secondary"
-            onClick={() => {
+            onClick={async () => {
               if (
-                mutate(
+                await mutate(
                   { type: 'board.archive', payload: { id: initial.id } },
                   initial.revision,
                 )
@@ -915,251 +1000,5 @@ function BoardSettings({
         </button>
       )}
     </section>
-  );
-}
-function CardDialog({
-  initial,
-  state,
-  readOnly,
-  mutate,
-  close,
-  people,
-  reconnect,
-  connectionStatus,
-  connectionError,
-}: {
-  initial: Card;
-  state: Snapshot;
-  readOnly: boolean;
-  mutate: (command: Command, base?: number) => boolean;
-  close: () => void;
-  people: BoardData['people'];
-  reconnect: () => void;
-  connectionStatus: string;
-  connectionError: string;
-}) {
-  const { t, locale } = useI18n();
-
-  const dialog = useRef<HTMLDialogElement>(null);
-  const [title, setTitle] = useState(initial.title);
-  const [description, setDescription] = useState(initial.description);
-  const [assigneeId, setAssigneeId] = useState(initial.assigneeId ?? '');
-  const [dueDate, setDueDate] = useState(initial.dueDate ?? '');
-  const [confirmArchive, setConfirmArchive] = useState(false);
-  const [base] = useState(state.board.revision);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
-  return (
-    <dialog
-      ref={dialog}
-      onClose={close}
-      aria-labelledby="card-dialog-title"
-      className="motion-dialog m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
-    >
-      <div className="mb-6 flex items-center justify-between">
-        <h2 id="card-dialog-title" className="eyebrow">
-          {t('CARD DETAILS')}
-        </h2>
-        <button
-          className="icon-button"
-          aria-label={t('Close card')}
-          onClick={close}
-        >
-          <X size={20} />
-        </button>
-      </div>
-      {connectionStatus === 'Access expired' && (
-        <ApiErrorNotice
-          error={new ApiError(connectionError, 401, 'UNAUTHENTICATED')}
-          className="mb-4"
-        />
-      )}
-      <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          className="button secondary"
-          onClick={reconnect}
-          disabled={
-            connectionStatus === 'Connecting' || connectionStatus === 'Syncing'
-          }
-        >
-          {t('Reconnect board')}
-        </button>
-      </div>
-      <form
-        className="space-y-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const payload: {
-            id: string;
-            title?: string;
-            description?: string;
-            assigneeId?: string | null;
-            dueDate?: string | null;
-          } = { id: initial.id };
-          if (title !== initial.title) payload.title = title;
-          if (description !== initial.description)
-            payload.description = description;
-          if ((assigneeId || null) !== initial.assigneeId)
-            payload.assigneeId = assigneeId || null;
-          if ((dueDate || null) !== initial.dueDate)
-            payload.dueDate = dueDate || null;
-          if (Object.keys(payload).length === 1) return;
-          if (mutate({ type: 'card.update', payload }, base)) close();
-        }}
-      >
-        <label className="field">
-          {t('Title')}
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            maxLength={160}
-            disabled={readOnly}
-          />
-        </label>
-        <label className="field">
-          {t('Description')}
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={10000}
-            disabled={readOnly}
-          />
-        </label>
-        <label className="field">
-          {t('Assignee')}
-          <select
-            aria-label={t('Assignee')}
-            disabled={readOnly}
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-          >
-            <option value="">{t('Unassigned')}</option>
-            {assigneeId && !people.some((p) => p.id === assigneeId) && (
-              <option value={assigneeId}>{t('Former member')}</option>
-            )}
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          {t('Due date')}
-          <input
-            type="date"
-            disabled={readOnly}
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </label>
-        {!readOnly && (
-          <div className="flex flex-wrap justify-between gap-3">
-            <button className="button">{t('Save changes')}</button>
-            <button
-              type="button"
-              className="text-sm text-destructive"
-              onClick={() => {
-                if (!confirmArchive) {
-                  setConfirmArchive(true);
-                  return;
-                }
-                if (
-                  mutate(
-                    { type: 'card.archive', payload: { id: initial.id } },
-                    base,
-                  )
-                )
-                  close();
-              }}
-            >
-              {t(confirmArchive ? 'Confirm archive card' : 'Archive card')}
-            </button>
-            {confirmArchive && (
-              <button type="button" onClick={() => setConfirmArchive(false)}>
-                {t('Cancel')}
-              </button>
-            )}
-          </div>
-        )}
-      </form>
-      {!readOnly && (
-        <label className="field mt-6">
-          {t('Move to')}
-          <select
-            value={
-              state.cards.find((c) => c.id === initial.id)?.columnId ??
-              initial.columnId
-            }
-            onChange={(e) =>
-              mutate({
-                type: 'card.move',
-                payload: {
-                  id: initial.id,
-                  columnId: e.target.value,
-                  beforeId: null,
-                },
-              })
-            }
-          >
-            {state.columns.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      <section className="mt-8 border-t border-border pt-6">
-        <h2 className="font-semibold">{t('Conversation')}</h2>
-        <ul className="my-4 space-y-3">
-          {state.comments
-            .filter((c) => c.cardId === initial.id)
-            .map((c) => (
-              <li key={c.id} className="rounded-lg bg-background p-3 text-sm">
-                <p className="whitespace-pre-wrap">{c.body}</p>
-                <time className="mt-2 block text-xs text-muted">
-                  {new Date(c.createdAt).toLocaleString(locale)}
-                </time>
-              </li>
-            ))}
-        </ul>
-        {!readOnly && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget;
-              if (
-                mutate({
-                  type: 'comment.create',
-                  payload: {
-                    id: crypto.randomUUID(),
-                    cardId: initial.id,
-                    body: String(new FormData(form).get('body')),
-                  },
-                })
-              )
-                form.reset();
-            }}
-          >
-            <label className="field">
-              {t('Add a comment')}
-              <textarea name="body" required maxLength={2000} />
-            </label>
-            <button className="button secondary mt-3">
-              {t('Post comment')}
-            </button>
-          </form>
-        )}
-      </section>
-      <Attachments
-        cardId={initial.id}
-        items={state.attachments}
-        readOnly={readOnly}
-      />
-    </dialog>
   );
 }

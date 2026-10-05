@@ -29,7 +29,7 @@ export const POST = route(async (request) => {
   );
   await seedDemo(env.DB);
   return Response.json(
-    { boardId: DEMO.board },
+    { boardId: DEMO.board, userId: DEMO[person] },
     { headers: { 'Set-Cookie': await createSession(DEMO[person], request) } },
   );
 });
