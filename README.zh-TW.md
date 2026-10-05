@@ -132,6 +132,7 @@ GitHub Actions 負責 CI；Cloudflare 原生 Workers Builds 連接本 repo，在
 
 ## 延伸文件
 
+- [API 與登入錯誤恢復](docs/error-recovery.md)：註冊交易、錯誤分類、保留輸入與同帳號重連
 - [本次專案審查與改善順序](docs/project-review.md)：登入可靠性、錯誤恢復、資料成長與維護建議
 - [架構](docs/architecture.md)、[即時協定](docs/realtime-protocol.md)、[衝突處理](docs/conflict-resolution.md)
 - [安全與配額](docs/security.md)、[測試](docs/testing.md)、[部署](docs/deployment.md)
