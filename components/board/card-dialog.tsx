@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
 import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
@@ -168,6 +168,37 @@ export function CardDialog({
     if (dirty) setConfirmClose(true);
     else close();
   }
+  function containTabFocus(event: KeyboardEvent<HTMLDialogElement>) {
+    if (
+      event.key !== 'Tab' ||
+      event.defaultPrevented ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey
+    )
+      return;
+    const controls = [
+      ...event.currentTarget.querySelectorAll<HTMLElement>(
+        'a[href], button, input, select, textarea, [tabindex]',
+      ),
+    ].filter(
+      (element) =>
+        element.tabIndex >= 0 &&
+        !element.matches(':disabled') &&
+        !element.closest('[inert]') &&
+        element.getClientRects().length > 0 &&
+        getComputedStyle(element).visibility !== 'hidden',
+    );
+    const destination = event.shiftKey ? controls.at(-1) : controls[0];
+    const boundary = event.shiftKey ? controls[0] : controls.at(-1);
+    // Native modal inertness protects the page, but Chromium can otherwise
+    // leave the document after the last control. Wrap only at the boundary;
+    // keep native keyboard navigation within date/select/file controls.
+    if (destination && document.activeElement === boundary) {
+      event.preventDefault();
+      destination.focus();
+    }
+  }
   async function discardAndClose() {
     setBusy(true);
     try {
@@ -195,6 +226,7 @@ export function CardDialog({
   return (
     <dialog
       ref={dialog}
+      onKeyDown={containTabFocus}
       onClose={requestClose}
       onCancel={(event) => {
         event.preventDefault();
