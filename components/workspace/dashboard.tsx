@@ -18,6 +18,7 @@ import { PasswordInput } from '../ui/password-input';
 import { asError } from '../../src/lib/api-client';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { useHydrated } from '../ui/use-hydrated';
+import { Usage } from './usage';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
@@ -313,6 +314,12 @@ export function Dashboard() {
               <p className="mt-3 text-muted">
                 {t('A shared view of what’s moving forward.')}
               </p>
+              {detail.data.role === 'OWNER' && (
+                <Usage
+                  key={detail.data.workspace.id}
+                  workspaceId={detail.data.workspace.id}
+                />
+              )}
               <label className="mt-6 flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

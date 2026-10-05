@@ -6,6 +6,23 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'Capacity and limits': '容量與使用限制',
+  Archived: '已封存',
+  Columns: '欄位',
+  Cards: '卡片',
+  'Limit reached': '已達上限',
+  'Archiving keeps data and does not free capacity. Shared server budgets can also prevent changes.':
+    '封存會保留資料，不會釋放容量。共用的伺服器配額也可能限制修改。',
+  'Loading capacity…': '正在讀取容量…',
+  'Measured at {time}': '讀取時間：{time}',
+  'Refresh capacity': '重新讀取容量',
+  'Workspace members': '工作區成員',
+  'Workspace boards': '工作區看板',
+  'Attachments are disabled in this environment.': '此環境未開放附件功能。',
+  'Most comments on one card': '單張卡片最多留言數',
+  'Accepted board changes': '已接受的看板修改',
+  '{archived} archived cards · {comments} comments total':
+    '已封存 {archived} 張卡片・共 {comments} 則留言',
   'Try again': '重試',
   'Reconnect board': '重新連線看板',
   'Try again in {seconds} seconds.': '請在 {seconds} 秒後重試。',

@@ -46,6 +46,7 @@ const errors: Record<string, string> = {
   'Please sign in': '請先登入',
   'Session expired': '登入已過期，請重新登入。',
   'Workspace access denied': '你沒有此工作區的存取權限',
+  'Workspace usage access denied': '只有目前的工作區擁有者能查看容量。',
   'Viewers cannot edit': '檢視者無法編輯',
   'Only the owner can manage members': '只有擁有者可以管理成員',
   'This user must register first': '此使用者必須先註冊帳號',
