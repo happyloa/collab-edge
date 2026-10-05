@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { LocaleProvider } from './i18n';
 import type { Locale } from '../../src/i18n/messages';
+import { shouldRetryApiError } from '../../src/lib/api-client';
+export { api } from '../../src/lib/api-client';
 export function Providers({
   children,
   locale = 'en',
@@ -14,7 +16,11 @@ export function Providers({
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
+          queries: {
+            staleTime: 30_000,
+            retry: shouldRetryApiError,
+            refetchOnWindowFocus: false,
+          },
         },
       }),
   );
@@ -23,26 +29,4 @@ export function Providers({
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     </LocaleProvider>
   );
-}
-export async function api<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...(options?.body instanceof FormData
-        ? {}
-        : { 'Content-Type': 'application/json' }),
-      ...options?.headers,
-    },
-  });
-  const data: unknown = await response.json();
-  if (!response.ok)
-    throw new Error(
-      data &&
-        typeof data === 'object' &&
-        'error' in data &&
-        typeof data.error === 'string'
-        ? data.error
-        : 'Request failed',
-    );
-  return data as T;
 }

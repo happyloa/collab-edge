@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from './ui/providers';
 import { useHydrated } from './ui/use-hydrated';
+import { asError } from '../src/lib/api-client';
+import { ApiErrorNotice } from './ui/api-error-notice';
 export function DemoEntry() {
-  const { t, errorText } = useI18n();
+  const { t } = useI18n();
 
   const hydrated = useHydrated();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
   return (
     <div className="mt-6">
@@ -21,6 +23,7 @@ export function DemoEntry() {
             className="button secondary"
             onClick={async () => {
               setBusy(true);
+              setError(null);
               try {
                 const result = await api<{ boardId: string }>(
                   '/api/auth/demo',
@@ -28,9 +31,7 @@ export function DemoEntry() {
                 );
                 router.push(`/boards/${result.boardId}`);
               } catch (e) {
-                setError(
-                  e instanceof Error ? e.message : 'Unable to open demo',
-                );
+                setError(asError(e, 'Unable to open demo'));
                 setBusy(false);
               }
             }}
@@ -42,11 +43,7 @@ export function DemoEntry() {
       <p className="mt-3 text-xs text-muted">
         {t('Shared public demo · open Bob in a private window to collaborate.')}
       </p>
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
-          {errorText(error)}
-        </p>
-      )}
+      <ApiErrorNotice error={error} className="mt-3" />
     </div>
   );
 }

@@ -28,6 +28,8 @@ export function useBoard(
   const [presence, setPresence] = useState<Presence[]>([]);
   const [activity, setActivity] = useState<BoardEvent[]>([]);
   const [error, setError] = useState('');
+  const [connectionVersion, setConnectionVersion] = useState(0);
+  const [role, setRole] = useState<'OWNER' | 'EDITOR' | 'VIEWER' | null>(null);
   const ownPresence = useRef<Pick<Presence, 'status' | 'selectedCardId'>>({
     status: 'active',
   });
@@ -106,6 +108,7 @@ export function useBoard(
         value: JSON.stringify({ type: 'presence', status: 'active' }),
       };
       let targetRevision = -1;
+      let rejectedIdentity = false;
       let lastMessageAt = Date.now();
       const synchronize = () => {
         if (authoritative.current.board.revision < targetRevision) return;
@@ -118,6 +121,7 @@ export function useBoard(
         targetRevision = Infinity;
       };
       ws.onmessage = (event) => {
+        if (stopped || socket.current !== ws || rejectedIdentity) return;
         lastMessageAt = Date.now();
         let decoded: unknown;
         try {
@@ -133,6 +137,15 @@ export function useBoard(
         }
         const message = parsed.data;
         if (message.type === 'ready') {
+          if (message.userId !== actorId) {
+            rejectedIdentity = true;
+            setStatus('Access expired');
+            setError('Sign in to the original account to recover this draft.');
+            ws.close(4001, 'Account changed');
+            return;
+          }
+          setRole(message.role);
+          setError('');
           attempt = 0;
           targetRevision = message.revision;
           setStatus('Syncing');
@@ -215,9 +228,12 @@ export function useBoard(
         if (stopped || socket.current !== ws) return;
         socket.current = null;
         setPresence([]);
-        if (event.code === 1008) {
+        if (rejectedIdentity || event.code === 1008) {
           setStatus('Access expired');
-          setError('Your session or membership expired. Please sign in again.');
+          if (!rejectedIdentity)
+            setError(
+              'Your session or membership expired. Please sign in again.',
+            );
           return;
         }
         setStatus(navigator.onLine ? 'Reconnecting' : 'Offline');
@@ -260,7 +276,13 @@ export function useBoard(
       window.removeEventListener('offline', offline);
       socket.current?.close();
     };
-  }, [initial.board.id, sendPresence, updatePending]);
+  }, [
+    initial.board.id,
+    actorId,
+    connectionVersion,
+    sendPresence,
+    updatePending,
+  ]);
   const mutate = (
     command: Command,
     baseRevision = authoritative.current.board.revision,
@@ -297,6 +319,8 @@ export function useBoard(
     pending,
     activity,
     error,
+    role,
+    reconnect: () => setConnectionVersion((version) => version + 1),
     mutate,
     dismiss: (id: string) =>
       updatePending((items) =>

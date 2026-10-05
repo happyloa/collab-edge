@@ -1,6 +1,16 @@
 import type { Locale } from './messages';
 
 const errors: Record<string, string> = {
+  'Sign in to the original account to recover this draft.':
+    '請登入原本的帳號，才能繼續處理這份草稿。',
+  'Connection lost. Check your network and try again.':
+    '連線中斷，請檢查網路後重試。',
+  'You do not have permission to perform this action.':
+    '你沒有執行此操作的權限。',
+  'Too many requests. Please wait before trying again.':
+    '操作過於頻繁，請稍候再試。',
+  'The service is temporarily unavailable. Please try again later.':
+    '服務暫時無法使用，請稍後重試。',
   'Assignee must be a current workspace member': '負責人必須是目前的工作區成員',
   'Request failed': '操作失敗，請稍後重試。',
   'Request failed. Please try again.': '操作失敗，請稍後重試。',

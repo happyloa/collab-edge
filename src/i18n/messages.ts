@@ -6,6 +6,12 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'Try again': '重試',
+  'Reconnect board': '重新連線看板',
+  'Try again in {seconds} seconds.': '請在 {seconds} 秒後重試。',
+  'Sign in in another tab': '在新分頁登入',
+  'Sign in in another tab, then retry here. Your current inputs stay on this page.':
+    '請在新分頁登入，再回到這裡重試。目前輸入的內容會留在此頁。',
   Active: '使用中',
   Idle: '閒置中',
   'Viewing {title}': '正在查看 {title}',

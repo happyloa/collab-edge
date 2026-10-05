@@ -3,6 +3,8 @@ import { useI18n } from '../ui/i18n';
 import { useState } from 'react';
 import { api } from '../ui/providers';
 import type { Snapshot } from '../../src/realtime/protocol';
+import { asError } from '../../src/lib/api-client';
+import { ApiErrorNotice } from '../ui/api-error-notice';
 export function Attachments({
   cardId,
   items,
@@ -12,9 +14,9 @@ export function Attachments({
   items: Snapshot['attachments'];
   readOnly: boolean;
 }) {
-  const { t, errorText } = useI18n();
+  const { t } = useI18n();
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const [busy, setBusy] = useState(false);
   return (
     <section className="mt-8 border-t border-border pt-6">
@@ -42,9 +44,7 @@ export function Attachments({
                         method: 'DELETE',
                       });
                     } catch (e) {
-                      setError(
-                        e instanceof Error ? e.message : 'Delete failed',
-                      );
+                      setError(asError(e, 'Delete failed'));
                     }
                   }}
                 >
@@ -54,11 +54,7 @@ export function Attachments({
             </li>
           ))}
       </ul>
-      {error && (
-        <p role="alert" className="notice error">
-          {errorText(error)}
-        </p>
-      )}
+      <ApiErrorNotice error={error} />
       {!readOnly && (
         <label className="field">
           {t('Upload a file')}
@@ -70,27 +66,20 @@ export function Attachments({
               const file = e.target.files?.[0];
               if (!file) return;
               setBusy(true);
-              setError('');
+              setError(null);
               try {
                 if (file.size > 10 * 1024 * 1024)
                   throw new Error('Maximum file size is 10 MB');
-                const response = await fetch(
-                  `/api/cards/${cardId}/attachments`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': file.type,
-                      'X-Filename': encodeURIComponent(file.name),
-                    },
-                    body: file,
+                await api(`/api/cards/${cardId}/attachments`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': file.type,
+                    'X-Filename': encodeURIComponent(file.name),
                   },
-                );
-                if (!response.ok) {
-                  const result = (await response.json()) as { error: string };
-                  throw new Error(result.error);
-                }
+                  body: file,
+                });
               } catch (e) {
-                setError(e instanceof Error ? e.message : 'Upload failed');
+                setError(asError(e, 'Upload failed'));
               } finally {
                 setBusy(false);
               }

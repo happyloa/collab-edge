@@ -31,6 +31,8 @@ import {
   Download,
 } from 'lucide-react';
 import { api } from '../ui/providers';
+import { ApiErrorNotice } from '../ui/api-error-notice';
+import { ApiError } from '../../src/lib/api-client';
 import { ThemeToggle } from '../ui/theme';
 import { Attachments } from './attachments';
 import { useBoard } from '../../src/realtime/socket-client';
@@ -49,18 +51,19 @@ type BoardData = {
 type Card = Snapshot['cards'][number];
 type ActivityPage = { events: BoardEvent[]; nextBefore: number | null };
 export function BoardLoader({ id }: { id: string }) {
-  const { t, errorText } = useI18n();
+  const { t } = useI18n();
 
   const query = useQuery({
     queryKey: ['board', id],
-    queryFn: () => api<BoardData>(`/api/boards/${id}`),
+    queryFn: ({ signal }) => api<BoardData>(`/api/boards/${id}`, { signal }),
   });
-  if (query.error)
+  if (query.error && !query.data)
     return (
       <main className="p-10">
-        <p role="alert" className="notice error">
-          {errorText(query.error.message)}
-        </p>
+        <ApiErrorNotice
+          error={query.error}
+          onRetry={() => void query.refetch()}
+        />
         <Link href="/workspaces">{t('Back to workspaces')}</Link>
       </main>
     );
@@ -72,7 +75,16 @@ export function BoardLoader({ id }: { id: string }) {
         </div>
       </main>
     );
-  return <Board key={id} initial={query.data} />;
+  return (
+    <>
+      <ApiErrorNotice
+        error={query.error}
+        className="m-6"
+        onRetry={() => void query.refetch()}
+      />
+      <Board key={`${id}:${query.data.user.id}`} initial={query.data} />
+    </>
+  );
 }
 function SortableCard({
   card,
@@ -176,9 +188,10 @@ function Board({ initial }: { initial: BoardData }) {
     queryKey: ['activity', initial.snapshot.board.id],
     enabled: showActivity,
     initialPageParam: undefined as number | undefined,
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       api<ActivityPage>(
         `/api/boards/${initial.snapshot.board.id}/activity?limit=30${pageParam === undefined ? '' : `&before=${pageParam}`}`,
+        { signal },
       ),
     getNextPageParam: (lastPage) => lastPage.nextBefore ?? undefined,
   });
@@ -199,7 +212,8 @@ function Board({ initial }: { initial: BoardData }) {
   const filtered = Boolean(search.trim() || assignee || due);
   const today = localToday();
   const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
-  const readOnly = initial.role === 'VIEWER' || state.board.archived;
+  const readOnly =
+    (live.role ?? initial.role) === 'VIEWER' || state.board.archived;
   const columns = useMemo(
     () => [...state.columns].sort((a, b) => a.position - b.position),
     [state.columns],
@@ -507,11 +521,17 @@ function Board({ initial }: { initial: BoardData }) {
             close={() => setSettings(null)}
           />
         )}
-        {live.error && (
-          <p role="alert" className="notice error mb-4">
-            {errorText(live.error)}
-          </p>
-        )}
+        <ApiErrorNotice
+          error={
+            live.error &&
+            (live.status === 'Access expired'
+              ? new ApiError(live.error, 401, 'UNAUTHENTICATED')
+              : live.error)
+          }
+          className="mb-4"
+          retryLabel="Reconnect board"
+          onRetry={live.reconnect}
+        />
         {live.pending
           .filter((p) => p.state !== 'pending')
           .map((p) => (
@@ -758,21 +778,15 @@ function Board({ initial }: { initial: BoardData }) {
                 {t('Loading activity…')}
               </p>
             )}
-            {history.error && (
-              <div role="alert" className="notice error mt-3">
-                {errorText(history.error.message)}
-                <button
-                  className="button secondary ml-3"
-                  onClick={() => {
-                    if (history.isFetchNextPageError)
-                      void history.fetchNextPage();
-                    else void history.refetch();
-                  }}
-                >
-                  {t('Retry activity')}
-                </button>
-              </div>
-            )}
+            <ApiErrorNotice
+              error={history.error}
+              className="mt-3"
+              retryLabel="Retry activity"
+              onRetry={() => {
+                if (history.isFetchNextPageError) void history.fetchNextPage();
+                else void history.refetch();
+              }}
+            />
             {!history.isPending && !history.error && activity.length === 0 && (
               <p className="mt-3 text-sm text-muted">
                 {t('Board updates will appear here.')}
@@ -816,6 +830,9 @@ function Board({ initial }: { initial: BoardData }) {
           readOnly={readOnly}
           people={initial.people}
           mutate={live.mutate}
+          reconnect={live.reconnect}
+          connectionStatus={live.status}
+          connectionError={live.error}
           close={() => setSelected(null)}
         />
       )}
@@ -907,6 +924,9 @@ function CardDialog({
   mutate,
   close,
   people,
+  reconnect,
+  connectionStatus,
+  connectionError,
 }: {
   initial: Card;
   state: Snapshot;
@@ -914,6 +934,9 @@ function CardDialog({
   mutate: (command: Command, base?: number) => boolean;
   close: () => void;
   people: BoardData['people'];
+  reconnect: () => void;
+  connectionStatus: string;
+  connectionError: string;
 }) {
   const { t, locale } = useI18n();
 
@@ -931,16 +954,37 @@ function CardDialog({
     <dialog
       ref={dialog}
       onClose={close}
+      aria-labelledby="card-dialog-title"
       className="motion-dialog m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
     >
       <div className="mb-6 flex items-center justify-between">
-        <span className="eyebrow">{t('CARD DETAILS')}</span>
+        <h2 id="card-dialog-title" className="eyebrow">
+          {t('CARD DETAILS')}
+        </h2>
         <button
           className="icon-button"
           aria-label={t('Close card')}
           onClick={close}
         >
           <X size={20} />
+        </button>
+      </div>
+      {connectionStatus === 'Access expired' && (
+        <ApiErrorNotice
+          error={new ApiError(connectionError, 401, 'UNAUTHENTICATED')}
+          className="mb-4"
+        />
+      )}
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          className="button secondary"
+          onClick={reconnect}
+          disabled={
+            connectionStatus === 'Connecting' || connectionStatus === 'Syncing'
+          }
+        >
+          {t('Reconnect board')}
         </button>
       </div>
       <form

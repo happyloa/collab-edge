@@ -15,6 +15,8 @@ import {
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
 import { PasswordInput } from '../ui/password-input';
+import { asError } from '../../src/lib/api-client';
+import { ApiErrorNotice } from '../ui/api-error-notice';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
@@ -42,36 +44,36 @@ type Detail = {
   } | null;
 };
 export function Dashboard() {
-  const { t, errorText, locale } = useI18n();
+  const { t, locale } = useI18n();
 
   const client = useQueryClient();
   const [selected, setSelected] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
+  const [deleteError, setDeleteError] = useState<Error | null>(null);
   const session = useQuery({
     queryKey: ['auth', 'session'],
-    queryFn: () => api<SessionState>('/api/auth/session'),
+    queryFn: ({ signal }) => api<SessionState>('/api/auth/session', { signal }),
   });
   const list = useQuery({
     queryKey: ['workspaces'],
-    queryFn: () => api<Workspace[]>('/api/workspaces'),
+    queryFn: ({ signal }) => api<Workspace[]>('/api/workspaces', { signal }),
   });
   const id = selected || list.data?.[0]?.id;
   const detail = useQuery({
     queryKey: ['workspace', id],
-    queryFn: () => api<Detail>(`/api/workspaces/${id}`),
+    queryFn: ({ signal }) => api<Detail>(`/api/workspaces/${id}`, { signal }),
     enabled: !!id,
   });
   async function run(fn: () => Promise<unknown>) {
     try {
-      setError('');
+      setError(null);
       await fn();
       await client.invalidateQueries({ queryKey: ['workspace'] });
       await client.invalidateQueries({ queryKey: ['workspaces'] });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Request failed');
+      setError(asError(e));
     }
   }
   async function action(data: object) {
@@ -190,18 +192,14 @@ export function Dashboard() {
                         );
                         void (async () => {
                           try {
-                            setDeleteError('');
+                            setDeleteError(null);
                             await api('/api/auth/account', {
                               method: 'DELETE',
                               body: JSON.stringify({ password, confirm: true }),
                             });
                             location.href = '/login';
                           } catch (error) {
-                            setDeleteError(
-                              error instanceof Error
-                                ? error.message
-                                : 'Request failed',
-                            );
+                            setDeleteError(asError(error));
                           }
                         })();
                       }}
@@ -226,11 +224,7 @@ export function Dashboard() {
                         />
                         {t('I understand this cannot be undone.')}
                       </label>
-                      {deleteError && (
-                        <p role="alert" className="text-destructive">
-                          {errorText(deleteError)}
-                        </p>
-                      )}
+                      <ApiErrorNotice error={deleteError} />
                       <button className="button secondary" type="submit">
                         {t('Permanently delete account')}
                       </button>
@@ -271,12 +265,16 @@ export function Dashboard() {
                 </button>
               </div>
             )}
-          {(error || list.error || detail.error) && (
-            <div role="alert" className="notice error mb-6">
-              {errorText(error || list.error?.message || detail.error?.message)}{' '}
-              {list.error && <Link href="/login">{t('Sign in →')}</Link>}
-            </div>
-          )}
+          <ApiErrorNotice
+            error={error || list.error || detail.error || session.error}
+            className="mb-6"
+            onRetry={() => {
+              setError(null);
+              void client.invalidateQueries({ queryKey: ['auth', 'session'] });
+              void client.invalidateQueries({ queryKey: ['workspaces'] });
+              void client.invalidateQueries({ queryKey: ['workspace'] });
+            }}
+          />
           {list.isPending && (
             <div role="status" className="surface h-40 animate-pulse p-6">
               {t('Loading your workspaces…')}

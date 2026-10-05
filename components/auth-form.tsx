@@ -9,6 +9,8 @@ import { z } from 'zod';
 import { Layers3 } from 'lucide-react';
 import { api } from './ui/providers';
 import { PasswordInput } from './ui/password-input';
+import { asError } from '../src/lib/api-client';
+import { ApiErrorNotice } from './ui/api-error-notice';
 const schema = z.object({
   email: z.email('Enter a valid email address'),
   password: z
@@ -24,10 +26,10 @@ export function AuthForm({
   registerMode?: boolean;
   returnTo?: string;
 }) {
-  const { t, errorText } = useI18n();
+  const { t } = useI18n();
 
   const hydrated = useHydrated();
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
   const switchModeHref = `${registerMode ? '/login' : '/register'}${returnTo === '/workspaces' ? '' : `?next=${encodeURIComponent(returnTo)}`}`;
   const {
     register,
@@ -59,14 +61,14 @@ export function AuthForm({
           className="mt-8 space-y-5"
           onSubmit={handleSubmit(async (values) => {
             try {
-              setError('');
+              setError(null);
               await api(`/api/auth/${registerMode ? 'register' : 'login'}`, {
                 method: 'POST',
                 body: JSON.stringify(values),
               });
               location.replace(returnTo);
             } catch (e) {
-              setError(e instanceof Error ? e.message : 'Sign in failed');
+              setError(asError(e, 'Sign in failed'));
             }
           })}
         >
@@ -122,11 +124,7 @@ export function AuthForm({
               </Link>
             </div>
           )}
-          {error && (
-            <p role="alert" className="notice error">
-              {errorText(error)}
-            </p>
-          )}
+          <ApiErrorNotice error={error} />
           <button
             className="button w-full"
             disabled={isSubmitting || !hydrated}

@@ -6,25 +6,27 @@ import { useI18n, LanguageSelect } from './ui/i18n';
 import { useHydrated } from './ui/use-hydrated';
 import { api } from './ui/providers';
 import { PasswordInput } from './ui/password-input';
+import { asError } from '../src/lib/api-client';
+import { ApiErrorNotice } from './ui/api-error-notice';
 
 export function PasswordResetForm({
   signedIn = false,
 }: {
   signedIn?: boolean;
 }) {
-  const { t, errorText } = useI18n();
+  const { t } = useI18n();
   const hydrated = useHydrated();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<Error | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError('');
+    setError(null);
     if (password !== confirmation) {
-      setError('Passwords do not match');
+      setError(new Error('Passwords do not match'));
       return;
     }
     setBusy(true);
@@ -37,7 +39,7 @@ export function PasswordResetForm({
       setConfirmation('');
       setDone(true);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Request failed');
+      setError(asError(cause));
     } finally {
       setBusy(false);
     }
@@ -103,11 +105,7 @@ export function PasswordResetForm({
                 onChange={(event) => setConfirmation(event.target.value)}
               />
             </div>
-            {error && (
-              <p role="alert" className="notice error">
-                {errorText(error)}
-              </p>
-            )}
+            <ApiErrorNotice error={error} />
             <button className="button w-full" disabled={busy || !hydrated}>
               {t(busy ? 'Just a moment…' : 'Set new password')}
             </button>
