@@ -2,6 +2,11 @@
 
 Updated 2026-10-05. The Worker is deployed behind owner-only Cloudflare Access and connected to native GitHub Builds. Registration now commits the account and session together. API errors retain their status and recovery information, and users can sign in in another tab without discarding edits on the original page. The dependency refresh uses stable Vinext 1.0.1. A public playground, recorded local two-browser run and reproducible walkthrough show the portfolio behavior. Owner-authenticated production registration, login and collaboration still await a fresh check after this release.
 
+## Snapshot performance and sign-out follow-up
+
+- Commits `ac74282` (hydration-safe sign-out and browser selectors), `11eaf26` (linear comment diff and 25/100/200-card fixtures) and `12b9be7` (measurement documentation) were pushed separately. Full local verification passed 70 Workers/core tests, 6 UI tests and all 23 Chromium scenarios. The comment diff no longer performs quadratic scans; [measured behavior and remaining limits](snapshot-performance.md) distinguish local wall time from production latency and D1 billing.
+- [CI](https://github.com/happyloa/collab-edge/actions/runs/37317248826), [CodeQL](https://github.com/happyloa/collab-edge/actions/runs/37317248809) and [public demo](https://github.com/happyloa/collab-edge/actions/runs/37317248799) succeeded for `12b9be7`. Native build `e16ab711-bc7b-46bc-ac03-9ddd3af15bcf` passed verification, reported no pending migrations and deployed version `1fa3b72b-65d3-4f46-abe7-df100d3c9260`. Deployment readback confirms 100% traffic from 2026-10-05 13:32:42 UTC. Owner-only Access, `ACCESS_REQUIRED=true`, `ATTACHMENTS_ENABLED=false` and the three secret binding names were read back. No resource or plan was added.
+
 ## Browser draft recovery
 
 - Commit `7231927` adds device drafts with seven-day expiry, a shared 24-record / 256 KiB limit, independent dialog records and transactional account isolation. Restored forms retain field conflict guards; uncertain mutations require review and reuse their original UUID before any confirmed conflict retry. See [local draft recovery](local-drafts.md).
