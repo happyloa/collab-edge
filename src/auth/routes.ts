@@ -5,13 +5,14 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { users, sessions } from '../db/schema';
 import { body, route } from '../lib/http';
 import { AppError, assert } from '../lib/errors';
-import { hashPassword, verifyPassword, sessionHash } from './crypto';
+import { sessionHash } from './crypto';
+import { checkPassword, dummyPasswordHash, newPasswordHash } from './password';
 import {
-  createSession,
   prepareSession,
   currentUser,
   requireUser,
   tokenFrom,
+  sessionIdForToken,
 } from './session';
 import { verifiedAccessEmail } from './access';
 import { DEMO } from '../db/demo';
@@ -72,10 +73,7 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
         .get();
       assert(!exists, 409, 'Unable to register this email');
       const id = crypto.randomUUID();
-      const password = await hashPassword(
-        data.password,
-        authEnv.SESSION_SECRET,
-      );
+      const password = await newPasswordHash(data.password, authEnv);
       const prepared = await prepareSession(id, request, authEnv);
       try {
         await db.batch([
@@ -110,23 +108,50 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
       .from(users)
       .where(and(eq(users.email, data.email), isNull(users.deletedAt)))
       .get();
-    const valid = await verifyPassword(
+    const checked = await checkPassword(
       data.password,
-      user?.password ??
-        'pbkdf2-sha256-peppered$100000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000',
-      authEnv.SESSION_SECRET,
+      user?.password ?? dummyPasswordHash(authEnv),
+      authEnv,
     );
     assert(
-      user && valid,
+      user && checked.valid,
       401,
       'Invalid email or password',
       'INVALID_CREDENTIALS',
     );
+    const upgraded = checked.needsUpgrade
+      ? await newPasswordHash(data.password, authEnv)
+      : user.password;
+    const prepared = await prepareSession(user.id, request, authEnv);
+    try {
+      await authEnv.DB.batch([
+        authEnv.DB.prepare(
+          `INSERT INTO mutation_guard(value) SELECT CASE WHEN EXISTS(
+            SELECT 1 FROM users WHERE id=? AND password=? AND deleted_at IS NULL
+          ) THEN 1 ELSE 0 END`,
+        ).bind(user.id, user.password),
+        authEnv.DB.prepare('UPDATE users SET password=? WHERE id=?').bind(
+          upgraded,
+          user.id,
+        ),
+        authEnv.DB.prepare(
+          'INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)',
+        ).bind(prepared.row.id, user.id, prepared.row.expiresAt),
+        authEnv.DB.prepare('DELETE FROM mutation_guard'),
+      ]);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
+      )
+        throw new AppError(409, 'Account state changed. Please sign in again.');
+      throw error;
+    }
     return Response.json(
       { user: { id: user.id, name: user.name, email: user.email } },
       {
         headers: {
-          'Set-Cookie': await createSession(user.id, request, authEnv),
+          'Set-Cookie': prepared.cookie,
         },
       },
     );
@@ -144,7 +169,7 @@ export const resetPasswordFor = (authEnv: Env = env) =>
       .where(and(eq(users.email, email), isNull(users.deletedAt)))
       .get();
     assert(user, 404, 'No account uses your verified email');
-    const password = await hashPassword(data.password, authEnv.SESSION_SECRET);
+    const password = await newPasswordHash(data.password, authEnv);
     await authEnv.DB.batch([
       authEnv.DB.prepare('UPDATE users SET password = ? WHERE id = ?').bind(
         password,
@@ -177,10 +202,8 @@ export const verifyEmailFor = (authEnv: Env = env) =>
   });
 export const logout = route(async (request) => {
   const token = tokenFrom(request);
-  if (token)
-    await drizzle(env.DB)
-      .delete(sessions)
-      .where(eq(sessions.id, await sessionHash(token, env.SESSION_SECRET)));
+  const id = token ? await sessionIdForToken(token) : null;
+  if (id) await drizzle(env.DB).delete(sessions).where(eq(sessions.id, id));
   return Response.json(
     { ok: true },
     {
@@ -192,7 +215,7 @@ export const logout = route(async (request) => {
 });
 export const sessionFor = (authEnv: Env = env) =>
   route(async (request) => {
-    const user = await currentUser(request);
+    const user = await currentUser(request, authEnv);
     if (!user) return Response.json({ user });
     if (authEnv.ACCESS_REQUIRED !== 'true')
       return Response.json({

@@ -2,8 +2,8 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq } from 'drizzle-orm';
 import { users } from '../db/schema';
 import { assert } from '../lib/errors';
-import { sessionHash, verifyPassword } from './crypto';
-import { tokenFrom } from './session';
+import { checkPassword } from './password';
+import { sessionIdForToken, tokenFrom } from './session';
 
 export type ConfirmedAccount = { passwordHash: string; sessionId: string };
 
@@ -28,16 +28,17 @@ export async function confirmPassword(
     .where(eq(users.id, userId))
     .get();
   assert(
-    user &&
-      (await verifyPassword(password, user.password, authEnv.SESSION_SECRET)),
+    user && (await checkPassword(password, user.password, authEnv)).valid,
     401,
     'Incorrect password',
     'INVALID_CREDENTIALS',
   );
   const token = tokenFrom(request);
   assert(token, 401, 'Please sign in');
+  const sessionId = await sessionIdForToken(token, authEnv);
+  assert(sessionId, 401, 'Please sign in');
   return {
     passwordHash: user.password,
-    sessionId: await sessionHash(token, authEnv.SESSION_SECRET),
+    sessionId,
   };
 }

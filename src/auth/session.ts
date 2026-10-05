@@ -13,16 +13,46 @@ export function tokenFrom(request: Request) {
     .find((v) => v.startsWith('ce_session='))
     ?.slice(11);
 }
-export async function currentUserForToken(token: string | undefined) {
+export async function sessionIdForToken(token: string, authEnv: Env = env) {
+  if (token.length > 80) return null;
+  if (token.startsWith('ce2.')) {
+    if (!/^ce2\.[a-f0-9-]{72}$/.test(token)) return null;
+    assert(
+      authEnv.SESSION_SIGNING_KEY?.length >= 32,
+      503,
+      'Session configuration unavailable',
+    );
+    return sessionHash(token, authEnv.SESSION_SIGNING_KEY);
+  }
+  const graceUntil = Date.parse(authEnv.LEGACY_SESSIONS_UNTIL);
+  if (
+    !/^[a-f0-9-]{72}$/.test(token) ||
+    !Number.isFinite(graceUntil) ||
+    Date.now() >= graceUntil
+  )
+    return null;
+  assert(
+    authEnv.SESSION_SECRET?.length >= 32,
+    503,
+    'Session configuration unavailable',
+  );
+  return sessionHash(token, authEnv.SESSION_SECRET);
+}
+export async function currentUserForToken(
+  token: string | undefined,
+  authEnv: Env = env,
+) {
   if (!token) return null;
-  const db = drizzle(env.DB);
+  const id = await sessionIdForToken(token, authEnv);
+  if (!id) return null;
+  const db = drizzle(authEnv.DB);
   const result = await db
     .select({ id: users.id, name: users.name, email: users.email })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(
       and(
-        eq(sessions.id, await sessionHash(token, env.SESSION_SECRET)),
+        eq(sessions.id, id),
         gt(sessions.expiresAt, Date.now()),
         isNull(users.deletedAt),
       ),
@@ -30,8 +60,8 @@ export async function currentUserForToken(token: string | undefined) {
     .get();
   return result ?? null;
 }
-export async function currentUser(request: Request) {
-  return currentUserForToken(tokenFrom(request));
+export async function currentUser(request: Request, authEnv: Env = env) {
+  return currentUserForToken(tokenFrom(request), authEnv);
 }
 export async function requireUser(request: Request) {
   const user = await currentUser(request);
@@ -84,15 +114,15 @@ export async function prepareSession(
   authEnv: Env = env,
 ) {
   assert(
-    authEnv.SESSION_SECRET?.length >= 32,
+    authEnv.SESSION_SIGNING_KEY?.length >= 32,
     503,
     'Session configuration unavailable',
   );
-  const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
+  const token = `ce2.${crypto.randomUUID()}${crypto.randomUUID()}`;
   const lifetime = 7 * 24 * 60 * 60;
   return {
     row: {
-      id: await sessionHash(token, authEnv.SESSION_SECRET),
+      id: await sessionHash(token, authEnv.SESSION_SIGNING_KEY),
       userId,
       expiresAt: Date.now() + lifetime * 1000,
     },

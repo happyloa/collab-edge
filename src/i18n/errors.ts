@@ -25,6 +25,10 @@ const errors: Record<string, string> = {
   'The usage guard is temporarily unavailable. Please try again later.':
     '使用量檢查暫時無法使用，請稍後重試。',
   'Session configuration unavailable': '登入服務暫時無法使用，請稍後重試。',
+  'Password configuration unavailable':
+    '密碼驗證服務暫時無法使用，請稍後重試。',
+  'Account state changed. Please sign in again.':
+    '帳號狀態已變更，請重新登入。',
   'Invalid email or password': '電子郵件或密碼不正確',
   'Unable to register this email': '無法使用此電子郵件註冊',
   'Display name required': '請輸入顯示名稱',

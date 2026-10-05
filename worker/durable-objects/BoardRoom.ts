@@ -3,8 +3,12 @@ import { z } from 'zod';
 import { drizzle } from 'drizzle-orm/d1';
 import { and, eq, gt, asc } from 'drizzle-orm';
 import { boards, events } from '../../src/db/schema';
-import { currentUser, boardAccess, tokenFrom } from '../../src/auth/session';
-import { sessionHash } from '../../src/auth/crypto';
+import {
+  currentUser,
+  boardAccess,
+  tokenFrom,
+  sessionIdForToken,
+} from '../../src/auth/session';
 import { loadSnapshot } from '../../src/db/queries/snapshot';
 import { DEMO } from '../../src/db/demo';
 import {
@@ -603,7 +607,7 @@ export class BoardRoom extends DurableObject<Env> {
         return {
           socket,
           state,
-          sessionId: await sessionHash(token, this.env.SESSION_SECRET),
+          sessionId: await sessionIdForToken(token, this.env),
         };
       }),
     );

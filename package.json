@@ -62,7 +62,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest",
-    "test:run": "vitest run && vitest run --config vitest.ui.config.ts && node tests/lint-tooling.mjs && node tests/dependency-security.mjs",
+    "test:run": "vitest run && vitest run --config vitest.ui.config.ts && node tests/lint-tooling.mjs && node tests/dependency-security.mjs && node tests/auth-key-files.mjs",
     "test:e2e": "node scripts/run-e2e.mjs",
     "capture:demo": "node scripts/run-e2e.mjs --capture-demo",
     "build:showcase": "vite build --config showcase/vite.config.ts",

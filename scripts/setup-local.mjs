@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 try {
   writeFileSync(
     '.dev.vars',
-    `SESSION_SECRET=${randomBytes(48).toString('base64url')}\nATTACHMENTS_ENABLED=true\nACCESS_REQUIRED=false\n`,
+    `SESSION_SECRET=${randomBytes(48).toString('base64url')}\nSESSION_SIGNING_KEY=${randomBytes(48).toString('base64url')}\nPASSWORD_PEPPERS=${JSON.stringify({ p1: randomBytes(48).toString('base64url') })}\nATTACHMENTS_ENABLED=true\nACCESS_REQUIRED=false\n`,
     { flag: 'wx', mode: 0o600 },
   );
   console.log(

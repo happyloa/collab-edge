@@ -9,6 +9,10 @@ export default defineConfig({
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations('./drizzle'),
           SESSION_SECRET: 'test-only-secret-at-least-32-characters-long',
+          SESSION_SIGNING_KEY: 'independent-session-signing-key-for-tests-only',
+          PASSWORD_PEPPERS: JSON.stringify({
+            p1: 'independent-password-pepper-for-tests-only',
+          }),
           ATTACHMENTS_ENABLED: 'true',
           ACCESS_REQUIRED: 'false',
         },

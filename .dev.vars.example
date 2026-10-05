@@ -1,3 +1,5 @@
 SESSION_SECRET=replace-with-a-cryptographically-random-secret-at-least-32-characters
+SESSION_SIGNING_KEY=replace-with-a-different-random-secret-at-least-32-characters
+PASSWORD_PEPPERS={"p1":"replace-with-another-independent-random-secret-at-least-32-characters"}
 ATTACHMENTS_ENABLED=true
 ACCESS_REQUIRED=false
