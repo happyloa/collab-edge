@@ -208,8 +208,12 @@ export function prepareMutation(
           ? next
           : v.dueDateRevision,
     }));
-  patch.comments = after.comments.filter(
-    (v) => !state.comments.some((old) => old.id === v.id),
-  );
+  if (after.comments === state.comments) patch.comments = [];
+  else {
+    const previousCommentIds = new Set(state.comments.map((item) => item.id));
+    patch.comments = after.comments.filter(
+      (item) => !previousCommentIds.has(item.id),
+    );
+  }
   return patch;
 }
