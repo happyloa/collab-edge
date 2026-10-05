@@ -24,6 +24,13 @@ import { prepareMutation, ConflictError } from '../../src/realtime/mutations';
 import { AppError, assert } from '../../src/lib/errors';
 import { LIMITS } from '../../src/lib/limits';
 import { uploadMetadata, validateBytes } from '../../src/validation/uploads';
+import {
+  stageRestore,
+  completeRestore,
+  cancelRestore,
+  cleanRestore,
+  restoreResult,
+} from '../../src/backups/restore';
 
 const socketState = z.object({
   boardId: z.uuid(),
@@ -108,6 +115,26 @@ export class BoardRoom extends DurableObject<Env> {
       return loadSnapshot(this.env.DB, boardId);
     });
   }
+  async restoreUpload(jobId: string, actorId: string, input: unknown) {
+    return this.serial(() =>
+      restoreResult(() => stageRestore(this.env.DB, jobId, actorId, input)),
+    );
+  }
+  async restoreComplete(jobId: string, actorId: string) {
+    return this.serial(() =>
+      restoreResult(() => completeRestore(this.env.DB, jobId, actorId)),
+    );
+  }
+  async restoreCancel(jobId: string, actorId: string) {
+    return this.serial(() =>
+      restoreResult(() => cancelRestore(this.env.DB, jobId, actorId)),
+    );
+  }
+  async restoreClean(jobId: string, actorId: string) {
+    return this.serial(() =>
+      restoreResult(() => cleanRestore(this.env.DB, jobId, actorId)),
+    );
+  }
   async upload(
     boardId: string,
     userId: string,
@@ -133,7 +160,9 @@ export class BoardRoom extends DurableObject<Env> {
         'Card not found',
       );
       assert(
-        state.attachments.filter((a) => a.cardId === cardId).length <
+        state.attachments.filter((a) => a.cardId === cardId).length +
+          (state.attachmentReferences?.filter((a) => a.cardId === cardId)
+            .length ?? 0) <
           LIMITS.attachmentsPerCard,
         429,
         'Attachment limit reached',

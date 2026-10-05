@@ -70,7 +70,9 @@ async function fixture() {
       'INSERT INTO cards(id,board_id,column_id,title,position,archived,updated_revision,title_revision,description_revision) VALUES(?,?,?,?,1,?,0,0,0)',
     ).bind(archivedCard, board, column, 'Archived', 1),
     ...[card, card, archivedCard].map((cardId) =>
-      env.DB.prepare('INSERT INTO card_comments VALUES(?,?,?,?,?,?)').bind(
+      env.DB.prepare(
+        'INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at) VALUES(?,?,?,?,?,?)',
+      ).bind(
         crypto.randomUUID(),
         cardId,
         board,
@@ -195,7 +197,9 @@ it('shows exhausted card and per-card comment quotas without changing retained d
     );
   await env.DB.batch(
     Array.from({ length: 48 }, () =>
-      env.DB.prepare('INSERT INTO card_comments VALUES(?,?,?,?,?,?)').bind(
+      env.DB.prepare(
+        'INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at) VALUES(?,?,?,?,?,?)',
+      ).bind(
         crypto.randomUUID(),
         data.card,
         data.board,

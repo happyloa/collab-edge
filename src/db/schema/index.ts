@@ -5,7 +5,9 @@ import {
   primaryKey,
   uniqueIndex,
   index,
+  check,
 } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
 
 export const users = sqliteTable('users', {
   id: text().primaryKey(),
@@ -132,6 +134,7 @@ export const comments = sqliteTable(
       .notNull()
       .references(() => users.id),
     body: text().notNull(),
+    importedAuthorName: text('imported_author_name'),
     createdAt: text('created_at').notNull(),
   },
   (t) => [
@@ -186,3 +189,84 @@ export const quotas = sqliteTable('quotas', {
   key: text().primaryKey(),
   used: integer().notNull().default(0),
 });
+
+export const attachmentReferences = sqliteTable(
+  'attachment_references',
+  {
+    id: text().primaryKey(),
+    boardId: text('board_id')
+      .notNull()
+      .references(() => boards.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => cards.id, { onDelete: 'cascade' }),
+    filename: text().notNull(),
+    mime: text().notNull(),
+    size: integer().notNull(),
+    actorId: text('actor_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [
+    index('references_board').on(table.boardId),
+    index('references_card').on(table.cardId),
+  ],
+);
+
+export const restoreJobs = sqliteTable(
+  'board_restore_jobs',
+  {
+    id: text().primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    actorId: text('actor_id')
+      .notNull()
+      .references(() => users.id),
+    targetBoardId: text('target_board_id').notNull().unique(),
+    root: text().notNull(),
+    header: text().notNull(),
+    assignees: text().notNull(),
+    state: text({ enum: ['uploading', 'complete', 'cancelled'] })
+      .notNull()
+      .default('uploading'),
+    itemCount: integer('item_count').notNull(),
+    receivedCount: integer('received_count').notNull().default(0),
+    byteCount: integer('byte_count').notNull().default(0),
+    expiresAt: integer('expires_at').notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (table) => [
+    index('restores_workspace').on(table.workspaceId),
+    uniqueIndex('restore_staging_slot')
+      .on(sql`(1)`)
+      .where(sql`${table.byteCount} > 0 OR ${table.state} = 'uploading'`),
+    check(
+      'restore_received_bounds',
+      sql`${table.receivedCount} >= 0 AND ${table.receivedCount} <= ${table.itemCount}`,
+    ),
+    check(
+      'restore_byte_bounds',
+      sql`${table.byteCount} >= 0 AND ${table.byteCount} <= 83886080`,
+    ),
+  ],
+);
+
+export const restoreItems = sqliteTable(
+  'board_restore_items',
+  {
+    jobId: text('job_id')
+      .notNull()
+      .references(() => restoreJobs.id, { onDelete: 'cascade' }),
+    kind: text({ enum: ['column', 'card', 'comment', 'attachment'] }).notNull(),
+    sourceId: text('source_id').notNull(),
+    newId: text('new_id').notNull(),
+    ordinal: integer().notNull(),
+    payload: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.jobId, table.kind, table.sourceId] }),
+    uniqueIndex('restore_item_ordinal').on(table.jobId, table.ordinal),
+  ],
+);

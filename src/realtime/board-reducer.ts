@@ -23,6 +23,10 @@ export function applyPatch(state: Snapshot, patch: Patch): Snapshot {
     attachments: upsert(state.attachments, patch.attachments).filter(
       (a) => cardIds.has(a.cardId) && !patch.removedAttachments?.includes(a.id),
     ),
+    attachmentReferences: upsert(
+      state.attachmentReferences ?? [],
+      patch.attachmentReferences,
+    ).filter((attachment) => cardIds.has(attachment.cardId)),
   };
 }
 export function applyEvent(state: Snapshot, event: BoardEvent) {

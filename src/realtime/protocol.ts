@@ -115,6 +115,7 @@ export const commentSchema = z.object({
   actorId: id,
   body: z.string(),
   createdAt: z.string(),
+  importedAuthorName: z.string().max(80).optional(),
 });
 export const attachmentSchema = z.object({
   id,
@@ -139,6 +140,7 @@ export const snapshotSchema = z.object({
   cards: z.array(cardSchema),
   comments: z.array(commentSchema),
   attachments: z.array(attachmentSchema),
+  attachmentReferences: z.array(attachmentSchema).optional(),
 });
 export type Snapshot = z.infer<typeof snapshotSchema>;
 export const patchSchema = z.object({
@@ -151,6 +153,7 @@ export const patchSchema = z.object({
   removedColumns: z.array(id).optional(),
   attachments: z.array(attachmentSchema).optional(),
   removedAttachments: z.array(id).optional(),
+  attachmentReferences: z.array(attachmentSchema).optional(),
 });
 export type Patch = z.infer<typeof patchSchema>;
 export const eventSchema = z.object({

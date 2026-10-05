@@ -175,7 +175,7 @@ it.for([
     expect(snapshot.columns).toHaveLength(4);
     expect(snapshot.attachments).toEqual([]);
     expect(metrics.batches).toBe(1);
-    expect(metrics.queries).toBe(5);
+    expect(metrics.queries).toBe(6);
     expect(metrics.rowsReturned).toBe(
       1 + 4 + size.cards + size.cards * size.commentsPerCard,
     );
