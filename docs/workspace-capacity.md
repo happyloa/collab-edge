@@ -16,7 +16,7 @@ These are read-only SQL aggregates over indexed workspace/board IDs. They do not
 
 These counters describe application capacity, not Cloudflare usage, billable operations or remaining free-plan allowances. Shared request, mutation, event and storage budgets can reject a change even when the displayed workspace counters have room. See [security and resource budgets](security.md).
 
-The panel does not delete data, reset quotas or compact history. A board at its lifetime change cap remains read-only for new mutations under the existing server guard. Full backup/restore and safe maintenance of retained data still need separate implementation and validation.
+The panel does not delete data, reset quotas or compact history. A board at its lifetime change cap remains read-only for new mutations under the existing server guard. Owners can [restore a JSON backup into a separate board](board-backups.md) while normal workspace and global budgets permit it; this does not erase the original board or reset global lifetime counters. Safe event maintenance remains separate work.
 
 ## Verification
 

@@ -22,6 +22,8 @@ Fixtures contain four columns, 240-character descriptions and 420-character comm
 
 `loadSnapshot` already uses one consistent D1 batch. The query count does not increase with the number of cards or comments. Each load still reads every comment and attachment metadata record on the board. Index traversal can add a few local `rows_read`; these values vary between runs and are not production billing measurements.
 
+The table records the pre-restore baseline. Board restore adds a sixth query for unavailable attachment references within the same consistent batch. The current scale test expects six queries and includes the empty reference array in its byte measurement; rerun the command above for current annotations. Reference-heavy boards need their own measurement.
+
 Load time includes the local D1 call and schema validation. It excludes JSON transfer, browser parsing and rendering. It is wall time, not a measurement of Workers CPU or Core Web Vitals. The four-MiB assertion bounds these particular fixtures, not all boards permitted by the product quotas.
 
 ## Mutation comparison
