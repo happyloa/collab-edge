@@ -6,12 +6,28 @@ import { fileURLToPath, URL } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const stateParent = join(root, '.wrangler');
-const captureDemo = process.argv.slice(2).includes('--capture-demo');
+const options = process.argv.slice(2);
+if (
+  options.some(
+    (option) => !['--capture-demo', '--performance'].includes(option),
+  )
+)
+  throw new Error('Unknown E2E runner option');
+const captureDemo = options.includes('--capture-demo');
+const performanceOnly = options.includes('--performance');
+if (captureDemo && performanceOnly)
+  throw new Error('Choose one E2E runner mode');
 if (captureDemo && process.env.E2E_BASE_URL)
   throw new Error('Demo recording must use isolated local workerd state');
+if (performanceOnly && process.env.E2E_BASE_URL)
+  throw new Error(
+    'Performance measurements must use isolated local workerd state',
+  );
 const playwrightCommand = captureDemo
   ? 'corepack pnpm exec playwright test e2e/collaboration.spec.ts'
-  : 'corepack pnpm exec playwright test';
+  : performanceOnly
+    ? 'corepack pnpm exec playwright test e2e/board-performance.spec.ts'
+    : 'corepack pnpm exec playwright test';
 let activeChild;
 
 function run(command, env) {
