@@ -50,6 +50,7 @@ export function route(fn: (request: Request) => Promise<Response>) {
       response = await fn(request);
     } catch (error) {
       if (
+        !(error instanceof AppError) &&
         error instanceof Error &&
         /(?:quota|budget|capacity|limit) reached/i.test(error.message)
       ) {

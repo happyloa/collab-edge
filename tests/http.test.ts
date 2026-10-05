@@ -91,4 +91,14 @@ it('distinguishes auth rate limits from exhausted storage and keeps retry metada
   })(request);
   expect(exhausted.headers.get('retry-after')).toBeNull();
   expect(await exhausted.json()).toMatchObject({ code: 'USAGE_LIMIT' });
+  const knownMessage = 'Database daily capacity reached. Try again tomorrow.';
+  const knownLimit = await route(async () => {
+    throw new AppError(429, knownMessage, 'USAGE_LIMIT');
+  })(request);
+  expect(knownLimit.status).toBe(429);
+  expect(await knownLimit.json()).toEqual({
+    error: knownMessage,
+    code: 'USAGE_LIMIT',
+  });
+  expect(knownLimit.headers.get('retry-after')).toBeNull();
 });
