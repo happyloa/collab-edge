@@ -168,6 +168,8 @@ test('separate tabs keep independent drafts and restored edits retain conflict g
     page.getByRole('alert').filter({ hasText: 'Edit conflict' }),
   ).toContainText('First tab draft');
   await page
+    .getByRole('alert')
+    .filter({ hasText: 'Edit conflict' })
     .getByRole('button', { name: 'Discard draft', exact: true })
     .click();
   await expect.poll(() => drafts(page)).toEqual([]);
@@ -429,6 +431,9 @@ test('storage transactions enforce cross-tab limits, expiry and account generati
   await page.getByRole('button', { name: 'Keep draft and close' }).click();
   await expect.poll(async () => (await drafts(page)).length).toBe(1);
   await page.goto('/workspaces');
+  await expect(
+    page.getByText('demo-bob@collabedge.invalid', { exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   await expect.poll(() => drafts(page)).toEqual([]);

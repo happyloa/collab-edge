@@ -17,6 +17,7 @@ import { ThemeToggle } from '../ui/theme';
 import { PasswordInput } from '../ui/password-input';
 import { asError } from '../../src/lib/api-client';
 import { ApiErrorNotice } from '../ui/api-error-notice';
+import { useHydrated } from '../ui/use-hydrated';
 type Workspace = { id: string; name: string; role: string };
 type SessionState = {
   user: { id: string; email: string } | null;
@@ -45,6 +46,7 @@ type Detail = {
 };
 export function Dashboard() {
   const { t, locale } = useI18n();
+  const ready = useHydrated();
 
   const client = useQueryClient();
   const [selected, setSelected] = useState('');
@@ -52,6 +54,7 @@ export function Dashboard() {
   const [showArchived, setShowArchived] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<Error | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const session = useQuery({
     queryKey: ['auth', 'session'],
     queryFn: ({ signal }) => api<SessionState>('/api/auth/session', { signal }),
@@ -82,6 +85,18 @@ export function Dashboard() {
       body: JSON.stringify(data),
     });
   }
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setError(null);
+    try {
+      await api('/api/auth/logout', { method: 'POST' });
+      location.replace('/login');
+    } catch (caught) {
+      setError(asError(caught));
+      setSigningOut(false);
+    }
+  }
   return (
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-5">
@@ -100,12 +115,9 @@ export function Dashboard() {
           <button
             className="icon-button"
             aria-label={t('Sign out')}
-            onClick={() =>
-              void run(async () => {
-                await api('/api/auth/logout', { method: 'POST' });
-                location.replace('/login');
-              })
-            }
+            disabled={!ready || signingOut}
+            aria-busy={signingOut}
+            onClick={() => void signOut()}
           >
             <LogOut size={18} />
           </button>

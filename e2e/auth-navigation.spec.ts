@@ -1,5 +1,60 @@
-import { test, expect } from './fixture';
+import { test, expect, isolatedContext } from './fixture';
 import { DEMO } from '../src/db/demo';
+
+test('sign out waits for hydration, prevents duplicate requests and permits retry after failure', async ({
+  page,
+  context,
+  browser,
+}, testInfo) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Try as Alice' }).click();
+  await expect(
+    page.getByRole('status', { name: 'Connection status' }),
+  ).toHaveText('Connected');
+  const withoutScripts = await isolatedContext(browser, testInfo, {
+    storageState: await context.storageState(),
+    javaScriptEnabled: false,
+  });
+  try {
+    const staticPage = await withoutScripts.newPage();
+    await staticPage.goto('/workspaces');
+    await expect(
+      staticPage.getByRole('button', { name: 'Sign out' }),
+    ).toBeDisabled();
+  } finally {
+    await withoutScripts.close();
+  }
+  await page.goto('/workspaces');
+  let requests = 0;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/auth/logout', async (route) => {
+    requests++;
+    if (requests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Service temporarily unavailable' }),
+      });
+    } else {
+      await gate;
+      await route.continue();
+    }
+  });
+  const signOut = page.getByRole('button', { name: 'Sign out' });
+  await signOut.click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(signOut).toBeEnabled();
+  await signOut.click();
+  await expect(signOut).toBeDisabled();
+  await expect(signOut).toHaveAttribute('aria-busy', 'true');
+  await expect.poll(() => requests).toBe(2);
+  release();
+  await expect(page).toHaveURL(/\/login$/);
+  expect(requests).toBe(2);
+});
 
 test('session state keeps guests and signed-in users on the right pages', async ({
   page,
