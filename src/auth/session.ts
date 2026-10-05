@@ -78,20 +78,33 @@ export async function boardAccess(
   const role = await workspaceRole(userId, board.workspaceId, write);
   return { board, role };
 }
-export async function createSession(userId: string, request: Request) {
+export async function prepareSession(
+  userId: string,
+  request: Request,
+  authEnv: Env = env,
+) {
   assert(
-    env.SESSION_SECRET?.length >= 32,
+    authEnv.SESSION_SECRET?.length >= 32,
     503,
     'Session configuration unavailable',
   );
   const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
   const lifetime = 7 * 24 * 60 * 60;
-  await drizzle(env.DB)
-    .insert(sessions)
-    .values({
-      id: await sessionHash(token, env.SESSION_SECRET),
+  return {
+    row: {
+      id: await sessionHash(token, authEnv.SESSION_SECRET),
       userId,
       expiresAt: Date.now() + lifetime * 1000,
-    });
-  return `ce_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${lifetime}${new URL(request.url).protocol === 'https:' ? '; Secure' : ''}`;
+    },
+    cookie: `ce_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${lifetime}${new URL(request.url).protocol === 'https:' ? '; Secure' : ''}`,
+  };
+}
+export async function createSession(
+  userId: string,
+  request: Request,
+  authEnv: Env = env,
+) {
+  const prepared = await prepareSession(userId, request, authEnv);
+  await drizzle(authEnv.DB).insert(sessions).values(prepared.row);
+  return prepared.cookie;
 }

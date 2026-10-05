@@ -6,7 +6,13 @@ import { users, sessions } from '../db/schema';
 import { body, route } from '../lib/http';
 import { AppError, assert } from '../lib/errors';
 import { hashPassword, verifyPassword, sessionHash } from './crypto';
-import { createSession, currentUser, requireUser, tokenFrom } from './session';
+import {
+  createSession,
+  prepareSession,
+  currentUser,
+  requireUser,
+  tokenFrom,
+} from './session';
 import { verifiedAccessEmail } from './access';
 import { DEMO } from '../db/demo';
 import { confirmPassword } from './reauth';
@@ -66,18 +72,36 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
         .get();
       assert(!exists, 409, 'Unable to register this email');
       const id = crypto.randomUUID();
-      await db.insert(users).values({
-        id,
-        email: data.email,
-        name: data.name,
-        password: await hashPassword(data.password, authEnv.SESSION_SECRET),
-        createdAt: Date.now(),
-      });
+      const password = await hashPassword(
+        data.password,
+        authEnv.SESSION_SECRET,
+      );
+      const prepared = await prepareSession(id, request, authEnv);
+      try {
+        await db.batch([
+          db.insert(users).values({
+            id,
+            email: data.email,
+            name: data.name,
+            password,
+            createdAt: Date.now(),
+          }),
+          db.insert(sessions).values(prepared.row),
+        ]);
+      } catch (error) {
+        let cause: unknown = error;
+        for (let depth = 0; cause instanceof Error && depth < 5; depth++) {
+          if (/UNIQUE constraint failed: users.email/i.test(cause.message))
+            throw new AppError(409, 'Unable to register this email');
+          cause = cause.cause;
+        }
+        throw error;
+      }
       return Response.json(
         { user: { id, email: data.email, name: data.name } },
         {
           status: 201,
-          headers: { 'Set-Cookie': await createSession(id, request) },
+          headers: { 'Set-Cookie': prepared.cookie },
         },
       );
     }
@@ -92,10 +116,19 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
         'pbkdf2-sha256-peppered$100000$00000000000000000000000000000000$0000000000000000000000000000000000000000000000000000000000000000',
       authEnv.SESSION_SECRET,
     );
-    assert(user && valid, 401, 'Invalid email or password');
+    assert(
+      user && valid,
+      401,
+      'Invalid email or password',
+      'INVALID_CREDENTIALS',
+    );
     return Response.json(
       { user: { id: user.id, name: user.name, email: user.email } },
-      { headers: { 'Set-Cookie': await createSession(user.id, request) } },
+      {
+        headers: {
+          'Set-Cookie': await createSession(user.id, request, authEnv),
+        },
+      },
     );
   });
 

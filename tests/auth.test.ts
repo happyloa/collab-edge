@@ -1,5 +1,5 @@
 import { env } from 'cloudflare:workers';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { authenticate, logout, session } from '../src/auth/routes';
 const origin = 'https://auth.test';
 const request = (path: string, data: unknown, cookie = '') =>
@@ -66,4 +66,112 @@ it('rejects malformed payloads and passwords without returning credentials', asy
   );
   expect(response.status).toBe(400);
   expect(await response.text()).not.toContain('short');
+});
+
+it('rolls back registration when the session insert fails, then allows a retry', async () => {
+  const email = `rollback-${crypto.randomUUID()}@example.com`;
+  const data = {
+    email,
+    password: 'A-rollback-password-2026',
+    name: 'Retry user',
+  };
+  // The generated email contains only a fixed prefix, UUID and fixed domain.
+  await env.DB.prepare(
+    `CREATE TRIGGER fail_registration_session
+    BEFORE INSERT ON sessions
+    WHEN NEW.user_id IN (SELECT id FROM users WHERE email='${email}')
+    BEGIN SELECT RAISE(ABORT,'Test session insert failure'); END;`,
+  ).run();
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const failed = await authenticate(true)(
+      request('/api/auth/register', data),
+    );
+    expect(failed.status).toBe(500);
+    expect(failed.headers.get('set-cookie')).toBeNull();
+    expect(
+      await env.DB.prepare('SELECT id FROM users WHERE email=?')
+        .bind(email)
+        .first(),
+    ).toBeNull();
+    expect(log.mock.calls.flat().join('')).not.toContain(email);
+  } finally {
+    await env.DB.exec('DROP TRIGGER fail_registration_session');
+    log.mockRestore();
+  }
+  const retried = await authenticate(true)(request('/api/auth/register', data));
+  expect(retried.status).toBe(201);
+  const cookie = retried.headers.get('set-cookie')!;
+  expect(
+    await (
+      await session(
+        new Request(`${origin}/api/auth/session`, {
+          headers: { Cookie: cookie },
+        }),
+      )
+    ).json(),
+  ).toMatchObject({ user: { email } });
+});
+
+it('creates only one account and session during concurrent registration', async () => {
+  const email = `concurrent-${crypto.randomUUID()}@example.com`;
+  const data = {
+    email,
+    password: 'A-concurrent-password-2026',
+    name: 'One user',
+  };
+  const results = await Promise.all([
+    authenticate(true)(request('/api/auth/register', data)),
+    authenticate(true)(request('/api/auth/register', data)),
+  ]);
+  expect(results.map((result) => result.status).sort()).toEqual([201, 409]);
+  expect(
+    results.filter((result) => result.headers.has('set-cookie')),
+  ).toHaveLength(1);
+  expect(
+    await env.DB.prepare('SELECT count(*) AS count FROM users WHERE email=?')
+      .bind(email)
+      .first(),
+  ).toEqual({ count: 1 });
+  expect(
+    await env.DB.prepare(
+      'SELECT count(*) AS count FROM sessions JOIN users ON users.id=sessions.user_id WHERE users.email=?',
+    )
+      .bind(email)
+      .first(),
+  ).toEqual({ count: 1 });
+});
+
+it('keeps the lifetime account quota enforced during transactional registration', async () => {
+  const { count } = (await env.DB.prepare(
+    'SELECT count(*) AS count FROM users',
+  ).first<{ count: number }>())!;
+  await env.DB.batch(
+    Array.from({ length: 100 - count }, (_, index) =>
+      env.DB.prepare(
+        'INSERT INTO users(id,email,name,password,created_at) VALUES(?,?,?, ?,0)',
+      ).bind(
+        crypto.randomUUID(),
+        `quota-${index}@example.com`,
+        'Quota user',
+        '!',
+      ),
+    ),
+  );
+  const email = `blocked-${crypto.randomUUID()}@example.com`;
+  const response = await authenticate(true)(
+    request('/api/auth/register', {
+      email,
+      password: 'A-quota-password-2026',
+      name: 'Blocked user',
+    }),
+  );
+  expect(response.status).toBe(429);
+  expect(await response.json()).toMatchObject({ code: 'USAGE_LIMIT' });
+  expect(response.headers.get('set-cookie')).toBeNull();
+  expect(
+    await env.DB.prepare('SELECT id FROM users WHERE email=?')
+      .bind(email)
+      .first(),
+  ).toBeNull();
 });
