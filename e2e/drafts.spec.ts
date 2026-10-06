@@ -432,7 +432,9 @@ test('storage transactions enforce cross-tab limits, expiry and account generati
   await expect.poll(async () => (await drafts(page)).length).toBe(1);
   await page.goto('/workspaces');
   await expect(
-    page.getByText('demo-bob@collabedge.invalid', { exact: true }),
+    page
+      .getByRole('banner')
+      .getByText('demo-bob@collabedge.invalid', { exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
