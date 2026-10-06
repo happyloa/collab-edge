@@ -71,3 +71,57 @@ for (const name of [
 console.log(
   'Patched braces rejects deep strings and ASTs; ordinary globs still work',
 );
+
+const sourceMapVersions = new Set(
+  [...lock.matchAll(/^ {2}source-map-js@([^\s:(]+)(?:\([^\n]*\))?:/gm)].map(
+    (match) => match[1],
+  ),
+);
+assert.ok(sourceMapVersions.size > 0, 'Source-map dependency graph is missing');
+for (const version of sourceMapVersions) {
+  const parts = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  assert.ok(parts, 'Review non-stable source-map-js versions');
+  const [major, minor, patch] = parts.slice(1).map(Number);
+  assert.ok(
+    major > 1 || (major === 1 && (minor > 2 || (minor === 2 && patch >= 2))),
+    `Vulnerable source-map-js ${version} remains in the lockfile`,
+  );
+}
+{
+  const fromPostcss = createRequire(
+    createRequire(import.meta.resolve('vite')).resolve('postcss'),
+  );
+  const { SourceMapConsumer, SourceNode } = require(
+    fromPostcss.resolve('source-map-js'),
+  );
+  const map = {
+    version: 3,
+    sources: ['input.js'],
+    names: [],
+    mappings: 'AAAA',
+    sourcesContent: ['a();'],
+  };
+  const indexed = (line) => ({
+    version: 3,
+    sections: [{ offset: { line, column: 0 }, map }],
+  });
+  const valid = new SourceMapConsumer(indexed(0));
+  assert.equal(
+    SourceNode.fromStringWithSourceMap('a();', valid).toString(),
+    'a();',
+  );
+  // Construction must reject before a generator can amplify this tiny map.
+  for (const line of [1e9, -1, Infinity, NaN, 1.5])
+    assert.throws(() => new SourceMapConsumer(indexed(line)), /Section offset/);
+  assert.throws(
+    () =>
+      new SourceMapConsumer({
+        version: 3,
+        sections: [{ offset: { line: 1e7, column: 0 }, map: indexed(1) }],
+      }),
+    /offset line/i,
+  );
+}
+console.log(
+  'Source-map offsets reject malicious amplification; valid maps work',
+);
