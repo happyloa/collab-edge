@@ -1,6 +1,32 @@
 import { test, expect, isolatedContext } from './fixture';
 import { DEMO } from '../src/db/demo';
 
+test('login and registration inputs wait for client initialization', async ({
+  browser,
+}, testInfo) => {
+  const staticContext = await isolatedContext(browser, testInfo, {
+    javaScriptEnabled: false,
+  });
+  try {
+    const page = await staticContext.newPage();
+    for (const path of ['/login', '/register']) {
+      await page.goto(path);
+      await expect(page.getByLabel('Email address')).toBeDisabled();
+      await expect(page.getByLabel('Password', { exact: true })).toBeDisabled();
+      if (path === '/register')
+        await expect(page.getByLabel('Your name')).toBeDisabled();
+      await expect(
+        page.getByRole('button', {
+          name: path === '/register' ? 'Create account' : 'Sign in',
+          exact: true,
+        }),
+      ).toBeDisabled();
+    }
+  } finally {
+    await staticContext.close();
+  }
+});
+
 test('sign out waits for hydration, prevents duplicate requests and permits retry after failure', async ({
   page,
   context,

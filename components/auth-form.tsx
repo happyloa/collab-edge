@@ -76,6 +76,7 @@ export function AuthForm({
             <label className="field">
               {t('Your name')}
               <input
+                disabled={!hydrated}
                 autoComplete="name"
                 required
                 maxLength={80}
@@ -90,7 +91,12 @@ export function AuthForm({
           )}
           <label className="field">
             {t('Email address')}
-            <input type="email" autoComplete="email" {...register('email')} />
+            <input
+              disabled={!hydrated}
+              type="email"
+              autoComplete="email"
+              {...register('email')}
+            />
             {registerMode && (
               <span className="text-xs font-normal text-muted">
                 {t(
@@ -107,6 +113,7 @@ export function AuthForm({
           <div className="field">
             <label htmlFor="account-password">{t('Password')}</label>
             <PasswordInput
+              disabled={!hydrated}
               id="account-password"
               autoComplete={registerMode ? 'new-password' : 'current-password'}
               {...register('password')}
