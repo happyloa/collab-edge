@@ -26,16 +26,18 @@ Pure changes to `docs/**`, `README.md` and `AGENTS.md` do not trigger a Cloudfla
 
 In Workers & Pages → `collab-edge` → Settings → Builds → Connect, authorize the Cloudflare GitHub App only for `happyloa/collab-edge` and configure:
 
-| Setting                       | Value                                                                                                 |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Production branch             | `main`                                                                                                |
-| Root directory                | `/`                                                                                                   |
-| Build command                 | `corepack pnpm install --frozen-lockfile && corepack pnpm verify`                                     |
-| Deploy command                | `node scripts/check-deploy-budget.mjs && corepack pnpm db:migrate:remote && corepack pnpm run deploy` |
-| Build variable                | `CLOUDFLARE_FREE_PLAN_CONFIRMED=true`                                                                 |
-| Non-production/preview builds | Disabled                                                                                              |
+| Setting                       | Value                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Production branch             | `main`                                                                                                      |
+| Root directory                | `/`                                                                                                         |
+| Build command                 | `corepack pnpm install --frozen-lockfile && corepack pnpm audit --audit-level high && corepack pnpm verify` |
+| Deploy command                | `node scripts/check-deploy-budget.mjs && corepack pnpm db:migrate:remote && corepack pnpm run deploy`       |
+| Build variable                | `CLOUDFLARE_FREE_PLAN_CONFIRMED=true`                                                                       |
+| Non-production/preview builds | Disabled                                                                                                    |
 
 Use a build token scoped to this account's Workers Scripts, D1 and required bindings; never use a Global API Key. Keep Builds on the Free allowance and disable paid overages. Verify an actual successful build after connecting. Do not enable both native Builds and GitHub Actions deployments for the same branch.
+
+Native Builds checks the high-severity audit before building. An unhandled advisory or failed audit request stops deployment independently of GitHub CI. The named, patched braces exception remains in the repository audit configuration; new advisories are not automatically ignored.
 
 The obsolete, disabled GitHub Actions Worker deployment workflow, its two repository deployment variables and its account-ID secret have been removed. GitHub Actions runs app CI and the separate static GitHub Pages demo deployment; native Builds retains its own Worker deploy token and Free-plan build variable in Cloudflare. See [public demo](public-demo.md) for the independent browser-only artifact.
 
