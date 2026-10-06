@@ -54,6 +54,45 @@
     color-scheme: dark;
   }
 }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--color-primary) 55%,
+      var(--color-muted)
+    )
+    transparent;
+}
+@supports not (scrollbar-width: thin) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: color-mix(
+      in srgb,
+      var(--color-primary) 55%,
+      var(--color-muted)
+    );
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+  }
+}
+@media (forced-colors: active) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: CanvasText;
+  }
+}
 .theme-icon-light {
   display: var(--theme-icon-light-display);
 }
