@@ -22,7 +22,7 @@ References: [Workers Access and WebSocket limitations](https://developers.cloudf
 
 Native Workers Builds is connected to `happyloa/collab-edge`, with production trigger `d5048a22-ca1a-4390-842a-01904be97a9a`. Pushes to `main` initiate builds automatically; no preview trigger was created. GitHub CI runs separately. The following settings are configured in Cloudflare.
 
-Pure changes to `docs/**`, `README.md` and `AGENTS.md` do not trigger a Cloudflare build, saving free build minutes. Other matching `main` changes trigger the complete native verification and deployment flow. Node 24.12.0 and pnpm 12.5.1 are configured as build variables.
+Pure changes to `docs/**`, `README.md`, `README.en.md`, the legacy `README.zh-TW.md` entry and `AGENTS.md` do not trigger a Cloudflare build, saving free build minutes. Other matching `main` changes trigger the complete native verification and deployment flow. Node 24.12.0 and pnpm 12.5.1 are configured as build variables.
 
 In Workers & Pages → `collab-edge` → Settings → Builds → Connect, authorize the Cloudflare GitHub App only for `happyloa/collab-edge` and configure:
 

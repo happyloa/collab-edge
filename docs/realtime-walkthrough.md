@@ -8,7 +8,7 @@ CollabEdge's [public playground](https://happyloa.github.io/collab-edge/) is a b
 
 ## Reproduce it
 
-From a fresh checkout, follow the [local setup](../README.md#local-development), install Chromium, then run:
+From a fresh checkout, follow the [local setup](../README.en.md#local-development), install Chromium, then run:
 
 ```sh
 corepack pnpm test:e2e

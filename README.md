@@ -1,184 +1,162 @@
 # CollabEdge
 
-[繁體中文](README.zh-TW.md) · **English**
+**繁體中文** · [English](README.en.md)
 
 [![CI](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml/badge.svg)](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml)
 
-A shared project workspace that makes realtime collaboration explicit: ordered changes, recoverable conflicts, and a clear source of truth.
+讓團隊在同一個看板規劃、討論與即時協作，清楚處理同步、斷線及編輯衝突。
 
-[Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
+[開啟網站](https://collab-edge.piafyoyo06.workers.dev) · [GitHub](https://github.com/happyloa/collab-edge) · [作品交接與待驗收項目](docs/portfolio-handoff.md) · [交付與驗證紀錄](docs/delivery-status.md)
 
-**Deployment:** [CollabEdge on Workers](https://collab-edge.piafyoyo06.workers.dev), protected by owner-only Cloudflare Access email verification. GitHub About contains the same URL. The Worker is connected to this repository through native Workers Builds for `main`; GitHub Actions runs CI and publishes the separate static demo. Production attachments and preview URLs are disabled. See [delivery status](docs/delivery-status.md) for release verification and remaining testing limits.
+**[免登入互動展示](https://happyloa.github.io/collab-edge/)**：可編輯、指派、篩選、移動、封存及還原示範卡片，也能模擬隊友修改造成的衝突。展示頁獨立部署在 GitHub Pages，資料只保留在目前分頁，重整或重設即清除，不呼叫正式站 API，也不提供真正的多人連線。頁面下方可[觀看本機雙瀏覽器測試實錄](https://happyloa.github.io/collab-edge/#recorded-collaboration)。[展示頁說明](docs/public-demo.md)。
 
-**Public interactive demo:** [Try it without signing in](https://happyloa.github.io/collab-edge/). This separate GitHub Pages site runs entirely in your browser: edit, assign, filter, move, archive and restore sample cards, or simulate a conflicting edit. Reload or reset to discard changes. It does not call the production API or demonstrate live multi-user synchronization. [Watch the recorded local two-browser test](https://happyloa.github.io/collab-edge/#recorded-collaboration) below the playground. [Demo setup and boundaries](docs/public-demo.md).
+**真正的即時協作驗證**：參閱[雙瀏覽器測試導覽](docs/realtime-walkthrough.md)，可在本機重現 Alice 和 Bob 透過 Worker、WebSocket 與資料庫同步，並驗證衝突重試及斷線重連。正式站登入後的多人協作仍待擁有者通過 Access 驗收。
 
-**Live collaboration evidence:** [Follow the two-browser test walkthrough](docs/realtime-walkthrough.md) to reproduce Alice and Bob using the real local Worker, WebSocket and database, including conflict recovery and reconnect. Authenticated production collaboration still needs an owner Access smoke test.
+> 正式網站目前只允許擁有者通過 Cloudflare Access 信箱驗證後進入。核心功能通過本機與 CI 測試；登入後的正式環境全流程驗收尚未完成。正式附件功能為控制費用而停用。
 
-![CollabEdge seeded demo board captured in Chromium](docs/screenshots/demo-board.png)
+![CollabEdge 看板](docs/screenshots/demo-board.png)
 
-## Why this exists
+## 專案目的
 
-Realtime collaboration is more than broadcasting a new card title. Two people can edit the same field, a connection can disappear after the server commits, and an optimistic screen can briefly disagree with persistent state. CollabEdge explores those boundaries using server authority, edge coordination, explicit revisions and recoverable user input.
+即時協作不只是廣播畫面變更。同一欄位可能被兩人同時編輯，連線可能在伺服器寫入後中斷，畫面上的樂觀更新也可能與資料庫不同步。CollabEdge 使用伺服器決定的版本順序、可重試的操作，以及保留草稿的衝突處理，讓這些情況有明確行為。
 
-## Features
+## 功能與邊界
 
-- Workspaces with server-enforced OWNER, EDITOR and VIEWER roles; member invitations, role changes, removal and leaving. An owner can propose a transfer to an existing member, who must sign in and accept within seven days. Both parties confirm their own account password.
-- Password-confirmed account deletion for non-demo users who no longer own workspaces. It revokes every session and anonymizes the account while preserving shared project content.
-- Boards with columns, cards, descriptions, archive, comments, column ordering and pointer/keyboard card dragging.
-- Synchronized board renaming, archival and restoration. Archived boards retain history and files, become read-only, and still count toward quotas. The shared demo cannot be archived.
-- Card assignees restricted to current workspace members, calendar due dates, title/description search and assignee/date filters. Archived cards can be restored with their metadata and history intact. Clear filters to re-enable dragging.
-- Hibernating WebSockets, live active/idle and viewed-card presence, and ordered event delivery.
-- Optimistic creation, edits and moves, with explicit pending, failed and conflicted states.
-- Per-field conflict detection and a preserved draft with an explicit retry action.
-- Browser draft recovery across reloads, with seven-day expiry, shared count/size limits, separate tab records and account cleanup. Recovered mutations require review and retain their original UUID for deduplication. [Storage behavior and limits](docs/local-drafts.md).
-- Owners can inspect workspace and board capacity, including retained archived data and per-card comment limits. [Capacity behavior](docs/workspace-capacity.md).
-- Reconnect replay, revision-gap detection and snapshot fallback.
-- Private, authorized R2 attachments with MIME/signature validation and bounded uploads; enabled locally, gated in production.
-- Persistent board activity loaded on demand with older entries available in bounded pages; light/dark themes, responsive scrolling, keyboard controls, GSAP home-page storytelling, short in-app interaction animations, and reduced-motion support. See [motion direction](docs/motion-references.md).
-- Download a versioned board JSON backup with a checksum. Workspace owners can preview and restore it as a separate board, map assignees to current members and resume an interrupted upload. Attachment files and old event history are omitted; imported file references are unavailable for download. [Restore flow and capacity limits](docs/board-backups.md).
-- English and Traditional Chinese interface, including persistent language selection, server-rendered locale, statuses, common errors, accessibility labels and dates. User-authored content stays unchanged.
-- Self-hosted Google Fonts Noto Sans TC across the website, with Unicode subsets loaded on demand. [Font source and license](public/fonts/README.md).
-- Hard server-side quotas for users, workspaces, boards, messages, mutations, events and attachments.
-- Alice and Bob demo sessions with a seeded **Acme Product Team / Website Launch** board.
+| 功能         | 目前狀態                                                                             |
+| ------------ | ------------------------------------------------------------------------------------ |
+| 帳號與工作區 | 註冊、登入、登出、Access 身分密碼重設、帳號刪除、角色權限與雙方確認的擁有權轉移      |
+| 成員管理     | 加入已註冊帳號、調整權限、移除成員；不寄送邀請信                                     |
+| 看板與卡片   | 建立看板、改名、封存與還原、欄位管理、拖曳卡片、描述與留言                           |
+| 任務管理     | 指派現有工作區成員、截止日期、標題／描述搜尋、負責人及日期篩選                       |
+| 即時協作     | WebSocket 同步、使用中／閒置與正在查看的卡片提示、可分頁瀏覽的活動紀錄、樂觀更新     |
+| 看板備份還原 | 匯出含版本與校驗碼的 JSON、預覽、成員對應、還原至新看板及中斷續傳                    |
+| 衝突與重連   | 欄位衝突提示、保留草稿重試、事件重播與完整快照備援                                   |
+| 本機草稿     | 重新整理後可找回卡片修改與未送出留言；七天期限、筆數與容量上限、多分頁隔離及帳號清除 |
+| 中英文介面   | English／繁體中文切換，記住選擇，支援伺服器首次渲染                                  |
+| 操作體驗     | 深／淺色、手機版、鍵盤操作、GSAP 首頁動態與輕量互動、減少動態效果                    |
+| 附件         | 本機可測試私有上傳與下載；正式環境停用                                               |
+| 客製驗證信   | [HTML、純文字與預覽](docs/email/README.md)已完成，尚未串接 Access 寄信               |
 
-## Try collaboration locally
+Cloudflare Access 是外層門禁，通過後仍需登入 CollabEdge 帳號或使用示範身分。工作區成員設定不會自動授予外層門禁權限。
 
-Choose **English / 繁體中文** from the language selector on the home, authentication, workspace or board screen. The choice persists for a year using a cookie; English is the default. Switching does not clear drafts or reconnect the board. Cloudflare Access pages and emails are outside this app's localization. See [i18n maintenance](docs/i18n.md).
+草稿保存在目前瀏覽器，恢復後由使用者確認再送出；不確定是否已提交的修改會保留原 UUID，避免重複寫入。登出、重設密碼、刪除帳號或切換帳號後會清除裝置草稿。瀏覽器若禁止儲存，介面會保留輸入並停止送出看板修改；完整離線重新載入目前不支援。詳見[本機草稿與限制](docs/local-drafts.md)。
 
-Start the app, open its home page, and choose **Try as Alice**. Open a private window and choose **Try as Bob**. Both sessions join the same public demo board. Move a card or edit a title and watch the second window update without a reload. Demo identities are editors; they cannot manage members. Keep sensitive information out of the shared demo.
+工作區擁有者可查看成員、看板、卡片、留言與累計修改的容量。封存資料仍計入配額，容量頁面不會刪除資料或重設上限。詳見[工作區容量](docs/workspace-capacity.md)。
 
-## Architecture
+看板 JSON 匯出不會向 Cloudflare 發出額外請求，只有連線已同步且沒有待確認編輯時可使用。新版備份包含格式版本與校驗碼；工作區擁有者可預覽資料、對應指派成員，並還原為新看板，中斷後也能選取同一份檔案續傳。備份不含附件檔案本體或完整事件歷史，還原後的附件只顯示無法下載的參照。[還原流程與容量限制](docs/board-backups.md)。
 
-```mermaid
-flowchart LR
-    A[Browser A] -->|WebSocket| W[Cloudflare Worker]
-    B[Browser B] -->|WebSocket| W
-    W --> D[BoardRoom Durable Object]
-    W --> H[Vinext App Router APIs]
-    H --> D
-    D --> DB[(Cloudflare D1)]
-    H --> DB
-    D --> R2[(Private Cloudflare R2)]
-    D -->|Ordered events| A
-    D -->|Ordered events| B
-```
+首頁動畫的設計來源與取捨見[動態設計參考](docs/motion-references.md)。
 
-Vinext owns pages, React Server Components and HTTP routes. The custom Worker routes WebSockets and exports DO classes. One BoardRoom per board serializes mutations and allocates revisions. D1 stores canonical entities and events. R2 stores binaries. AuthRateLimiter stores durable counters. Cloudflare Access protects the production hostname; application accounts and sessions are managed internally. There is no external realtime provider.
+在工作區勾選「顯示已封存看板」即可進入並還原看板；卡片可從「已封存卡片」清單還原。封存資料仍計入原有配額，還原不會清除描述、留言或附件紀錄。搜尋與篩選期間暫停拖曳，清除篩選後恢復。截止日期採日曆日期，逾期／今日篩選依瀏覽器當地日期判斷，尚無到期通知。
 
-## Realtime synchronization
+## 切換語言
 
-Each command has a client-generated UUID and baseRevision. BoardRoom validates and authorizes it, checks conflicts, calculates authoritative ordering, and atomically commits entity changes, the next revision and an event in D1. Only then does it broadcast and acknowledge. A unique board/mutation constraint makes retrying a command safe.
+全站使用 Google Fonts 的 **Noto Sans TC（思源黑體）**，中英文及表單控制項皆套用同一字型。字型自行託管，依頁面字元載入需要的分段；[來源與開源授權](public/fonts/README.md)隨專案附上。
 
-The client keeps confirmed state separate from optimistic commands. Ordered patches reconcile the UI without refetching the entire board after each success. Duplicate events are ignored; revision gaps initiate resynchronization. [Protocol details →](docs/realtime-protocol.md)
+首頁、登入／註冊頁、工作區與看板都有 **Language / 語言** 選單。選擇 English 或繁體中文後立即更新介面，不重新載入看板，也不清除輸入中的草稿。
 
-## Conflict resolution
+選擇會儲存於 `collabedge_locale` cookie，保留一年。重新整理與切換頁面後仍使用所選語言，未設定時預設英文。按鈕、欄位、提示、常見錯誤、權限、連線狀態與活動名稱皆有翻譯；日期時間使用所選語系格式。
 
-Alice opens a card at revision 40. Bob edits its title, creating revision 41. Alice submits an older title based on 40. The server rejects the conflicting field, sends the authoritative snapshot and preserves Alice's attempted value for explicit recovery. A description edit can still succeed if only the title changed. [Rules and examples →](docs/conflict-resolution.md)
+卡片、留言、工作區名稱、檔名等使用者資料保留原文。Cloudflare Access 的外部登入頁與寄信不由本專案的語言選單控制。翻譯維護方式見 [i18n 文件](docs/i18n.md)。
 
-## Reconnection
+## 本機啟動
 
-The browser tracks lastSeenRevision and retries with exponential backoff and jitter. The server replays up to 200 contiguous events; absent or unsafe history produces a snapshot. Pending commands retain their mutation IDs. Offline writes are disabled while form drafts remain available. Heartbeat timeout and online/offline events detect broken connections.
-
-## Technology stack
-
-| Layer                              | Installed version        |
-| ---------------------------------- | ------------------------ |
-| Vinext / Cloudflare adapter        | 1.0.1 / 1.0.1            |
-| React / React DOM / RSC runtime    | 19.3.0                   |
-| Vite / TypeScript                  | 8.3.2 / 6.0.3            |
-| Tailwind / Vite integration        | 4.3.3                    |
-| Wrangler / Cloudflare Vite plugin  | 4.147.0 / 1.62.5         |
-| Drizzle ORM / Kit                  | 0.45.3 / 0.31.11         |
-| Zod / TanStack Query               | 4.6.5 / 5.104.1          |
-| React Hook Form / resolvers        | 7.89.0 / 5.9.1           |
-| dnd-kit core / sortable            | 6.3.1 / 10.0.0           |
-| Vitest / Cloudflare test plugin    | 4.1.11 / 1.3.6           |
-| Playwright / React Testing Library | 1.63.0 / 16.3.3          |
-| ESLint / Prettier / pnpm           | 10.12.0 / 3.9.9 / 12.5.1 |
-
-The exact reproducible graph lives in pnpm-lock.yaml. Compatibility pins, the ESLint bridge and Drizzle loader override are explained in [dependency decisions](docs/dependencies.md).
-
-## Repository structure
-
-```text
-app/                 Server pages and App Router HTTP handlers
-components/          Interactive auth, workspace, board and UI components
-src/auth/            Passwords, sessions, permissions and auth routes
-src/i18n/            English/Traditional Chinese UI and error messages
-src/db/              Drizzle schema, consistent snapshots and demo data
-src/realtime/        Validated protocol, reducers, conflicts and socket client
-src/validation/      Upload metadata and signature checks
-worker/              Minimal fetch entry and Durable Object coordinators
-drizzle/             Committed SQL migrations, constraints and quota triggers
-tests/               workerd integration, pure logic and React DOM tests
-e2e/                 Independent-browser collaboration scenario
-docs/                Architecture, protocol, security, tests and deployment
-.github/workflows/   GitHub CI verification; deployment uses Workers Builds
-```
-
-## Local development
-
-Use Node.js 24 and pnpm 12.5.1. On Windows, `corepack pnpm` works without a global pnpm shim.
+使用 Node.js 24 與 pnpm **12.5.1**。Windows 可用 `corepack pnpm`，不必另外安裝全域 pnpm。
 
 ```sh
 git clone https://github.com/happyloa/collab-edge.git
 cd collab-edge
-corepack enable
-pnpm install --frozen-lockfile
+corepack pnpm install --frozen-lockfile
 node scripts/setup-local.mjs
-pnpm cf:typegen
-pnpm db:migrate:local
-pnpm dev
+corepack pnpm cf:typegen
+corepack pnpm db:migrate:local
+corepack pnpm dev
 ```
 
-The setup script creates a random local SESSION_SECRET and enables only **local** R2. It never overwrites an existing .dev.vars. Open the URL printed by Vinext. Local D1/R2/DO emulation requires no Cloudflare account. Do not add `remote: true` to development bindings.
+開啟終端機顯示的網址。設定腳本會建立 `.dev.vars`，分別產生本機 `SESSION_SECRET`、`SESSION_SIGNING_KEY` 與 `PASSWORD_PEPPERS`，啟用本機附件並停用本機 Access 門禁。三組密鑰彼此獨立，腳本不覆蓋既有檔案；若沿用較早的設定，請依[密鑰設定與輪替文件](docs/auth-key-rotation.md)補齊，勿複製正式環境密鑰。D1、R2 與 Durable Objects 在本機模擬，不需要 Cloudflare 帳號；請勿將開發 bindings 改成遠端資料來源。
 
-## Cloudflare setup and deployment
+在一般視窗選 **Try as Alice／以 Alice 體驗**，在無痕視窗選 **Try as Bob／以 Bob 體驗**，即可進入相同的 Website Launch 示範看板。修改卡片時，另一個視窗會即時更新。示範身分皆為編輯者，請勿輸入敏感資料。
 
-D1 and private R2 were provisioned with Wrangler; their actual configuration is committed. DO exports declare SQLite storage. Use `pnpm cf:typegen` after binding changes, committed SQL migrations for schema changes, and `wrangler secret put SESSION_SECRET` for the runtime secret. The official deployment command is `pnpm run deploy`.
+## 系統架構
 
-Native Workers Builds verifies the app, checks deployment safety gates, applies remote migrations and deploys pushes to main. GitHub Actions runs CI only. [Exact commands, permissions and release gates →](docs/deployment.md)
+```mermaid
+flowchart LR
+    A[瀏覽器 A] --> W[Cloudflare Worker / Vinext]
+    B[瀏覽器 B] --> W
+    W --> H[HTTP API]
+    W --> D[每個看板的 BoardRoom Durable Object]
+    H --> DB[(D1)]
+    H --> D
+    D --> DB
+    D --> R[(私有 R2 / 正式停用)]
+    D -->|有序事件| A
+    D -->|有序事件| B
+```
 
-## Testing
+Vinext 處理頁面與 HTTP API。每個看板由一個 BoardRoom 序列化變更；D1 保存正式資料及事件。R2 儲存附件，AuthRateLimiter 保存使用量計數。
+
+每次操作附上唯一 `clientMutationId` 與 `baseRevision`。伺服器在同一筆 D1 transaction 中更新資料、版本與事件，再廣播結果。重送相同操作不會重複寫入。整欄拖曳排序以單一 SQL 更新受影響卡片的位置，避免在 Workers Free 上為每張卡片各執行一次查詢；變動的資料列仍計入 D1 每日寫入額度。事件及在線名單廣播以一筆 D1 查詢重新確認所有接收者的權限；單一看板最多 20 條連線。
+
+例如 Alice 開啟版本 40 的卡片，Bob 修改標題後成為版本 41；Alice 再以舊版本修改同一標題時，系統會提示衝突並保留草稿。重連時依最後版本補回事件，無法安全重播則取得完整快照。這不是 CRDT 文字合併，也沒有長期離線寫入佇列。
+
+## 技術與目錄
+
+Vinext 1.0.1、React 19.3.0、Vite 8.3.2、TypeScript 6.0.3、Tailwind CSS 4.3.3，搭配 Drizzle、Zod、TanStack Query 與 dnd-kit。實際鎖定版本以 [package.json](package.json) 與 [pnpm-lock.yaml](pnpm-lock.yaml) 為準；相容性取捨見 [dependencies.md](docs/dependencies.md)。
+
+| 目錄                   | 用途                          |
+| ---------------------- | ----------------------------- |
+| `app/`、`components/`  | 頁面、API 與互動介面          |
+| `src/auth/`、`src/db/` | 身分驗證、權限與資料模型      |
+| `src/realtime/`        | 同步協定、衝突與重連          |
+| `src/i18n/`            | 中英文文案與錯誤翻譯          |
+| `worker/`              | Worker 入口與 Durable Objects |
+| `drizzle/`             | 不可改寫的已套用 migrations   |
+| `tests/`、`e2e/`       | Workers、React 及瀏覽器測試   |
+| `docs/`                | 架構、部署、安全與驗證文件    |
+
+## 驗證與部署
 
 ```sh
-pnpm verify
-pnpm exec playwright install chromium
-pnpm test:e2e
-pnpm test:perf
-pnpm outdated
-pnpm audit
+corepack pnpm verify
+corepack pnpm exec playwright install chromium
+corepack pnpm test:e2e
+corepack pnpm test:perf
+corepack pnpm audit
 ```
 
-Workers integration uses real local workerd, D1, R2 and DOs. Tests cover atomic rollback, idempotency, revision increments, viewer rejection, hibernation, replay and conflict rules. React Testing Library checks UI permissions and validation. The two-browser Playwright test covers synchronization, conflicting edits, reconnect, comments and private attachments, and captures the screenshot above. [Test details →](docs/testing.md)
+`verify` 包含格式、lint、型別、Workers／React 測試、Vinext 相容性與正式建置。Playwright 另驗證雙人協作、衝突、重連、手機版、主題與語言切換。`test:e2e` 每次會自動建立、遷移並清理獨立的本機測試資料，不消耗平常開發資料庫的配額。測試使用本機模擬環境，不等同正式環境登入後驗收。
 
-`pnpm test:e2e` migrates and uses its own disposable local Cloudflare state and port, so repeated browser runs do not consume the normal development database's quotas.
+`test:perf` 量測 25／100／200 張卡片、最多 4,000 則留言的本機 Chromium 看板，記錄快照大小、繪製與互動時間，並確認鍵盤移動寫入 D1、留言完整保留。數據與限制見[大型看板基準](docs/snapshot-performance.md)；桌面與手機的焦點、未存提示和減少動態驗收見[鍵盤操作](docs/keyboard-accessibility.md)。正式站延遲仍需登入後另外確認。
 
-`pnpm test:perf` measures 25/100/200-card fixtures with up to 4,000 comments in isolated local Chromium. It records snapshot bytes, paint samples and interactions, and confirms keyboard moves persist without losing comments. See the [browser baseline and limits](docs/snapshot-performance.md) and [card keyboard acceptance](docs/keyboard-accessibility.md). These local measurements do not establish authenticated production latency.
+GitHub Actions 負責 CI、CodeQL 與獨立展示頁發布；Cloudflare 原生 Workers Builds 連接本 repo，在符合路徑條件的 `main` 更新時，先執行高風險套件稽核與 `verify`，通過費用防護檢查後才套用遠端 migrations 並部署。純 README 與 `docs/` 修改不觸發 Worker 建置。不要另外啟用第二套自動部署。完整操作、bindings、權限與安全檢查見 [部署文件](docs/deployment.md)。GitHub About 已設定正式網址。
 
-Registration commits the account and session together. API failures retain status and retry metadata; sign-in recovery opens a separate tab to keep current edits. Query cancellation, bounded retries and same-account board reconnection are described in [error recovery](docs/error-recovery.md).
+目前仍由 `wrangler.jsonc` 與 Vinext Cloudflare adapter 管理開發、建置及部署；帳號與資源管理優先使用官方 `cf` CLI。建議另行完成 `cf` 遷移，目前 adapter 整合與遷移 TODO 尚未驗證，不能只替換命令。正式驗證需三組獨立密鑰；已使用的 `SESSION_SECRET` 保留供舊帳號相容，不應在一般部署中重建。詳見[密鑰設定與輪替](docs/auth-key-rotation.md)。
 
-## Security
+## 安全、用量與已知限制
 
-Passwords use a server-secret HMAC followed by PBKDF2-HMAC-SHA256 with 100,000 iterations, a unique 128-bit salt and a 256-bit result. Cloudflare Workers rejects higher PBKDF2 counts; this is below OWASP's general 600,000-iteration guidance, so the private site's Access gate and persistent auth limits remain important. Sessions use random tokens, HMAC digests, seven-day expiry, server-side logout invalidation and HttpOnly cookies. All write origins and payloads are validated. RBAC is enforced on the server, including event recipients. R2 stays private and downloads are authorized. Persistent rate limits and atomic quotas bound usage. [Parameters, limits and caveats →](docs/security.md)
+新密碼使用獨立 pepper、100,000 次 PBKDF2-HMAC-SHA256、隨機鹽值與 256-bit 結果；工作區權限、Access 門禁與持續限流共同限制存取。密碼雜湊參數的安全取捨見[安全文件](docs/security.md)。Session 使用獨立簽章密鑰及 HttpOnly cookie；所有寫入、WebSocket 與附件存取均在伺服器驗證權限。正式環境僅允許擁有者信箱進站，Workers Free 由擁有者確認，未升級付費方案。
 
-## Engineering decisions and tradeoffs
+系統設有每 IP 限流、每 24 小時最多 5,000 次動態請求、每日 2,000 次看板變更，以及工作區、卡片、事件與檔案配額。超過上限會拒絕操作；封存資料仍占配額。應用程式限制不是整個 Cloudflare 帳戶的帳單保證。
 
-- **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. The project uses stable 1.0.1 and checks its App Router compatibility on every release.
-- **Durable Objects:** a natural coordination boundary per board, with explicit serialization across asynchronous I/O and hibernating sockets.
-- **D1:** one durable source of truth and atomic event/entity batches. Full-column card moves write changed positions with one JSON-expanded SQL statement inside the batch, avoiding a per-card query burst on Workers Free. A large move still counts every changed row toward D1's daily write allowance. Event and presence broadcasts reauthorize all recipients with one batched D1 query; the room remains capped at 20 sockets.
-- **R2:** private binary storage with random keys. R2 and D1 are not a distributed transaction; crashes can leave inaccessible objects, bounded by the upload budget.
-- **Revisions:** understandable conflict and replay semantics without claiming CRDT text merging. Event retention is capped; capacity exhaustion fails closed instead of auto-scaling cost.
-- **Cost:** quotas are not an account-wide billing guarantee. The Worker is deployed on the user-confirmed Free plan, with production R2 disabled and owner-only Access enabled.
+正式網站的新帳號必須使用 Cloudflare Access 已驗證的信箱註冊。既有帳號可先登入，再於工作區畫面改用該信箱；示範帳號不能改用正式信箱。Access 是外層門禁，不會自動登入應用程式帳號。已登入者進入登入／註冊頁時會回到工作區。
 
-On the private site, new registrations must use the email verified by Cloudflare Access. Existing accounts using another email can sign in and adopt that verified address from the workspace screen; demo identities cannot adopt it. The [password reset page](app/reset-password/page.tsx) uses the same Access identity and revokes all previous app sessions. The current Access session is sufficient; resetting does not send a fresh code. Local development without Access cannot reset passwords. Access remains a separate outer gate and does not automatically sign users into an app account. Member invitations target existing app accounts, while ownership transfers target existing workspace members. Both recipients must be able to pass the outer Access gate; neither flow sends email. Demo identities cannot transfer ownership or delete their accounts. Account deletion requires transferring every owned workspace first; it removes login details and membership, but shared cards, comments, files and an anonymous author record remain. Deleted accounts still count against the lifetime user cap. Rich-text CRDTs, automated orphan cleanup and event compaction remain unimplemented. Archived cards remain retained and count toward quotas. The [custom verification email](docs/email/README.md) is a design artifact, not the production Access email.
+- **密碼重設**：[重設頁面](app/reset-password/page.tsx)核對同一個有效的 Access 身分，重設後撤銷所有舊的應用程式登入階段。流程不另外寄送新驗證碼；未設定 Access 的本機環境不能使用。
+- **擁有權轉移**：擁有者向現有成員提出邀請，雙方各自輸入帳號密碼，接收者須於七天內登入接受。邀請不寄信，也不授予外層 Access 權限；示範帳號不能轉移。
+- **帳號刪除與資料保留**：非示範帳號先轉移所有工作區擁有權，再輸入密碼刪除。登入資料與成員資格會移除，共享的卡片、留言與檔案保留，作者匿名化。已刪除帳號仍占終身帳號總額；封存資料仍占配額。目前沒有自動清理孤立附件或事件壓縮。
+- **尚待驗收**：擁有者登入正式站後的完整流程、多瀏覽器、慢速裝置與螢幕閱讀器驗收仍未完成。本機與 CI 通過不代表這些項目已完成，詳見[作品交接](docs/portfolio-handoff.md)。
+- **安全稽核例外**：`braces@3.0.3` 的既有高風險公告使用本機修補、回歸測試及明列的稽核例外。相容性限制與修補依據見[套件文件](docs/dependencies.md)。
+- **後續功能**：富文字共同編輯、看板範本、通知、游標同步、長期離線寫入及組織管理尚未實作。Vinext 使用穩定版 1.0.1，升級前仍需驗證相容性。
 
-## Roadmap
+## 延伸文件
 
-See the [2026-10-05 project review](docs/project-review.md) for code-backed priorities and acceptance criteria covering authentication, error recovery, data growth and maintainability.
+- [API 與登入錯誤恢復](docs/error-recovery.md)：註冊交易、錯誤分類、保留輸入與同帳號重連
+- [作品交接與待驗收項目](docs/portfolio-handoff.md)：目前交付範圍、測試證據與正式環境限制
+- [專案審查與改善順序](docs/project-review.md)：審查時的問題與驗收準則，完成狀態以交接文件為準
+- [驗證密鑰設定與輪替](docs/auth-key-rotation.md)：獨立密鑰、舊帳號相容與部署程序
+- [架構](docs/architecture.md)、[即時協定](docs/realtime-protocol.md)、[衝突處理](docs/conflict-resolution.md)
+- [安全與配額](docs/security.md)、[測試](docs/testing.md)、[部署](docs/deployment.md)
+- [交付狀態與未完成驗收](docs/delivery-status.md)、[開發規則](AGENTS.md)
 
-CRDT rich text, board templates, notifications, cursor presence, a durable offline write queue, event compaction and organization administration.
+## 授權
 
-## License
-
-MIT © happyloa
+[MIT](LICENSE) © happyloa
