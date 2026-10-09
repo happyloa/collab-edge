@@ -56,3 +56,5 @@ pnpm run deploy
 The deploy script validates private Access enforcement, disabled previews, the rate-limit binding and disabled production R2, then uses the official Vinext Cloudflare adapter to build and deploy. Production secrets are already stored on Cloudflare and are not needed for static build analysis. Missing local SESSION_SECRET warnings during release build do not erase the remote secret.
 
 Applied migrations are append-only. Consider schema compatibility before using Wrangler rollback. Never reset remote D1 or upgrade billing to bypass a demo quota.
+
+The event-retention release adds columns and an index in [migration 0006](../drizzle/0006_lean_harrier.sql). Applying it does not compact existing event payloads; owners must review and confirm that separately. Restore now inserts events with explicit column names. Older code that uses positional `INSERT INTO board_events VALUES(...)` is incompatible with the added column, so a code rollback must retain the [restore compatibility fix](../src/backups/restore.ts). Do not rewrite or remove the applied migration to work around that incompatibility.
