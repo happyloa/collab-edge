@@ -13,7 +13,17 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    ...(['firefox', 'webkit'] as const).map((name) => ({
+      name,
+      testMatch:
+        /(?:auth-navigation|board-accessibility|history-maintenance)\.spec\.ts$/,
+      use: {
+        ...devices[name === 'firefox' ? 'Desktop Firefox' : 'Desktop Safari'],
+      },
+    })),
+  ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {

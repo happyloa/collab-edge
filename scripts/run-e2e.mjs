@@ -24,9 +24,9 @@ if (performanceOnly && process.env.E2E_BASE_URL)
     'Performance measurements must use isolated local workerd state',
   );
 const playwrightCommand = captureDemo
-  ? 'corepack pnpm exec playwright test e2e/collaboration.spec.ts'
+  ? 'corepack pnpm exec playwright test e2e/collaboration.spec.ts --project=chromium'
   : performanceOnly
-    ? 'corepack pnpm exec playwright test e2e/board-performance.spec.ts'
+    ? 'corepack pnpm exec playwright test e2e/board-performance.spec.ts --project=chromium'
     : 'corepack pnpm exec playwright test';
 let activeChild;
 
