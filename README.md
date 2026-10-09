@@ -134,13 +134,13 @@ Vinext 1.0.1、React 19.3.0、Vite 8.3.2、TypeScript 6.0.3、Tailwind CSS 4.3.3
 
 ```sh
 corepack pnpm verify
-corepack pnpm exec playwright install chromium
+corepack pnpm exec playwright install chromium firefox webkit
 corepack pnpm test:e2e
 corepack pnpm test:perf
 corepack pnpm audit
 ```
 
-`verify` 包含格式、lint、型別、Workers／React 測試、Vinext 相容性與正式建置。Playwright 另驗證雙人協作、衝突、重連、手機版、主題與語言切換。`test:e2e` 每次會自動建立、遷移並清理獨立的本機測試資料，不消耗平常開發資料庫的配額。測試使用本機模擬環境，不等同正式環境登入後驗收。
+`verify` 包含格式、lint、型別、Workers／React 測試、Vinext 相容性與正式建置。Playwright 使用 Chromium 驗證完整功能，另用 Firefox／WebKit 驗證登入導航、鍵盤對話框與歷史維護。`test:e2e` 每次會自動建立、遷移並清理獨立的本機測試資料，不消耗平常開發資料庫的配額。測試使用本機模擬環境，不等同正式環境登入後验收；實機瀏覽器與讀屏驗收仍待完成。
 
 `test:perf` 量測 25／100／200 張卡片、最多 4,000 則留言的本機 Chromium 看板，記錄快照大小、繪製與互動時間，並確認鍵盤移動寫入 D1、留言完整保留。數據與限制見[大型看板基準](docs/snapshot-performance.md)；桌面與手機的焦點、未存提示和減少動態驗收見[鍵盤操作](docs/keyboard-accessibility.md)。正式站延遲仍需登入後另外確認。
 
