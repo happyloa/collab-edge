@@ -1,4 +1,31 @@
 import { test, expect } from '@playwright/test';
+test('shared illustration keeps its layout and keyboard interaction in the static build', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  const story = page.getByRole('region', { name: 'How collaboration works' });
+  const cards = story.locator('article');
+  const first = await cards.first().boundingBox();
+  const second = await cards.nth(1).boundingBox();
+  expect(first).not.toBeNull();
+  expect(second).not.toBeNull();
+  expect(second!.x).toBeGreaterThan(first!.x + first!.width);
+  expect(second!.y).toBe(first!.y);
+  await story.getByRole('button', { name: 'Keep your draft' }).focus();
+  await page.keyboard.press('Space');
+  await expect(
+    story.getByText('Draft preserved', { exact: true }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
+  await story.getByRole('button', { name: 'Catch up again' }).click();
+  await expect(
+    story.getByText('Server revision 42', { exact: true }),
+  ).toBeVisible();
+});
 test('public demo preserves conflicts, restores cards and never calls an API', async ({
   page,
 }) => {

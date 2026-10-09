@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Layers, ArrowUpRight, RotateCcw } from 'lucide-react';
 import { LanguageSelect, LocaleProvider, useI18n } from '../components/ui/i18n';
 import { ThemeToggle } from '../components/ui/theme';
+import { CollaborationStory } from '../components/collaboration-story';
 import { parseLocale } from '../src/i18n/messages';
 import { applyEvent } from '../src/realtime/board-reducer';
 import { prepareMutation, ConflictError } from '../src/realtime/mutations';
@@ -140,12 +141,12 @@ function Showcase() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl p-5 sm:p-8">
-        <div className="motion-reveal mb-7 flex flex-wrap items-end justify-between gap-5">
-          <div>
+        <div className="motion-reveal mb-10 grid items-center gap-9 border-b border-border py-7 pb-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-12">
+          <div className="min-w-0">
             <p className="eyebrow mb-3">
-              {t('A little less friction. A lot more together.')}
+              {t('INTERACTIVE PORTFOLIO / COLLABEDGE')}
             </p>
-            <h1 className="text-3xl font-semibold">
+            <h1 className="max-w-xl text-5xl leading-tight font-semibold tracking-tight sm:text-6xl">
               {t('Make room for good work.')}
             </h1>
             <p className="mt-3 max-w-2xl text-muted">
@@ -153,20 +154,21 @@ function Showcase() {
                 'A public playground. Changes stay in this tab and reset on reload. No account or server connection.',
               )}
             </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a className="button secondary" href="#recorded-collaboration">
+                {t('Watch real two-browser test')}
+                <ArrowUpRight size={16} />
+              </a>
+              <a
+                className="button secondary"
+                href="https://github.com/happyloa/collab-edge/blob/main/docs/architecture.md"
+              >
+                {t('Read the architecture')}
+                <ArrowUpRight size={16} />
+              </a>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <a className="button secondary" href="#recorded-collaboration">
-              {t('Watch real two-browser test')}
-              <ArrowUpRight size={16} />
-            </a>
-            <a
-              className="button secondary"
-              href="https://github.com/happyloa/collab-edge"
-            >
-              {t('View source')}
-              <ArrowUpRight size={16} />
-            </a>
-          </div>
+          <CollaborationStory />
         </div>
         <div className="notice motion-reveal motion-delay-1 mb-6">
           {t(

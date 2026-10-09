@@ -6,6 +6,53 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'How collaboration works': '協作如何運作',
+  'TWO VIEWS. ONE BOARD.': '兩個視窗，同一個看板',
+  Illustration: '示意互動',
+  'My team’s next chapter': '團隊的下一個篇章',
+  'Build a shared space': '打造共同的空間',
+  'Draft preserved': '草稿已保留',
+  Committed: '已提交',
+  'Field conflict detected': '偵測到欄位衝突',
+  'Server revision {revision}': '伺服器版本 {revision}',
+  'One committed change. The same revision in both browsers.':
+    '修改提交後，兩個瀏覽器會收到相同版本。',
+  'Bob changed the title first. Alice keeps her draft and chooses what to send next.':
+    'Bob 先修改了標題。Alice 的草稿會保留，讓她決定接下來送出哪個版本。',
+  'Missed changes replay in order. A snapshot fills in when history cannot be replayed.':
+    '依序補回錯過的變更；若無法安全重播歷史，就載入完整快照。',
+  'Stay in sync': '同步變更',
+  'Keep your draft': '保留草稿',
+  'Catch up again': '重新連線',
+  'Illustrated scenarios only. No server connection or saved changes.':
+    '此處為情境示意，不連接伺服器，也不儲存修改。',
+  'How it works': '運作方式',
+  'REALTIME COLLABORATION / BUILT AT THE EDGE': '即時協作 / 在邊緣運行',
+  'Plan on one board. See every committed change, keep your draft when edits collide, and reconnect without losing your place.':
+    '在同一個看板規劃，掌握每次已提交的變更。編輯衝突時保留草稿，重新連線後接回團隊的進度。',
+  'Explore the public playground': '開啟免登入展示',
+  'THE COLLABORATION STUDY': '協作的每個瞬間',
+  'Follow a change through the system': '看看一次修改如何同步',
+  '01 / UNDER THE SURFACE': '01 / 畫面背後',
+  'Every change has a place in the story.': '每次修改，都有明確的順序。',
+  'Read the architecture': '閱讀技術架構',
+  'Keep the attempted edit': '保留這次編輯',
+  'The browser keeps confirmed state and your pending draft separately.':
+    '瀏覽器分開管理已確認的狀態與待送出的草稿。',
+  'Commit before broadcasting': '先提交，再廣播',
+  'One coordinator per board checks permissions and commits data, revision and event together.':
+    '每個看板由獨立協調器檢查權限，將資料、版本與事件一起提交。',
+  'Bring everyone up to date': '讓團隊接回最新進度',
+  'Authorized browsers receive ordered events. Reconnects replay changes or load a consistent snapshot.':
+    '已授權的瀏覽器依序接收事件；重連時補回變更，或載入版本一致的快照。',
+  '02 / THE SHARED SPACE': '02 / 共同的空間',
+  'A familiar board. Thoughtful details.': '熟悉的看板，細節都在。',
+  'A preview of the private app': '私人協作平台預覽',
+  '03 / TRY IT FOR YOURSELF': '03 / 親自試試',
+  'Make a change. See what happens.': '改一張卡片，看看會發生什麼。',
+  'The public playground runs in your browser. Explore cards and conflicts without an account.':
+    '公開展示在瀏覽器中運行，免登入即可體驗卡片操作與編輯衝突。',
+  'INTERACTIVE PORTFOLIO / COLLABEDGE': '互動作品 / COLLABEDGE',
   'Imported copies share a 64 MiB lifetime payload budget across the site. Archiving a board does not reset it.':
     '全站匯入副本共用 64 MiB 的累計資料上限。封存看板不會重設這項用量。',
   'Capacity and limits': '容量與使用限制',

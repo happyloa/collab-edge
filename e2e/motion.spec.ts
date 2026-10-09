@@ -84,3 +84,43 @@ test('reduced motion is respected on first paint and after switching language', 
     'none',
   );
 });
+
+test('collaboration illustration is keyboard operable, bilingual and stays local', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (['fetch', 'xhr', 'websocket'].includes(request.resourceType()))
+      requests.push(request.url());
+  });
+  let story = page.getByRole('region', { name: 'How collaboration works' });
+  await expect(
+    story.getByRole('button', { name: 'Stay in sync' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  const conflict = story.getByRole('button', { name: 'Keep your draft' });
+  await expect(conflict).toBeEnabled();
+  await conflict.focus();
+  await page.keyboard.press('Enter');
+  await expect(conflict).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    story.getByText('Draft preserved', { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole('combobox', { name: 'Language / 語言' })
+    .selectOption('zh-TW');
+  story = page.getByRole('region', { name: '協作如何運作' });
+  await expect(story.getByRole('button', { name: '保留草稿' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await story.getByRole('button', { name: '重新連線' }).click();
+  await expect(story.getByText('伺服器版本 42', { exact: true })).toBeVisible();
+  await expect(story.getByText('草稿已保留', { exact: true })).toHaveCount(0);
+  await expect(story.locator('[data-story-card]').first()).toHaveCSS(
+    'transform',
+    'none',
+  );
+  expect(requests).toEqual([]);
+});
