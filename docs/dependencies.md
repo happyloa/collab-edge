@@ -2,7 +2,7 @@
 
 jose 6.2.12 is pinned for Cloudflare Access JWT signature and claim verification, following Cloudflare's documented jose integration.
 
-GSAP 3.15.0 supplies the landing page's scoped entrance, ticker and ScrollTrigger sequences. It runs only in the client home component, honors `prefers-reduced-motion`, and does not animate draggable board elements.
+GSAP 3.15.0 supplies the landing page's scoped entrance, ticker and ScrollTrigger sequences, plus transitions in the collaboration illustration shared with the public demo. Each component cleans up its animation context, honors `prefers-reduced-motion`, and leaves draggable board elements to the drag-and-drop library. The ticker pauses outside the viewport.
 
 Vinext and its official Cloudflare adapter use the stable 1.0.1 releases. Development and build scripts use the recommended `vite dev` and `vite build` commands. The adapter still supports the project's Wrangler configuration and deployment command. React Server Components uses the exact same React version as react-dom and react-server-dom-webpack.
 
@@ -15,6 +15,8 @@ Drizzle Kit 0.31.11 still depends on deprecated @esbuild-kit/esm-loader. The wor
 The Cloudflare test plugin currently brings an upstream Miniflare alpha dependency. It is test-only and selected by the official plugin; the application does not directly choose an alpha package. This is an upstream limitation to track.
 
 The fflate 0.7.x dependency from Vinext's image-generation tooling is overridden to 0.7.5, the compatible fix for [GHSA-px8p-9vwx-vf98](https://github.com/advisories/GHSA-px8p-9vwx-vf98).
+
+On 2026-10-09, release auditing identified [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w) in sharp's bundled librsvg dependency. A version-scoped override replaces vulnerable sharp 0.35.x resolutions with the upstream 0.35.5 patch across image-generation and optional peer paths. This stays within the installed parents' compatible 0.35.x range. Remove it after ordinary dependency resolution consistently selects a tested fixed version. No new audit exception was added. Security probes reject vulnerable locked versions and render a small SVG through the installed native binding to verify the image pipeline still works.
 
 On 2026-10-06, CI reported [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) for source-map-js 1.2.1. Its indexed-map offsets can amplify a small input into excessive synchronous work. All PostCSS, Tailwind and css-tree paths now resolve to the upstream [1.2.2 fix](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2) through the lockfile, without a new override or audit exception. Security probes check every locked version, malformed and oversized offsets, nested offset amplification and normal source-node conversion.
 

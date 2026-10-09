@@ -6,7 +6,7 @@
 
 A shared project workspace that makes realtime collaboration explicit: ordered changes, recoverable conflicts, and a clear source of truth.
 
-[Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
+[Source](https://github.com/happyloa/collab-edge) · [Architecture](docs/architecture.en.md) · [Protocol](docs/realtime-protocol.md) · [Security and quotas](docs/security.md)
 
 **Deployment:** [CollabEdge on Workers](https://collab-edge.piafyoyo06.workers.dev), protected by owner-only Cloudflare Access email verification. GitHub About contains the same URL. The Worker is connected to this repository through native Workers Builds for `main`; GitHub Actions runs CI and publishes the separate static demo. Production attachments and preview URLs are disabled. See the [portfolio handoff](docs/portfolio-handoff.md) and [delivery status](docs/delivery-status.md) for completed work, release evidence and remaining acceptance checks.
 
@@ -16,9 +16,23 @@ A shared project workspace that makes realtime collaboration explicit: ordered c
 
 ![CollabEdge seeded demo board captured in Chromium](docs/screenshots/demo-board.png)
 
+## What to look at
+
+Start with the illustrated scenarios in the public demo, then follow the [architecture guide](docs/architecture.en.md) into the implementation and tests.
+
+| Collaboration problem                         | Implemented behavior                                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Who orders concurrent changes?                | One Durable Object coordinates each board; D1 holds canonical data and revisions.                                          |
+| What if a notification is lost after a write? | Entity, revision and event commit atomically before broadcast. Reconnection can replay events.                             |
+| Does retrying create duplicate data?          | The original mutation UUID is retained and protected by a unique database constraint.                                      |
+| What happens to a conflicting edit?           | Per-field revisions detect conflicts while preserving the attempted draft for explicit retry.                              |
+| How is demonstration usage bounded?           | Server limits, atomic quotas and release gates protect the private app; the public playground runs locally in the browser. |
+
+The guide covers state ownership, mutation flow, safety boundaries, code pointers and remaining work. The two-person illustration is an explanatory model; [local two-browser evidence](docs/realtime-walkthrough.md) exercises the real Worker and WebSocket implementation.
+
 ## Why this exists
 
-Realtime collaboration is more than broadcasting a new card title. Two people can edit the same field, a connection can disappear after the server commits, and an optimistic screen can briefly disagree with persistent state. CollabEdge explores those boundaries using server authority, edge coordination, explicit revisions and recoverable user input.
+Two people can edit the same field, a connection can disappear after the server commits, and an optimistic screen can briefly disagree with persistent state. CollabEdge handles those boundaries using server authority, edge coordination, explicit revisions and recoverable user input.
 
 ## Features
 
