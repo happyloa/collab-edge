@@ -838,6 +838,8 @@ function Board({ initial }: { initial: BoardData }) {
           boardId={state.board.id}
           open={showActivity}
           liveEvents={live.activity}
+          isOwner={(live.role ?? initial.role) === 'OWNER'}
+          canOperate={live.status === 'Connected' && live.pending.length === 0}
         />
       </main>
       {selected && (

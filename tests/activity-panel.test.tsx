@@ -57,7 +57,13 @@ it('fetches only when opened and keeps deduplicated history during next-page fai
   const liveEvents = [overlap, newest];
   const content = (open: boolean) => (
     <Providers>
-      <ActivityPanel boardId={boardId} open={open} liveEvents={liveEvents} />
+      <ActivityPanel
+        boardId={boardId}
+        open={open}
+        liveEvents={liveEvents}
+        isOwner={false}
+        canOperate={true}
+      />
     </Providers>
   );
   const { rerender } = render(content(false));

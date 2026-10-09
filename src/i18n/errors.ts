@@ -1,6 +1,16 @@
 import type { Locale } from './messages';
 
 const errors: Record<string, string> = {
+  'Shared demo history cannot be cleared.': '共用示範看板的歷史紀錄無法清除。',
+  'Only the workspace owner can manage board history.':
+    '只有工作區擁有者能管理看板歷史紀錄。',
+  'The history cutoff must be at least 30 days old.':
+    '清理範圍必須在 30 天之前。',
+  'Board changed. Refresh history maintenance and review again.':
+    '看板已變更，請重新讀取並檢視清理預覽。',
+  'Recent history must be retained.': '最近的歷史紀錄必須保留。',
+  'History maintenance batch is too large.': '歷史紀錄清理批次過大。',
+  'Board confirmation does not match.': '看板確認資料不符。',
   'Temporary backup cleanup is incomplete. Try again.':
     '暫存備份資料尚未清完，請再試一次。',
   'Select the original backup file to resume this restore.':

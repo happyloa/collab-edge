@@ -6,6 +6,33 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'History maintenance': '歷史紀錄維護',
+  'Manage history': '管理歷史紀錄',
+  'Only event details older than 30 days can be cleared. The latest 200 changes remain available.':
+    '僅可清除超過 30 天的事件內容，最近 200 次修改會保留。',
+  'Board data, retry receipts and lifetime quotas stay unchanged. This does not reset capacity.':
+    '看板資料、重試紀錄與累計配額保持不變；清理不會重設容量。',
+  'Each request clears at most 100 details. A retry targets the same reviewed batch.':
+    '每次最多清除 100 筆內容；重試只處理原先預覽的批次。',
+  'Connect and finish pending edits before managing history.':
+    '請先連線並完成待確認的編輯，再管理歷史紀錄。',
+  'Loading history maintenance…': '正在讀取歷史紀錄維護資訊…',
+  'Refresh history preview': '重新讀取清理預覽',
+  'Eligible event details': '可清除的事件內容',
+  'Eligible payload size': '可清除內容的大小',
+  '{bytes} bytes': '{bytes} 位元組',
+  'Preview revision {revision} · Before {time}':
+    '預覽版本 {revision} · {time} 之前',
+  'I understand that cleared activity details cannot be recovered from a board JSON backup.':
+    '我了解清除的活動內容無法透過看板 JSON 備份還原。',
+  'Clearing history…': '正在清除歷史紀錄…',
+  'Clear reviewed batch': '清除已預覽的批次',
+  'No event details are eligible for clearing.': '目前沒有符合條件的事件內容。',
+  'Retry reviewed batch': '重試原批次',
+  'Batch completed. Review the remaining details before continuing.':
+    '本批次已完成。繼續清理前，請先檢視剩餘內容。',
+  'Some older activity details have been cleared. Current board data is preserved.':
+    '部分較舊的活動內容已清除，目前的看板資料仍保留。',
   'How collaboration works': '協作如何運作',
   'TWO VIEWS. ONE BOARD.': '兩個視窗，同一個看板',
   Illustration: '示意互動',
