@@ -74,6 +74,9 @@ export const boards = sqliteTable(
     revision: integer().notNull().default(0),
     nameRevision: integer('name_revision').notNull().default(0),
     archived: integer({ mode: 'boolean' }).notNull().default(false),
+    historyPrunedThrough: integer('history_pruned_through')
+      .notNull()
+      .default(0),
   },
   (t) => [index('boards_workspace').on(t.workspaceId)],
 );
@@ -178,11 +181,15 @@ export const events = sqliteTable(
     actorId: text('actor_id').notNull(),
     type: text().notNull(),
     payload: text().notNull(),
+    payloadPruned: integer('payload_pruned', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     createdAt: text('created_at').notNull(),
   },
   (t) => [
     uniqueIndex('events_revision').on(t.boardId, t.revision),
     uniqueIndex('events_mutation').on(t.boardId, t.clientMutationId),
+    index('events_retention').on(t.boardId, t.payloadPruned, t.revision),
   ],
 );
 export const quotas = sqliteTable('quotas', {

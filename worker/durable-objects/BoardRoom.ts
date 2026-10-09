@@ -23,6 +23,14 @@ import {
 import { prepareMutation, ConflictError } from '../../src/realtime/mutations';
 import { AppError, assert } from '../../src/lib/errors';
 import { LIMITS } from '../../src/lib/limits';
+import {
+  EVENT_RETENTION,
+  historyResult,
+  previewHistory,
+  pruneHistory,
+  pruneHistorySchema,
+  type PruneHistoryInput,
+} from '../../src/boards/retention';
 import { uploadMetadata, validateBytes } from '../../src/validation/uploads';
 import {
   stageRestore,
@@ -114,6 +122,25 @@ export class BoardRoom extends DurableObject<Env> {
       await boardAccess(userId, boardId);
       return loadSnapshot(this.env.DB, boardId);
     });
+  }
+  async historyRetention(boardId: string, userId: string) {
+    return this.serial(() =>
+      historyResult(() => previewHistory(this.env.DB, boardId, userId)),
+    );
+  }
+  async pruneHistory(boardId: string, userId: string, raw: PruneHistoryInput) {
+    return this.serial(() =>
+      historyResult(async () => {
+        const input = pruneHistorySchema.parse(raw);
+        assert(
+          input.boardId === boardId,
+          400,
+          'Board confirmation does not match.',
+        );
+        const { board } = await boardAccess(userId, boardId);
+        return pruneHistory(this.env.DB, board.workspaceId, userId, input);
+      }),
+    );
   }
   async restoreUpload(jobId: string, actorId: string, input: unknown) {
     return this.serial(() =>
@@ -357,15 +384,23 @@ export class BoardRoom extends DurableObject<Env> {
         if (message.type === 'mutate') {
           mutationId = message.mutation.clientMutationId;
           try {
-            const event = await this.mutate(
+            const result = await this.mutate(
               state.boardId,
               user.id,
               message.mutation,
             );
-            await this.broadcastEvent(event);
+            if (result.event) await this.broadcastEvent(result.event);
+            else {
+              // A permanent receipt survives payload pruning. Do not manufacture
+              // or rebroadcast an incomplete event; refresh only this sender.
+              this.send(socket, {
+                type: 'snapshot',
+                snapshot: await loadSnapshot(this.env.DB, state.boardId),
+              });
+            }
             this.send(socket, {
               type: 'ack',
-              revision: event.revision,
+              revision: result.revision,
               clientMutationId: mutationId,
             });
           } catch (error) {
@@ -398,7 +433,7 @@ export class BoardRoom extends DurableObject<Env> {
     boardId: string,
     actorId: string,
     input: Mutation,
-  ): Promise<BoardEvent> {
+  ): Promise<{ revision: number; event: BoardEvent | null }> {
     const mutation = mutationSchema.parse(input);
     assert(
       boardId !== DEMO.board || mutation.command.type !== 'board.archive',
@@ -422,10 +457,15 @@ export class BoardRoom extends DurableObject<Env> {
         409,
         'Mutation ID belongs to another actor',
       );
-      return eventSchema.parse({
-        ...duplicate,
-        payload: JSON.parse(duplicate.payload),
-      });
+      return {
+        revision: duplicate.revision,
+        event: duplicate.payloadPruned
+          ? null
+          : eventSchema.parse({
+              ...duplicate,
+              payload: JSON.parse(duplicate.payload),
+            }),
+      };
     }
     const state = await loadSnapshot(this.env.DB, boardId);
     assert(
@@ -579,7 +619,7 @@ export class BoardRoom extends DurableObject<Env> {
     );
     statements.push(this.env.DB.prepare('DELETE FROM mutation_guard'));
     await this.env.DB.batch(statements);
-    return event;
+    return { revision: event.revision, event };
   }
   private async replay(socket: WebSocket, boardId: string, after: number) {
     const db = drizzle(this.env.DB);
@@ -589,11 +629,21 @@ export class BoardRoom extends DurableObject<Env> {
       .where(eq(boards.id, boardId))
       .get();
     assert(board, 404, 'Board not found');
-    if (after > 0 && after <= board.revision && board.revision - after <= 200) {
+    if (
+      after > 0 &&
+      after <= board.revision &&
+      board.revision - after <= EVENT_RETENTION.recentEvents
+    ) {
       const rows = await db
         .select()
         .from(events)
-        .where(and(eq(events.boardId, boardId), gt(events.revision, after)))
+        .where(
+          and(
+            eq(events.boardId, boardId),
+            eq(events.payloadPruned, false),
+            gt(events.revision, after),
+          ),
+        )
         .orderBy(asc(events.revision));
       if (
         rows.length === board.revision - after &&

@@ -43,6 +43,13 @@
       "when": 1791209301317,
       "tag": "0005_eminent_vision",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791556592194,
+      "tag": "0006_lean_harrier",
+      "breakpoints": true
     }
   ]
 }

@@ -475,7 +475,9 @@ export async function completeRestore(
         )
         .bind(job.target_board_id, actorId, jobId),
       db
-        .prepare('INSERT INTO board_events VALUES(?,?,?,?,?,?,?,?)')
+        .prepare(
+          'INSERT INTO board_events(event_id,board_id,revision,client_mutation_id,actor_id,type,payload,created_at) VALUES(?,?,?,?,?,?,?,?)',
+        )
         .bind(
           crypto.randomUUID(),
           job.target_board_id,

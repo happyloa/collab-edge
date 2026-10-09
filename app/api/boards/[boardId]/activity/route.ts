@@ -27,14 +27,17 @@ export const GET = route(async (request) => {
           .min(1)
           .max(LIMITS.eventsPerBoard)
           .parse(beforeParam);
-  await boardAccess(user.id, id);
+  const { board } = await boardAccess(user.id, id);
   const rows = await drizzle(env.DB)
     .select()
     .from(events)
     .where(
-      before === null
-        ? eq(events.boardId, id)
-        : and(eq(events.boardId, id), lt(events.revision, before)),
+      and(
+        eq(events.payloadPruned, false),
+        before === null
+          ? eq(events.boardId, id)
+          : and(eq(events.boardId, id), lt(events.revision, before)),
+      ),
     )
     .orderBy(desc(events.revision))
     .limit(limit + 1);
@@ -44,5 +47,6 @@ export const GET = route(async (request) => {
       eventSchema.parse({ ...row, payload: JSON.parse(row.payload) }),
     ),
     nextBefore: rows.length > limit ? page.at(-1)!.revision : null,
+    prunedThroughRevision: board.historyPrunedThrough,
   });
 });
