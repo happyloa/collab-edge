@@ -45,7 +45,7 @@ Expired staging is reclaimed in bounded pages when an authorized owner explicitl
 
 Workerd tests exercise versioned checksums, legacy files, transfer tampering, authorization and ownership changes, quota rollback, ordering, unavailable files, immutable retries and bounded cleanup. A fresh local D1 restore verifies a 20-card, 1,000-comment copy, including maximum-length CJK description and comment fields. Browser coverage injects lost upload and finalization responses, reloads, re-selects the file and checks that only one board is created; it also checks cancellation, author labels and Chinese file-reference text.
 
-These checks establish local behavior. Current CI, deployment and authenticated production evidence belongs in [delivery status](delivery-status.md). Production attachment binaries remain disabled. Safe event compaction, database-wide disaster recovery and authenticated production restore smoke are separate work.
+The [post-compaction drill](event-retention.md) also exports a board after clearing old event payloads, restores it through interrupted and retried uploads, and verifies receipt reuse, staging cleanup and an unchanged source. These checks establish local board restore behavior. Current CI, deployment and authenticated production evidence belongs in [delivery status](delivery-status.md). Production attachment binaries remain disabled. Database-wide disaster recovery and authenticated production restore smoke are separate work.
 
 ## 中文操作說明
 

@@ -159,7 +159,7 @@ For matching pushes to `main`, native Workers Builds runs the high-severity depe
 
 ```sh
 corepack pnpm verify
-corepack pnpm exec playwright install chromium
+corepack pnpm exec playwright install chromium firefox webkit
 corepack pnpm test:e2e
 corepack pnpm test:perf
 corepack pnpm outdated
@@ -187,15 +187,15 @@ Passwords use an independent pepper HMAC followed by PBKDF2-HMAC-SHA256 with 100
 - **Revisions:** understandable conflict and replay semantics without claiming CRDT text merging. Event retention is capped; capacity exhaustion fails closed instead of auto-scaling cost.
 - **Cost:** quotas are not an account-wide billing guarantee. The Worker is deployed on the user-confirmed Free plan, with production R2 disabled and owner-only Access enabled.
 
-On the private site, new registrations must use the email verified by Cloudflare Access. Existing accounts using another email can sign in and adopt that verified address from the workspace screen; demo identities cannot adopt it. The [password reset page](app/reset-password/page.tsx) uses the same Access identity and revokes all previous app sessions. The current Access session is sufficient; resetting does not send a fresh code. Local development without Access cannot reset passwords. Access remains a separate outer gate and does not automatically sign users into an app account. Member invitations target existing app accounts, while ownership transfers target existing workspace members. Both recipients must be able to pass the outer Access gate; neither flow sends email. Demo identities cannot transfer ownership or delete their accounts. Account deletion requires transferring every owned workspace first; it removes login details and membership, but shared cards, comments, files and an anonymous author record remain. Deleted accounts still count against the lifetime user cap. Rich-text CRDTs, automated orphan cleanup and event compaction remain unimplemented. Archived cards remain retained and count toward quotas. The [custom verification email](docs/email/README.md) is a design artifact, not the production Access email.
+On the private site, new registrations must use the email verified by Cloudflare Access. Existing accounts using another email can sign in and adopt that verified address from the workspace screen; demo identities cannot adopt it. The [password reset page](app/reset-password/page.tsx) uses the same Access identity and revokes all previous app sessions. The current Access session is sufficient; resetting does not send a fresh code. Local development without Access cannot reset passwords. Access remains a separate outer gate and does not automatically sign users into an app account. Member invitations target existing app accounts, while ownership transfers target existing workspace members. Both recipients must be able to pass the outer Access gate; neither flow sends email. Demo identities cannot transfer ownership or delete their accounts. Account deletion requires transferring every owned workspace first; it removes login details and membership, but shared cards, comments, files and an anonymous author record remain. Deleted accounts still count against the lifetime user cap. Rich-text CRDTs and automated orphan cleanup remain unimplemented. Owners can clear old event payloads in bounded, reviewed batches while keeping UUID receipts, board data and lifetime budgets. See [event retention and the restore drill](docs/event-retention.md). Archived cards remain retained and count toward quotas. The [custom verification email](docs/email/README.md) is a design artifact, not the production Access email.
 
 ## Remaining work
 
-The [portfolio handoff](docs/portfolio-handoff.md) records completed improvements and acceptance evidence. Owner-authenticated production flows, broader browser coverage, slower devices and screen-reader checks remain pending. See the [project review](docs/project-review.md) for the original findings and acceptance criteria; use the handoff for current completion status.
+The [portfolio handoff](docs/portfolio-handoff.md) records completed improvements and acceptance evidence. Owner-authenticated production flows, slower devices and screen-reader checks remain pending. Targeted Firefox/WebKit projects cover auth navigation, keyboard dialogs and history maintenance; they do not establish full browser parity. See the [project review](docs/project-review.md) for the original findings and acceptance criteria; use the handoff for current completion status.
 
 Dependency auditing retains one reviewed high-severity exception for locally patched `braces@3.0.3`, with regression coverage. [Compatibility decisions and patch details](docs/dependencies.md).
 
-CRDT rich text, board templates, notifications, cursor presence, a durable offline write queue, event compaction and organization administration.
+CRDT rich text, board templates, notifications, cursor presence, a durable offline write queue and organization administration. Database-wide recovery and automated orphan cleanup remain future work.
 
 ## License
 

@@ -94,6 +94,8 @@ Native Workers Builds runs the high audit and `verify` before safety gates, migr
 
 Backups include a version and checksum, support owner-reviewed restore into a new board and resume interrupted transfers. Binary files and old event history are excluded. Archiving retains quota usage; account deletion preserves shared content with an anonymous author. [Backup limits](board-backups.md).
 
+Owners can clear old event payloads in reviewed batches of at most 100, keeping the latest 200 revisions and all UUID receipts. Ownership and revision guards commit with compaction; lost-response retries keep the original range. A pruned mutation retry returns a snapshot and its original acknowledgment instead of writing or broadcasting again. Lifetime budgets stay unchanged. The [retention guide](event-retention.md) includes the local post-compaction restore drill and its limits.
+
 ## Read the implementation
 
 1. [Protocol](../src/realtime/protocol.ts), [mutation rules](../src/realtime/mutations.ts) and [pure reducer](../src/realtime/board-reducer.ts).
@@ -105,4 +107,4 @@ The homepage and public demo include an illustrated, browser-only scenario selec
 
 ## Remaining priorities
 
-Owner-authenticated production acceptance remains pending. Local workerd, CI and an anonymous Access redirect do not prove it. Event retention/compaction, orphan cleanup, restore drills and quota recovery need a long-term operating policy. Slow devices, Firefox/WebKit, screen readers and privacy-aware operational metrics need broader validation. See [portfolio handoff](portfolio-handoff.md) for delivery evidence; the named, locally patched braces high audit exception remains documented in [dependencies](dependencies.md).
+Owner-authenticated production acceptance remains pending. Local workerd, CI and an anonymous Access redirect do not prove it. Manual event compaction and the board restore drill are implemented; database-wide disaster recovery, orphan cleanup and quota recovery need further work. Firefox/WebKit now cover sign-in navigation, keyboard dialogs and history maintenance. Slow devices, real hardware, screen readers and privacy-aware operational metrics need broader validation. See [portfolio handoff](portfolio-handoff.md) for delivery evidence; the named, locally patched braces high audit exception remains documented in [dependencies](dependencies.md).
