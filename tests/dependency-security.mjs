@@ -1,9 +1,43 @@
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 
 // The audit exception is valid only for the patched version in this lockfile.
 const lock = readFileSync('pnpm-lock.yaml', 'utf8');
+const sharpVersions = new Set(
+  [...lock.matchAll(/^ {2}sharp@([^\s:(]+)(?:\([^\n]*\))?:/gm)].map(
+    (match) => match[1],
+  ),
+);
+assert.ok(sharpVersions.size > 0, 'Image dependency graph is missing');
+for (const version of sharpVersions) {
+  const parts = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  assert.ok(parts, 'Review non-stable sharp versions');
+  const [major, minor, patch] = parts.slice(1).map(Number);
+  assert.ok(
+    major > 0 || minor > 35 || (minor === 35 && patch >= 5),
+    `Vulnerable sharp ${version} remains in the lockfile`,
+  );
+}
+const imageRequire = createRequire(
+  createRequire(import.meta.resolve('vinext')).resolve('@vercel/og'),
+);
+const sharp = imageRequire('sharp');
+const rendered = await sharp(
+  Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="#496747"/></svg>',
+  ),
+)
+  .png()
+  .toBuffer({ resolveWithObject: true });
+assert.equal(rendered.info.width, 4);
+assert.equal(rendered.info.height, 4);
+assert.deepEqual(
+  [...rendered.data.subarray(0, 8)],
+  [137, 80, 78, 71, 13, 10, 26, 10],
+);
+console.log('Patched sharp graph and native SVG-to-PNG rendering verified');
 const versions = new Set(
   [...lock.matchAll(/^ {2}braces@([^\s:(]+)(?:\([^\n]*\))?:/gm)].map(
     (match) => match[1],

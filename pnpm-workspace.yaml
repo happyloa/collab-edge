@@ -4,6 +4,7 @@ allowBuilds:
 overrides:
   '@esbuild-kit/esm-loader': 'npm:tsx@4.23.15'
   'fflate@>=0.7.0 <0.7.5': '0.7.5'
+  'sharp@>=0.35.0 <0.35.5': '0.35.5'
 audit:
   # No upstream release fixes this advisory yet. The version-scoped patch bounds
   # parser/walker nesting; CI checks the pinned graph and guard before the audit.
