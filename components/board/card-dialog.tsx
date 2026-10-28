@@ -237,9 +237,9 @@ export function CardDialog({
         requestClose();
       }}
       aria-labelledby="card-dialog-title"
-      className="motion-dialog m-auto max-h-11/12 w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-7 text-foreground shadow-panel backdrop:bg-black/40"
+      className="motion-dialog m-auto max-h-[calc(100dvh_-_1rem)] w-[calc(100%_-_1rem)] max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-5 text-foreground shadow-float backdrop:bg-black/40 sm:p-7"
     >
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
         <h2 id="card-dialog-title" className="eyebrow">
           {t('CARD DETAILS')}
         </h2>
@@ -256,7 +256,7 @@ export function CardDialog({
         <p
           role="status"
           aria-label={t('Draft status')}
-          className="notice mb-4 text-sm"
+          className="notice attention mb-4 text-sm"
         >
           {t(
             saveStatus ||
@@ -265,7 +265,7 @@ export function CardDialog({
         </p>
       )}
       {confirmClose && (
-        <div role="alert" className="notice mb-4 space-y-3">
+        <div role="alert" className="notice attention mb-4 space-y-3">
           <p>{t('Keep your edits on this device before closing?')}</p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -288,13 +288,18 @@ export function CardDialog({
           </div>
         </div>
       )}
-      {connectionStatus === 'Access expired' && (
+      {(connectionError || connectionStatus === 'Access expired') && (
         <ApiErrorNotice
-          error={new ApiError(connectionError, 401, 'UNAUTHENTICATED')}
+          error={
+            connectionStatus === 'Access expired'
+              ? new ApiError(connectionError, 401, 'UNAUTHENTICATED')
+              : connectionError
+          }
           className="mb-4"
         />
       )}
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <span className="badge">{t(connectionStatus)}</span>
         <button
           type="button"
           className="button secondary"

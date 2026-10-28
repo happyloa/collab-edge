@@ -88,8 +88,13 @@ export function ActivityPanel({
       )}
       <ol className="mt-3 space-y-3">
         {activity.map((event) => (
-          <li key={event.eventId} className="motion-reveal flex gap-4 text-sm">
-            <span className="text-muted">#{event.revision}</span>
+          <li
+            key={event.eventId}
+            className="motion-reveal flex gap-4 border-l-2 border-border py-1 pl-4 text-sm"
+          >
+            <span className="font-medium text-primary tabular-nums">
+              #{event.revision}
+            </span>
             <span>
               {locale === 'en' ? event.type.replace('.', ' · ') : t(event.type)}
             </span>

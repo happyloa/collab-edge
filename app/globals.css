@@ -211,6 +211,9 @@ button:disabled {
   .notice.error {
     @apply border-destructive text-destructive;
   }
+  .attention {
+    border-left: 4px solid var(--color-warning);
+  }
 }
 .home-ticker {
   overflow: hidden;

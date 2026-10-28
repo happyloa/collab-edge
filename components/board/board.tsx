@@ -552,7 +552,7 @@ function Board({ initial }: { initial: BoardData }) {
         {drafts.drafts.length > 0 && (
           <section
             aria-label={t('Drafts on this device')}
-            className="surface mb-4 space-y-3 p-4"
+            className="surface attention mb-4 space-y-3 p-4"
           >
             <h2 className="font-semibold">{t('Drafts on this device')}</h2>
             <p className="text-sm text-muted">
@@ -608,7 +608,7 @@ function Board({ initial }: { initial: BoardData }) {
             <div
               key={p.mutation.clientMutationId}
               role="alert"
-              className="notice mb-4"
+              className="notice attention mb-4"
             >
               <strong>
                 {t(
