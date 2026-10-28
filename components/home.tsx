@@ -8,7 +8,6 @@ import { CollaborationStory } from './collaboration-story';
 import Link from 'next/link';
 import {
   ArrowUpRight,
-  Layers3,
   Radio,
   ShieldCheck,
   GitBranch,
@@ -16,6 +15,7 @@ import {
   Check,
 } from 'lucide-react';
 import { ThemeToggle } from './ui/theme';
+import { BrandMark } from './ui/brand-mark';
 const features = [
   {
     Icon: Radio,
@@ -136,7 +136,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
     <div ref={homeRef} className="min-h-screen overflow-x-clip">
       <header className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-border px-5 py-6 sm:px-8">
         <Link href="/" className="brand">
-          <Layers3 size={24} /> CollabEdge
+          <BrandMark />
           <span className="badge">{t('BETA')}</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-3 sm:gap-5">

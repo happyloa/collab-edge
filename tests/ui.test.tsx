@@ -4,7 +4,20 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Attachments } from '../components/board/attachments';
 import { ThemeToggle } from '../components/ui/theme';
 import { PasswordInput } from '../components/ui/password-input';
+import { ConnectionStatus } from '../components/ui/connection-status';
 afterEach(cleanup);
+it('announces the actual connection state without showing success while offline', () => {
+  const { rerender } = render(<ConnectionStatus status="Connected" />);
+  const status = screen.getByRole('status', { name: 'Connection status' });
+  expect(status).toHaveTextContent('Connected');
+  expect(status.querySelector('svg')).toHaveClass('text-success');
+  rerender(<ConnectionStatus status="Offline" />);
+  expect(status).toHaveTextContent('Offline');
+  expect(status.querySelector('svg')).not.toHaveClass('text-success');
+  rerender(<ConnectionStatus status="Access expired" />);
+  expect(status).toHaveTextContent('Access expired');
+  expect(status.querySelector('svg')).toHaveClass('text-destructive');
+});
 it('toggles password visibility without clearing the value or submitting', () => {
   render(
     <PasswordInput aria-label="Password" defaultValue="a private phrase" />,

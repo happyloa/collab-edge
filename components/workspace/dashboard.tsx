@@ -3,15 +3,10 @@ import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Layers3,
-  Plus,
-  ArrowUpRight,
-  LayoutDashboard,
-  LogOut,
-} from 'lucide-react';
+import { Plus, ArrowUpRight, LayoutDashboard, LogOut } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
+import { BrandMark } from '../ui/brand-mark';
 import { asError } from '../../src/lib/api-client';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { useHydrated } from '../ui/use-hydrated';
@@ -89,8 +84,7 @@ export function Dashboard() {
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-5">
         <Link href="/" className="brand">
-          <Layers3 />
-          CollabEdge
+          <BrandMark />
         </Link>
         <div className="flex gap-3">
           {session.data?.user && (

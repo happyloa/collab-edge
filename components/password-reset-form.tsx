@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { Layers3 } from 'lucide-react';
+import { BrandMark } from './ui/brand-mark';
 import { useI18n, LanguageSelect } from './ui/i18n';
 import { useHydrated } from './ui/use-hydrated';
 import { api } from './ui/providers';
@@ -49,7 +49,7 @@ export function PasswordResetForm({
     <main className="grid min-h-screen place-items-center px-6">
       <div className="motion-reveal w-full max-w-md">
         <Link href="/" className="brand mb-12">
-          <Layers3 /> CollabEdge
+          <BrandMark />
         </Link>
         <div className="mb-6 flex justify-end">
           <LanguageSelect />

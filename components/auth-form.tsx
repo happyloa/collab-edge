@@ -6,7 +6,7 @@ import { useHydrated } from './ui/use-hydrated';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Layers3 } from 'lucide-react';
+import { BrandMark } from './ui/brand-mark';
 import { api } from './ui/providers';
 import { PasswordInput } from './ui/password-input';
 import { asError } from '../src/lib/api-client';
@@ -40,7 +40,7 @@ export function AuthForm({
     <main className="grid min-h-screen place-items-center px-6">
       <div className="motion-reveal w-full max-w-md">
         <Link href="/" className="brand mb-12">
-          <Layers3 /> CollabEdge
+          <BrandMark />
         </Link>
         <div className="mb-6 flex justify-end">
           <LanguageSelect />

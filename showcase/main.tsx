@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Layers, ArrowUpRight, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, RotateCcw } from 'lucide-react';
 import { LanguageSelect, LocaleProvider, useI18n } from '../components/ui/i18n';
 import { ThemeToggle } from '../components/ui/theme';
+import { BrandMark } from '../components/ui/brand-mark';
 import { CollaborationStory } from '../components/collaboration-story';
 import { parseLocale } from '../src/i18n/messages';
 import { applyEvent } from '../src/realtime/board-reducer';
@@ -131,8 +132,7 @@ function Showcase() {
     <>
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-4">
         <a className="brand" href="https://github.com/happyloa/collab-edge">
-          <Layers size={23} />
-          CollabEdge
+          <BrandMark />
         </a>
         <div className="flex items-center gap-3">
           <span className="badge">{t('Interactive demo')}</span>

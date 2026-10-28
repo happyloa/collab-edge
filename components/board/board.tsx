@@ -21,7 +21,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  Layers3,
   Plus,
   GripVertical,
   MessageSquare,
@@ -34,6 +33,8 @@ import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError, asError } from '../../src/lib/api-client';
 import { createBoardBackup } from '../../src/backups/format';
 import { ThemeToggle } from '../ui/theme';
+import { BrandMark } from '../ui/brand-mark';
+import { ConnectionStatus } from '../ui/connection-status';
 import { CardDialog } from './card-dialog';
 import { ActivityPanel } from './activity-panel';
 import { useBoardDrafts } from './use-board-drafts';
@@ -300,8 +301,7 @@ function Board({ initial }: { initial: BoardData }) {
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-4">
         <Link href="/workspaces" className="brand">
-          <Layers3 />
-          CollabEdge
+          <BrandMark />
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex -space-x-1">
@@ -329,14 +329,7 @@ function Board({ initial }: { initial: BoardData }) {
               );
             })}
           </div>
-          <span
-            role="status"
-            aria-label={t('Connection status')}
-            className="badge"
-          >
-            <span className="status-dot" />
-            {t(live.status)}
-          </span>
+          <ConnectionStatus status={live.status} />
           <LanguageSelect />
           <ThemeToggle />
         </div>
