@@ -6,6 +6,22 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'Main navigation': '主要導覽',
+  'Illustrative flow': '示意流程',
+  'Work moves forward.': '讓工作持續向前。',
+  'Changes stay in view.': '每次變更，清楚可見。',
+  'See how synchronization works': '看看同步如何運作',
+  'Source and architecture': '原始碼與技術架構',
+  'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.':
+    '私人應用程式需要通過 Cloudflare Access 授權；公開展示則不需登入。',
+  'Private app demo · Access may be required. Open Bob in another window to collaborate.':
+    '私人應用程式示範可能需要 Access 驗證；可在另一個視窗以 Bob 身分協作。',
+  '03 / THE EVIDENCE': '03 / 實作與驗證',
+  'See what happens behind the board.': '看看看板背後如何運作。',
+  'Explore the source and a recorded local two-browser test. The public playground is a simulation, not a live session.':
+    '查看原始碼與本機雙瀏覽器測試實錄。公開展示是模擬情境，並非即時多人連線。',
+  'Recorded local two-browser test': '本機雙瀏覽器測試實錄',
+  '04 / TRY IT FOR YOURSELF': '04 / 親自試試',
   'History maintenance': '歷史紀錄維護',
   'Manage history': '管理歷史紀錄',
   'Only event details older than 30 days can be cleared. The latest 200 changes remain available.':

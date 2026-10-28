@@ -222,6 +222,44 @@ button:disabled {
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
+.home-node {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+}
+.home-headline-accent {
+  background: linear-gradient(transparent 92%, var(--color-accent) 92%);
+  color: var(--color-foreground);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.home-evidence {
+  background: #15221b;
+  color: #f0f4ed;
+}
+.home-evidence-kicker {
+  color: #c4f06b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.home-evidence-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #6f8475;
+  padding-bottom: 0.75rem;
+}
+.home-evidence-link:hover {
+  color: #c4f06b;
+}
+@media (min-width: 48rem) {
+  .home-flow-step + .home-flow-step {
+    border-left: 1px solid var(--color-border);
+  }
+}
 .home-ticker-track,
 .home-ticker-group {
   display: flex;

@@ -39,7 +39,9 @@ export function DemoEntry() {
         ))}
       </div>
       <p className="mt-3 text-xs text-muted">
-        {t('Shared public demo · open Bob in a private window to collaborate.')}
+        {t(
+          'Private app demo · Access may be required. Open Bob in another window to collaborate.',
+        )}
       </p>
       <ApiErrorNotice error={error} className="mt-3" />
     </div>

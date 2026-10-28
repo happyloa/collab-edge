@@ -139,7 +139,10 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           <BrandMark />
           <span className="badge">{t('BETA')}</span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-3 sm:gap-5">
+        <nav
+          className="flex flex-wrap items-center gap-3 sm:gap-5"
+          aria-label={t('Main navigation')}
+        >
           <a
             href="#how-it-works"
             className="hidden text-sm text-muted lg:inline"
@@ -149,41 +152,44 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           <LanguageSelect />
           <ThemeToggle />
           {signedIn ? (
-            <Link className="button" href="/workspaces">
+            <Link
+              className="text-sm font-medium text-primary"
+              href="/workspaces"
+            >
               {t('Open workspace')}
               <ArrowUpRight size={16} />
             </Link>
           ) : (
-            <>
-              <Link href="/login">{t('Sign in')}</Link>
-              <Link className="button" href="/register">
-                {t('Get started')}
-                <ArrowUpRight size={16} />
-              </Link>
-            </>
+            <Link className="text-sm font-medium text-primary" href="/login">
+              {t('Sign in')}
+            </Link>
           )}
+          <a
+            className="button hidden sm:inline-flex"
+            href="https://happyloa.github.io/collab-edge/"
+          >
+            {t('Explore the public playground')}
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </a>
         </nav>
       </header>
       <main className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
         <section className="relative grid items-center gap-12 py-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-20">
-          <div
-            className="pointer-events-none absolute top-6 -right-20 -z-10 size-96 rounded-full bg-primary/10 blur-3xl"
-            aria-hidden="true"
-          />
           <div className="min-w-0">
             <p className="eyebrow" data-hero-enter>
-              <span className="status-dot" />
+              <span className="home-node" aria-hidden="true" />
               {t('REALTIME COLLABORATION / BUILT AT THE EDGE')}
             </p>
             <h1
-              className={`mt-7 font-semibold tracking-tight text-balance ${locale === 'zh-TW' ? 'text-5xl leading-[1.2] sm:text-6xl' : 'text-5xl leading-[1.08] sm:text-6xl xl:text-7xl'}`}
+              className={`mt-7 font-semibold tracking-tight text-balance ${locale === 'zh-TW' ? 'text-[clamp(2rem,9vw,3.75rem)] leading-[1.2] sm:text-6xl' : 'text-5xl leading-[1.05] sm:text-6xl xl:text-[5.25rem]'}`}
             >
               <span className="block" data-hero-enter>
-                {t('Good work happens')}
+                {t('Work moves forward.')}
               </span>
               <span className="block" data-hero-enter>
-                {t('in a')}{' '}
-                <span className="text-primary">{t('shared space.')}</span>
+                <span className="home-headline-accent">
+                  {t('Changes stay in view.')}
+                </span>
               </span>
             </h1>
             <p
@@ -195,33 +201,33 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               )}
             </p>
             <div className="mt-9 flex flex-wrap gap-3" data-hero-enter>
-              {signedIn ? (
-                <Link href="/workspaces" className="button">
-                  {t('Open workspace')}
-                  <ArrowUpRight size={18} />
-                </Link>
-              ) : (
-                <>
-                  <Link href="/register" className="button">
-                    {t('Create your workspace')}
-                    <ArrowUpRight size={18} />
-                  </Link>
-                  <Link href="/login" className="button secondary">
-                    {t('Open workspace')}
-                  </Link>
-                </>
-              )}
+              <a
+                href="https://happyloa.github.io/collab-edge/"
+                className="button"
+              >
+                {t('Explore the public playground')}
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </a>
+              <a href="#how-it-works" className="button secondary">
+                {t('See how synchronization works')}
+                <ArrowDown size={16} aria-hidden="true" />
+              </a>
             </div>
             <a
-              href="https://happyloa.github.io/collab-edge/"
+              href="https://github.com/happyloa/collab-edge/blob/main/docs/architecture.md"
               className="mt-5 inline-flex items-center gap-2 border-b border-primary/40 pb-1 text-sm text-primary"
               data-hero-enter
             >
-              {t('Explore the public playground')}
+              {t('Source and architecture')}
               <ArrowUpRight size={16} />
             </a>
             {!signedIn && (
               <div data-hero-enter>
+                <p className="mt-8 max-w-lg text-xs leading-relaxed text-muted">
+                  {t(
+                    'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.',
+                  )}
+                </p>
                 <DemoEntry />
               </div>
             )}
@@ -275,7 +281,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               <ArrowUpRight size={16} />
             </a>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="home-flow grid gap-0 md:grid-cols-3">
             {[
               [
                 '01',
@@ -295,7 +301,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
             ].map(([number, title, description]) => (
               <article
                 key={number}
-                className="rounded-2xl border border-border bg-surface p-6"
+                className="home-flow-step border-t border-border px-1 py-6 md:px-6 md:py-8"
                 data-flow-step
               >
                 <div className="mb-8 flex items-center justify-between text-primary">
@@ -399,9 +405,46 @@ export function Home({ signedIn }: { signedIn: boolean }) {
             </article>
           ))}
         </section>
+        <section className="home-evidence mt-20 rounded-2xl p-7 sm:p-12">
+          <p className="home-evidence-kicker">{t('03 / THE EVIDENCE')}</p>
+          <div className="mt-5 grid gap-8 md:grid-cols-2">
+            <div>
+              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {t('See what happens behind the board.')}
+              </h2>
+              <p className="mt-4 max-w-lg text-sm leading-relaxed">
+                {t(
+                  'Explore the source and a recorded local two-browser test. The public playground is a simulation, not a live session.',
+                )}
+              </p>
+            </div>
+            <div className="grid content-center gap-4 text-sm font-medium">
+              <a
+                href="https://github.com/happyloa/collab-edge"
+                className="home-evidence-link"
+              >
+                {t('View source ↗')}
+              </a>
+              <a
+                href="https://github.com/happyloa/collab-edge/blob/main/docs/realtime-walkthrough.md"
+                className="home-evidence-link"
+              >
+                {t('Recorded local two-browser test')}{' '}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+              <a
+                href="https://happyloa.github.io/collab-edge/"
+                className="home-evidence-link"
+              >
+                {t('Explore the public playground')}{' '}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+        </section>
         <section className="mt-16 flex flex-wrap items-center justify-between gap-6 rounded-3xl border border-border bg-primary/8 px-7 py-10 sm:px-10">
           <div>
-            <p className="eyebrow mb-3">{t('03 / TRY IT FOR YOURSELF')}</p>
+            <p className="eyebrow mb-3">{t('04 / TRY IT FOR YOURSELF')}</p>
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {t('Make a change. See what happens.')}
             </h2>

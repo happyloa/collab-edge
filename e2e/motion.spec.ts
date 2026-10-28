@@ -5,12 +5,14 @@ test('motion follows user preference without shifting draggable cards', async ({
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
-  const hero = page.getByRole('heading', { name: /Good work happens/ });
+  const hero = page.getByRole('heading', { name: /Work moves forward/ });
   const ticker = page.locator('[data-ticker-track]');
   await expect(hero).toBeVisible();
   await expect(ticker).toHaveCSS('transform', /matrix/);
 
-  const action = page.getByRole('link', { name: 'Get started' });
+  const action = page
+    .getByRole('link', { name: 'Explore the public playground' })
+    .first();
   await action.hover();
   await expect(action).toHaveCSS('transform', /matrix/);
   const previewRegion = page.getByRole('region', { name: 'Product preview' });

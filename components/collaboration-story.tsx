@@ -51,14 +51,11 @@ export function CollaborationStory() {
     <section
       ref={root}
       aria-label={t('How collaboration works')}
-      className="relative min-w-0 overflow-hidden rounded-3xl border border-border bg-surface p-5 shadow-panel sm:p-7"
+      className="story-artifact relative min-w-0 overflow-hidden rounded-3xl border border-border bg-surface p-5 shadow-float sm:p-7"
     >
       <div className="mb-7 flex items-center justify-between gap-3">
         <span className="eyebrow">{t('TWO VIEWS. ONE BOARD.')}</span>
-        <span className="flex items-center gap-2 text-xs text-success">
-          <span className="status-dot" />
-          {t('Illustration')}
-        </span>
+        <span className="text-xs text-muted">{t('Illustrative flow')}</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {['Alice', 'Bob'].map((person, index) => {
@@ -91,18 +88,20 @@ export function CollaborationStory() {
           );
         })}
       </div>
-      <div className="relative my-6 flex items-center justify-center">
+      <div className="relative my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs text-muted">
         <span
-          className="absolute inset-x-5 h-px bg-border"
+          className="absolute inset-x-2 top-1/2 h-px bg-control-border"
           aria-hidden="true"
         />
-        <span className="relative flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-xs">
+        <span className="relative w-fit bg-surface pr-2">Alice</span>
+        <span className="relative flex items-center gap-2 rounded-full border border-control-border bg-surface px-4 py-2 text-foreground">
           {conflict ? <GitBranch size={14} /> : <Check size={14} />}
           {t(
             conflict ? 'Field conflict detected' : 'Server revision {revision}',
             { revision },
           )}
         </span>
+        <span className="relative ml-auto w-fit bg-surface pl-2">Bob</span>
       </div>
       <p
         className="min-h-20 text-sm leading-relaxed text-muted"
