@@ -4,6 +4,7 @@ import { ArrowUpRight, RotateCcw } from 'lucide-react';
 import { LanguageSelect, LocaleProvider, useI18n } from '../components/ui/i18n';
 import { ThemeToggle } from '../components/ui/theme';
 import { BrandMark } from '../components/ui/brand-mark';
+import { SkipLink } from '../components/ui/skip-link';
 import { CollaborationStory } from '../components/collaboration-story';
 import { parseLocale } from '../src/i18n/messages';
 import { applyEvent } from '../src/realtime/board-reducer';
@@ -130,6 +131,7 @@ function Showcase() {
   );
   return (
     <>
+      <SkipLink />
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-6 py-4">
         <a className="brand" href="https://github.com/happyloa/collab-edge">
           <BrandMark />
@@ -140,7 +142,11 @@ function Showcase() {
           <ThemeToggle />
         </div>
       </header>
-      <main className="mx-auto max-w-7xl p-5 sm:p-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto max-w-7xl p-5 sm:p-8"
+      >
         <div className="motion-reveal mb-10 grid items-center gap-9 border-b border-border py-7 pb-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-12">
           <div className="min-w-0">
             <p className="eyebrow mb-3">

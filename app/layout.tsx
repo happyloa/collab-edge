@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { localeCookie, parseLocale } from '../src/i18n/messages';
 import './globals.css';
 import { Providers } from '../components/ui/providers';
+import { SkipLink } from '../components/ui/skip-link';
 
 export const metadata: Metadata = {
   title: 'CollabEdge — A shared space for what comes next',
@@ -20,7 +21,10 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
-        <Providers locale={locale}>{children}</Providers>
+        <Providers locale={locale}>
+          <SkipLink />
+          {children}
+        </Providers>
       </body>
     </html>
   );

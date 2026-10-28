@@ -10,6 +10,12 @@ test('landing keeps its public paths visible without JavaScript', async ({
   try {
     const page = await context.newPage();
     await page.goto('/');
+    await page.keyboard.press('Tab');
+    const skip = page.getByRole('link', { name: 'Skip to main content' });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeInViewport();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('main')).toBeFocused();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
       'Work moves forward.',
     );
@@ -44,6 +50,9 @@ test('landing fits small screens in both languages and themes', async ({
       await page
         .getByRole('combobox', { name: 'Language / 語言' })
         .selectOption(locale);
+      await expect(page.locator('.skip-link')).toHaveText(
+        locale === 'en' ? 'Skip to main content' : '跳至主要內容',
+      );
       for (const theme of ['light', 'dark']) {
         await page.evaluate((value) => {
           document.documentElement.dataset.theme = value;

@@ -4,6 +4,12 @@ test('shared illustration keeps its layout and keyboard interaction in the stati
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./');
+  await page.keyboard.press('Tab');
+  await expect(
+    page.getByRole('link', { name: 'Skip to main content' }),
+  ).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('main')).toBeFocused();
   const story = page.getByRole('region', { name: 'How collaboration works' });
   const cards = story.locator('article');
   const first = await cards.first().boundingBox();

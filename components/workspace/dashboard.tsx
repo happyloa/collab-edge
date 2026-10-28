@@ -168,7 +168,11 @@ export function Dashboard() {
               />
             )}
           </aside>
-          <main className="motion-reveal motion-delay-1 lg:col-span-3">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="motion-reveal motion-delay-1 lg:col-span-3"
+          >
             {session.data?.user &&
               session.data.verifiedEmail &&
               session.data.canVerifyEmail &&

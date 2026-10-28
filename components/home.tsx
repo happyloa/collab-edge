@@ -173,7 +173,11 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           </a>
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto max-w-7xl px-5 pb-20 sm:px-8"
+      >
         <section className="relative grid items-center gap-12 py-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-20">
           <div className="min-w-0">
             <p className="eyebrow" data-hero-enter>

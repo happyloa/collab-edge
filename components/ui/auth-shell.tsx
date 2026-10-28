@@ -10,7 +10,7 @@ import { ThemeToggle } from './theme';
 export function AuthShell({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   return (
-    <main className="min-h-screen px-5 pb-12 sm:px-8">
+    <div className="min-h-screen px-5 pb-12 sm:px-8">
       <header className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 border-b border-border py-5">
         <Link href="/" className="brand">
           <BrandMark />
@@ -20,7 +20,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <ThemeToggle />
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-10 py-8 lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-16">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto grid max-w-7xl gap-10 py-8 lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-16"
+      >
         <aside className="auth-story hidden rounded-2xl p-10 lg:block xl:p-14">
           <p className="auth-story-kicker">{t('PRIVATE WORKSPACE')}</p>
           <p className="mt-8 max-w-md text-5xl leading-tight font-semibold tracking-tight">
@@ -55,7 +59,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
             </a>
           </p>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

@@ -58,7 +58,7 @@ export function BoardLoader({ id }: { id: string }) {
   });
   if (query.error && !query.data)
     return (
-      <main className="p-10">
+      <main id="main-content" tabIndex={-1} className="p-10">
         <ApiErrorNotice
           error={query.error}
           onRetry={() => void query.refetch()}
@@ -68,7 +68,7 @@ export function BoardLoader({ id }: { id: string }) {
     );
   if (!query.data)
     return (
-      <main className="p-10">
+      <main id="main-content" tabIndex={-1} className="p-10">
         <div role="status" className="surface h-60 animate-pulse p-6">
           {t('Opening your shared space…')}
         </div>
@@ -392,7 +392,7 @@ function Board({ initial }: { initial: BoardData }) {
           </button>
         </div>
       </div>
-      <main className="p-4 sm:p-6">
+      <main id="main-content" tabIndex={-1} className="p-4 sm:p-6">
         {(live.status !== 'Connected' || live.pending.length > 0) && (
           <p className="mb-4 text-sm text-muted">
             {t('Connect and finish pending edits before exporting.')}
