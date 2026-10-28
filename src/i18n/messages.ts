@@ -9,6 +9,12 @@ export const zh = {
   'Main navigation': '主要導覽',
   'Illustrative flow': '示意流程',
   'PRIVATE WORKSPACE': '私人工作區',
+  'Your boards': '你的看板',
+  'No archived boards in this workspace.': '這個工作區沒有已封存的看板。',
+  'No boards in this workspace.': '這個工作區目前沒有看板。',
+  'No boards here yet. Create one to get started.':
+    '這裡還沒有看板，建立一個看板開始使用。',
+  'WORKSPACE MANAGEMENT': '工作區管理',
   'A shared place for work in progress.': '一起推進工作的共同空間。',
   'Keep the board, its changes, and the people working on it in context.':
     '讓看板、變更與參與的成員都在同一個脈絡中。',

@@ -105,7 +105,7 @@ export function Dashboard() {
           </button>
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-8 sm:px-6 lg:grid-cols-4 lg:gap-12 lg:py-12">
         <fieldset
           disabled={!ready || busy || signingOut}
           aria-busy={busy}
@@ -117,7 +117,8 @@ export function Dashboard() {
               {list.data?.map((w) => (
                 <button
                   key={w.id}
-                  className={`flex w-full items-center gap-3 rounded-lg p-3 text-left text-sm ${w.id === id ? 'bg-border font-medium' : ''}`}
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg p-3 text-left text-sm ${w.id === id ? 'bg-surface-subtle font-semibold text-foreground' : 'text-muted hover:bg-surface-subtle'}`}
+                  aria-pressed={w.id === id}
                   onClick={() => setSelected(w.id)}
                 >
                   <LayoutDashboard size={17} />
@@ -235,29 +236,19 @@ export function Dashboard() {
                 <p className="mt-3 text-muted">
                   {t('A shared view of what’s moving forward.')}
                 </p>
-                {detail.data.role === 'OWNER' && (
-                  <Usage
-                    key={`usage:${detail.data.workspace.id}`}
-                    workspaceId={detail.data.workspace.id}
-                  />
-                )}
-                {detail.data.role === 'OWNER' && session.data?.user && (
-                  <Restore
-                    key={`${detail.data.workspace.id}:${session.data.user.id}`}
-                    workspaceId={detail.data.workspace.id}
-                    members={detail.data.members}
-                  />
-                )}
-                <label className="mt-6 flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="w-auto"
-                    checked={showArchived}
-                    onChange={(e) => setShowArchived(e.target.checked)}
-                  />
-                  {t('Show archived boards')}
-                </label>
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+                  <h2 className="text-xl font-semibold">{t('Your boards')}</h2>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="w-auto"
+                      checked={showArchived}
+                      onChange={(e) => setShowArchived(e.target.checked)}
+                    />
+                    {t('Show archived boards')}
+                  </label>
+                </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   {detail.data.boards
                     .filter((board) => board.archived === showArchived)
                     .map((board, index) => (
@@ -280,10 +271,23 @@ export function Dashboard() {
                       </Link>
                     ))}
                 </div>
+                {!detail.data.boards.some(
+                  (board) => board.archived === showArchived,
+                ) && (
+                  <p className="mt-5 rounded-xl border border-dashed border-control-border p-5 text-sm text-muted">
+                    {t(
+                      showArchived
+                        ? 'No archived boards in this workspace.'
+                        : detail.data.role === 'VIEWER'
+                          ? 'No boards in this workspace.'
+                          : 'No boards here yet. Create one to get started.',
+                    )}
+                  </p>
+                )}
                 {detail.data.role !== 'VIEWER' && (
                   <form
                     key={`new-board:${detail.data.workspace.id}`}
-                    className="mt-6 flex items-end gap-3"
+                    className="mt-6 flex flex-wrap items-end gap-3"
                     onSubmit={(e) => {
                       e.preventDefault();
                       const form = e.currentTarget;
@@ -300,7 +304,7 @@ export function Dashboard() {
                       });
                     }}
                   >
-                    <label className="field flex-1">
+                    <label className="field min-w-[min(100%,14rem)] flex-1">
                       {t('New board')}
                       <input
                         name="name"
@@ -315,6 +319,9 @@ export function Dashboard() {
                     </button>
                   </form>
                 )}
+                <p className="eyebrow mt-12 border-t border-border pt-8">
+                  {t('WORKSPACE MANAGEMENT')}
+                </p>
                 <Members
                   key={`members:${detail.data.workspace.id}`}
                   detail={detail.data}
@@ -323,6 +330,19 @@ export function Dashboard() {
                   action={action}
                   onLeave={() => setSelected('')}
                 />
+                {detail.data.role === 'OWNER' && (
+                  <Usage
+                    key={`usage:${detail.data.workspace.id}`}
+                    workspaceId={detail.data.workspace.id}
+                  />
+                )}
+                {detail.data.role === 'OWNER' && session.data?.user && (
+                  <Restore
+                    key={`${detail.data.workspace.id}:${session.data.user.id}`}
+                    workspaceId={detail.data.workspace.id}
+                    members={detail.data.members}
+                  />
+                )}
               </>
             )}
           </main>
