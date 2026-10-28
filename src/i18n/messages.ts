@@ -16,6 +16,17 @@ export const zh = {
     '這裡還沒有看板，建立一個看板開始使用。',
   'WORKSPACE MANAGEMENT': '工作區管理',
   'Move without dragging': '不拖曳移動',
+  'PUBLIC PLAYGROUND / COLLABEDGE': '公開互動展示 / COLLABEDGE',
+  'Try the shared workflow.': '親自體驗協作流程。',
+  'Interactive simulation · no account, no live connection':
+    '互動模擬 · 不需帳號，不連接即時服務',
+  'Try the board': '試用看板',
+  'TRY A CONFLICT': '體驗編輯衝突',
+  'Open a card, edit its title, then simulate a teammate edit and save. Your attempted title stays available to review.':
+    '開啟卡片並編輯標題，再模擬隊友修改並儲存。你輸入的標題會保留，供你檢視。',
+  'Simulate a conflict': '模擬編輯衝突',
+  'Edit your title first, then simulate a teammate edit before saving.':
+    '先編輯標題，再模擬隊友修改，接著儲存。',
   'Choose position in column': '選擇欄位中的位置',
   Position: '位置',
   'End of column': '欄位末端',

@@ -30,8 +30,11 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   page,
 }) => {
   const apiRequests: string[] = [];
+  const videoRequests: string[] = [];
   const errors: string[] = [];
   page.on('request', (request) => {
+    if (new URL(request.url()).pathname.endsWith('.webm'))
+      videoRequests.push(request.url());
     if (
       ['fetch', 'xhr', 'websocket'].includes(request.resourceType()) ||
       request.url().includes('workers.dev')
@@ -40,6 +43,9 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
+  await expect(
+    page.getByText('Interactive simulation · no account, no live connection'),
+  ).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Watch real two-browser test' }),
   ).toHaveAttribute('href', '#recorded-collaboration');
@@ -51,6 +57,12 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   );
   const videos = page.locator('video');
   await expect(videos).toHaveCount(2);
+  for (const video of await videos.all()) {
+    await expect(video).toHaveAttribute('preload', 'none');
+    await expect(video).not.toHaveAttribute('autoplay');
+  }
+  await page.waitForLoadState('networkidle');
+  expect(videoRequests).toEqual([]);
   const captions = page.locator('video track[kind="captions"]');
   await expect(captions).toHaveCount(4);
   await page.getByRole('button', { name: 'Play both recordings' }).click();

@@ -144,17 +144,24 @@ function Showcase() {
         <div className="motion-reveal mb-10 grid items-center gap-9 border-b border-border py-7 pb-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-12">
           <div className="min-w-0">
             <p className="eyebrow mb-3">
-              {t('INTERACTIVE PORTFOLIO / COLLABEDGE')}
+              {t('PUBLIC PLAYGROUND / COLLABEDGE')}
             </p>
             <h1 className="max-w-xl text-5xl leading-tight font-semibold tracking-tight sm:text-6xl">
-              {t('Make room for good work.')}
+              {t('Try the shared workflow.')}
             </h1>
+            <p className="mt-5 inline-flex rounded-full border border-control-border px-3 py-1.5 text-xs font-medium">
+              {t('Interactive simulation · no account, no live connection')}
+            </p>
             <p className="mt-3 max-w-2xl text-muted">
               {t(
                 'A public playground. Changes stay in this tab and reset on reload. No account or server connection.',
               )}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
+              <a className="button" href="#playground">
+                {t('Try the board')}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
               <a className="button secondary" href="#recorded-collaboration">
                 {t('Watch real two-browser test')}
                 <ArrowUpRight size={16} />
@@ -170,10 +177,16 @@ function Showcase() {
           </div>
           <CollaborationStory />
         </div>
-        <div className="notice motion-reveal motion-delay-1 mb-6">
-          {t(
-            'Try editing a card, moving it, or simulating a teammate edit to see how a conflicting draft is preserved. Live collaboration is available in the private app and local setup.',
-          )}
+        <div
+          id="playground"
+          className="motion-reveal motion-delay-1 mb-6 scroll-mt-6 border-y border-border py-5"
+        >
+          <p className="eyebrow">{t('TRY A CONFLICT')}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            {t(
+              'Open a card, edit its title, then simulate a teammate edit and save. Your attempted title stays available to review.',
+            )}
+          </p>
         </div>
         <div className="motion-reveal motion-delay-2 mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -260,7 +273,7 @@ function Showcase() {
             <section
               key={column.id}
               aria-label={t(column.title)}
-              className="motion-reveal rounded-panel border border-border bg-border/25 p-4"
+              className="motion-reveal rounded-panel border border-border bg-surface-subtle p-4"
               style={{ animationDelay: `${index * 80}ms` }}
             >
               <h3 className="mb-4 flex items-center gap-2 font-semibold">
@@ -351,7 +364,7 @@ function Showcase() {
       </main>
       {draft && (
         <CardModal close={() => setDraft(null)} label={t('Edit card')}>
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between border-b border-border pb-4">
             <h2 className="text-xl font-semibold">{t('Edit card')}</h2>
             <button className="button secondary" onClick={() => setDraft(null)}>
               {t('Close card')}
@@ -481,22 +494,6 @@ function Showcase() {
                 type="button"
                 className="button secondary"
                 disabled={draft.card.archived}
-                onClick={() =>
-                  commit({
-                    type: 'card.update',
-                    payload: {
-                      id: draft.card.id,
-                      title: `Bob · ${state.board.revision + 1}`,
-                    },
-                  })
-                }
-              >
-                {t('Simulate teammate edit')}
-              </button>
-              <button
-                type="button"
-                className="button secondary"
-                disabled={draft.card.archived}
                 onClick={() => {
                   if (
                     commit({
@@ -508,6 +505,32 @@ function Showcase() {
                 }}
               >
                 {t('Archive card')}
+              </button>
+            </div>
+            <div className="rounded-xl border border-border bg-surface-subtle p-4">
+              <p className="text-sm font-semibold">
+                {t('Simulate a conflict')}
+              </p>
+              <p className="mt-2 text-sm text-muted">
+                {t(
+                  'Edit your title first, then simulate a teammate edit before saving.',
+                )}
+              </p>
+              <button
+                type="button"
+                className="button secondary mt-4"
+                disabled={draft.card.archived}
+                onClick={() =>
+                  commit({
+                    type: 'card.update',
+                    payload: {
+                      id: draft.card.id,
+                      title: `Bob · ${state.board.revision + 1}`,
+                    },
+                  })
+                }
+              >
+                {t('Simulate teammate edit')}
               </button>
             </div>
           </form>
