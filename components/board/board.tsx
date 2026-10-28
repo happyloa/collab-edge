@@ -172,7 +172,7 @@ function Column({
     <section
       ref={setNodeRef}
       aria-label={column.title}
-      className={`motion-reveal w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : ''}`}
+      className={`motion-reveal w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : 'bg-surface-subtle'}`}
       style={{ animationDelay: `${Math.min(index, 5) * 70}ms` }}
     >
       {children}
@@ -303,7 +303,7 @@ function Board({ initial }: { initial: BoardData }) {
         <Link href="/workspaces" className="brand">
           <BrandMark />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex -space-x-1">
             {live.presence.map((p) => {
               const viewedCard = state.cards.find(
@@ -393,7 +393,27 @@ function Board({ initial }: { initial: BoardData }) {
         </div>
       </div>
       <main className="p-4 sm:p-6">
+        {(live.status !== 'Connected' || live.pending.length > 0) && (
+          <p className="mb-4 text-sm text-muted">
+            {t('Connect and finish pending edits before exporting.')}
+          </p>
+        )}
+        {live.pending.some((item) => item.state === 'pending') && (
+          <p className="notice mb-4" role="status">
+            {t('{count} change(s) awaiting confirmation.', {
+              count: live.pending.filter((item) => item.state === 'pending')
+                .length,
+            })}
+          </p>
+        )}
         <ApiErrorNotice error={exportError} className="mb-4" />
+        {(live.role ?? initial.role) === 'VIEWER' && (
+          <p className="notice mb-4">
+            {t(
+              'You can view this board, but your role does not allow editing.',
+            )}
+          </p>
+        )}
         {state.board.archived && (
           <p className="notice mb-4">
             {t(

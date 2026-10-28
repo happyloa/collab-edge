@@ -71,6 +71,10 @@ export function CardDialog({
   const [confirmClose, setConfirmClose] = useState(false);
   const [base] = useState(restoredDraft?.baseRevision ?? state.board.revision);
   const [busy, setBusy] = useState(false);
+  const [beforeId, setBeforeId] = useState('');
+  const [moveStatus, setMoveStatus] = useState('');
+  const [positionOpen, setPositionOpen] = useState(false);
+  const movePending = useRef(false);
   const [saveStatus, setSaveStatus] = useState(
     restoredDraft ? 'Draft saved on this device.' : '',
   );
@@ -450,31 +454,119 @@ export function CardDialog({
         )}
       </form>
       {!readOnly && (
-        <label className="field mt-6">
-          {t('Move to')}
-          <select
-            value={
-              state.cards.find((c) => c.id === initial.id)?.columnId ??
-              initial.columnId
-            }
-            onChange={(e) =>
-              mutate({
-                type: 'card.move',
-                payload: {
-                  id: initial.id,
-                  columnId: e.target.value,
-                  beforeId: null,
-                },
-              })
-            }
+        <section
+          className="mt-8 space-y-4 border-t border-border pt-6"
+          aria-label={t('Move without dragging')}
+        >
+          <h2 className="font-semibold">{t('Move without dragging')}</h2>
+          <label className="field">
+            {t('Move to')}
+            <select
+              value={
+                state.cards.find((c) => c.id === initial.id)?.columnId ??
+                initial.columnId
+              }
+              disabled={busy}
+              onChange={(e) => {
+                setBeforeId('');
+                setMoveStatus('');
+                void mutate({
+                  type: 'card.move',
+                  payload: {
+                    id: initial.id,
+                    columnId: e.target.value,
+                    beforeId: null,
+                  },
+                });
+              }}
+            >
+              {state.columns.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="text-sm text-primary underline underline-offset-4"
+            aria-expanded={positionOpen}
+            onClick={() => setPositionOpen((value) => !value)}
           >
-            {state.columns.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
-        </label>
+            {t('Choose position in column')}
+          </button>
+          {positionOpen && (
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (busy || movePending.current) return;
+                const columnId =
+                  state.cards.find((card) => card.id === initial.id)
+                    ?.columnId ?? initial.columnId;
+                movePending.current = true;
+                setBusy(true);
+                setMoveStatus('');
+                try {
+                  if (
+                    await mutate({
+                      type: 'card.move',
+                      payload: {
+                        id: initial.id,
+                        columnId,
+                        beforeId: beforeId || null,
+                      },
+                    })
+                  ) {
+                    setMoveStatus(
+                      'Move submitted. The board will show the result when confirmed.',
+                    );
+                  }
+                } finally {
+                  movePending.current = false;
+                  setBusy(false);
+                }
+              }}
+              className="space-y-3"
+            >
+              <label className="field">
+                {t('Position')}
+                <select
+                  value={beforeId}
+                  onChange={(event) => setBeforeId(event.target.value)}
+                  disabled={busy}
+                >
+                  <option value="">{t('End of column')}</option>
+                  {state.cards
+                    .filter(
+                      (card) =>
+                        !card.archived &&
+                        card.id !== initial.id &&
+                        card.columnId ===
+                          (state.cards.find((item) => item.id === initial.id)
+                            ?.columnId ?? initial.columnId),
+                    )
+                    .sort((a, b) => a.position - b.position)
+                    .map((card) => (
+                      <option key={card.id} value={card.id}>
+                        {t('Before {title}', { title: card.title })}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <button
+                className="button secondary"
+                type="submit"
+                disabled={busy}
+                aria-busy={busy}
+              >
+                {t('Move card')}
+              </button>
+            </form>
+          )}
+          <p role="status" className="text-sm text-muted">
+            {t(moveStatus)}
+          </p>
+        </section>
       )}
       <section className="mt-8 border-t border-border pt-6">
         <h2 className="font-semibold">{t('Conversation')}</h2>

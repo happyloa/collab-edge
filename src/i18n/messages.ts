@@ -15,6 +15,19 @@ export const zh = {
   'No boards here yet. Create one to get started.':
     '這裡還沒有看板，建立一個看板開始使用。',
   'WORKSPACE MANAGEMENT': '工作區管理',
+  'Move without dragging': '不拖曳移動',
+  'Choose position in column': '選擇欄位中的位置',
+  Position: '位置',
+  'End of column': '欄位末端',
+  'Before {title}': '在 {title} 之前',
+  'Move card': '移動卡片',
+  'Move submitted. The board will show the result when confirmed.':
+    '已送出移動，確認後看板會顯示結果。',
+  '{count} change(s) awaiting confirmation.': '{count} 筆變更等待確認。',
+  'Connect and finish pending edits before exporting.':
+    '請先連線並完成待確認的編輯，再匯出看板。',
+  'You can view this board, but your role does not allow editing.':
+    '你可以檢視這個看板，但目前的角色無法編輯。',
   'A shared place for work in progress.': '一起推進工作的共同空間。',
   'Keep the board, its changes, and the people working on it in context.':
     '讓看板、變更與參與的成員都在同一個脈絡中。',
