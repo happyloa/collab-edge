@@ -4,18 +4,30 @@
 @theme {
   --font-sans: 'Noto Sans TC', sans-serif;
   --font-mono: 'Noto Sans TC', sans-serif;
-  --color-background: #f7f8fa;
-  --color-foreground: #1c2637;
+  --color-background: #f7f8f3;
+  --color-foreground: #15221b;
   --color-surface: #ffffff;
-  --color-muted: #647085;
-  --color-border: #e3e7ed;
-  --color-primary: #496747;
-  --color-destructive: #b42335;
-  --color-success: #39724e;
-  --color-warning: #986610;
-  --color-focus: #517447;
-  --radius-panel: 0.85rem;
-  --shadow-panel: 0 2px 5px #16223805, 0 12px 30px #16223804;
+  --color-surface-subtle: #edf1ea;
+  --color-muted: #4e6255;
+  --color-border: #d7e0d6;
+  --color-control-border: #75877a;
+  --color-primary: #315f3c;
+  --color-on-primary: #ffffff;
+  --color-accent: #cbf26c;
+  --color-accent-ink: #15221b;
+  --color-destructive: #b02b3c;
+  --color-success: #256b42;
+  --color-warning: #896011;
+  --color-focus: #215eaf;
+  --color-overlay: #10171499;
+  --color-skeleton: #e4ebe1;
+  --radius-panel: 1rem;
+  --shadow-panel: 0 2px 5px #15221b08, 0 12px 30px #15221b08;
+  --shadow-float: 0 18px 50px #15221b1a;
+  --shadow-active: 0 8px 24px #15221b1a;
+  --motion-fast: 160ms;
+  --motion-normal: 220ms;
+  --space-section: clamp(3.5rem, 8vw, 8rem);
 }
 :root {
   --theme-icon-light-display: none;
@@ -28,30 +40,42 @@
 :root[data-theme='dark'] {
   --theme-icon-light-display: block;
   --theme-icon-dark-display: none;
-  --color-background: #151b22;
-  --color-surface: #202833;
-  --color-foreground: #e7ecf2;
-  --color-muted: #a0aec0;
-  --color-border: #344150;
-  --color-primary: #adc99e;
-  --color-success: #8fd0a5;
-  --color-destructive: #ff9ca8;
-  --color-warning: #f5cb77;
+  --color-background: #101714;
+  --color-surface: #1a241f;
+  --color-surface-subtle: #222f28;
+  --color-foreground: #f0f4ed;
+  --color-muted: #aec0b3;
+  --color-border: #36483d;
+  --color-control-border: #82998a;
+  --color-primary: #c4f06b;
+  --color-on-primary: #142017;
+  --color-success: #91dda6;
+  --color-destructive: #ff9fa9;
+  --color-warning: #f1cc81;
+  --color-focus: #9ec4ff;
+  --color-overlay: #000000b3;
+  --color-skeleton: #2a3a30;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     --theme-icon-light-display: block;
     --theme-icon-dark-display: none;
-    --color-background: #151b22;
-    --color-surface: #202833;
-    --color-foreground: #e7ecf2;
-    --color-muted: #a0aec0;
-    --color-border: #344150;
-    --color-primary: #adc99e;
-    --color-success: #8fd0a5;
-    --color-destructive: #ff9ca8;
-    --color-warning: #f5cb77;
+    --color-background: #101714;
+    --color-surface: #1a241f;
+    --color-surface-subtle: #222f28;
+    --color-foreground: #f0f4ed;
+    --color-muted: #aec0b3;
+    --color-border: #36483d;
+    --color-control-border: #82998a;
+    --color-primary: #c4f06b;
+    --color-on-primary: #142017;
+    --color-success: #91dda6;
+    --color-destructive: #ff9fa9;
+    --color-warning: #f1cc81;
+    --color-focus: #9ec4ff;
+    --color-overlay: #000000b3;
+    --color-skeleton: #2a3a30;
     color-scheme: dark;
   }
 }
@@ -122,18 +146,23 @@ button:disabled {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
 @layer components {
   .brand {
     @apply flex items-center gap-2 text-lg font-semibold tracking-tight;
   }
   .button {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-surface;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-on-primary;
   }
   .button.secondary {
-    @apply border border-border bg-surface text-foreground;
+    @apply border border-control-border bg-surface text-foreground;
   }
   .icon-button {
-    @apply inline-flex size-10 items-center justify-center rounded-lg text-muted hover:bg-border;
+    @apply inline-flex size-11 items-center justify-center rounded-lg text-muted hover:bg-border;
   }
   .surface {
     @apply rounded-panel border border-border bg-surface shadow-panel;
@@ -144,7 +173,7 @@ button:disabled {
   input,
   textarea,
   select {
-    @apply w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-foreground;
+    @apply w-full rounded-lg border border-control-border bg-surface px-3 py-2.5 text-foreground;
   }
   textarea {
     @apply min-h-28 resize-y;
@@ -306,7 +335,6 @@ button:disabled {
       transform 220ms ease,
       box-shadow 220ms ease,
       border-color 220ms ease,
-      background-color 220ms ease,
       opacity 220ms ease;
   }
   .status-dot {
