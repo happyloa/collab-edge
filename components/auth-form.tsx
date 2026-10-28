@@ -1,12 +1,12 @@
 'use client';
-import { useI18n, LanguageSelect } from './ui/i18n';
+import { useI18n } from './ui/i18n';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useHydrated } from './ui/use-hydrated';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { BrandMark } from './ui/brand-mark';
+import { AuthShell } from './ui/auth-shell';
 import { api } from './ui/providers';
 import { PasswordInput } from './ui/password-input';
 import { asError } from '../src/lib/api-client';
@@ -37,126 +37,115 @@ export function AuthForm({
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
   return (
-    <main className="grid min-h-screen place-items-center px-6">
-      <div className="motion-reveal w-full max-w-md">
-        <Link href="/" className="brand mb-12">
-          <BrandMark />
-        </Link>
-        <div className="mb-6 flex justify-end">
-          <LanguageSelect />
-        </div>
-        <p className="eyebrow">{t('YOUR NEXT CHAPTER')}</p>
-        <h1 className="mt-3 text-3xl font-semibold">
-          {t(registerMode ? 'Make room for good work.' : 'Welcome back.')}
-        </h1>
-        <p className="mt-3 text-muted">
-          {t(
-            registerMode
-              ? 'Create an account and bring your team together.'
-              : 'Your team’s shared space is right here.',
-          )}
-        </p>
-        <form
-          method="post"
-          className="mt-8 space-y-5"
-          onSubmit={handleSubmit(async (values) => {
-            try {
-              setError(null);
-              await api(`/api/auth/${registerMode ? 'register' : 'login'}`, {
-                method: 'POST',
-                body: JSON.stringify(values),
-              });
-              location.replace(returnTo);
-            } catch (e) {
-              setError(asError(e, 'Sign in failed'));
-            }
-          })}
-        >
-          {registerMode && (
-            <label className="field">
-              {t('Your name')}
-              <input
-                disabled={!hydrated}
-                autoComplete="name"
-                required
-                maxLength={80}
-                {...register('name')}
-              />
-              {errors.name && (
-                <span className="text-destructive">
-                  {t(errors.name.message ?? 'Use at most 80 characters')}
-                </span>
-              )}
-            </label>
-          )}
+    <AuthShell>
+      <p className="eyebrow">{t('YOUR NEXT CHAPTER')}</p>
+      <h1 className="mt-3 text-3xl font-semibold">
+        {t(registerMode ? 'Make room for good work.' : 'Welcome back.')}
+      </h1>
+      <p className="mt-3 text-muted">
+        {t(
+          registerMode
+            ? 'Create an account and bring your team together.'
+            : 'Your team’s shared space is right here.',
+        )}
+      </p>
+      <form
+        method="post"
+        className="mt-8 space-y-5"
+        onSubmit={handleSubmit(async (values) => {
+          try {
+            setError(null);
+            await api(`/api/auth/${registerMode ? 'register' : 'login'}`, {
+              method: 'POST',
+              body: JSON.stringify(values),
+            });
+            location.replace(returnTo);
+          } catch (e) {
+            setError(asError(e, 'Sign in failed'));
+          }
+        })}
+      >
+        {registerMode && (
           <label className="field">
-            {t('Email address')}
+            {t('Your name')}
             <input
               disabled={!hydrated}
-              type="email"
-              autoComplete="email"
-              {...register('email')}
+              autoComplete="name"
+              required
+              maxLength={80}
+              {...register('name')}
             />
-            {registerMode && (
-              <span className="text-xs font-normal text-muted">
-                {t(
-                  'On the private site, use the email you verified with Cloudflare Access.',
-                )}
-              </span>
-            )}
-            {errors.email && (
+            {errors.name && (
               <span className="text-destructive">
-                {t(errors.email.message ?? 'Enter a valid email address')}
+                {t(errors.name.message ?? 'Use at most 80 characters')}
               </span>
             )}
           </label>
-          <div className="field">
-            <label htmlFor="account-password">{t('Password')}</label>
-            <PasswordInput
-              disabled={!hydrated}
-              id="account-password"
-              autoComplete={registerMode ? 'new-password' : 'current-password'}
-              {...register('password')}
-            />
-            {errors.password && (
-              <span className="text-destructive">
-                {t(errors.password.message ?? 'Use at least 12 characters')}
-              </span>
-            )}
+        )}
+        <label className="field">
+          {t('Email address')}
+          <input
+            disabled={!hydrated}
+            type="email"
+            autoComplete="email"
+            {...register('email')}
+          />
+          {registerMode && (
+            <span className="text-xs font-normal text-muted">
+              {t(
+                'On the private site, use the email you verified with Cloudflare Access.',
+              )}
+            </span>
+          )}
+          {errors.email && (
+            <span className="text-destructive">
+              {t(errors.email.message ?? 'Enter a valid email address')}
+            </span>
+          )}
+        </label>
+        <div className="field">
+          <label htmlFor="account-password">{t('Password')}</label>
+          <PasswordInput
+            disabled={!hydrated}
+            id="account-password"
+            autoComplete={registerMode ? 'new-password' : 'current-password'}
+            {...register('password')}
+          />
+          {errors.password && (
+            <span className="text-destructive">
+              {t(errors.password.message ?? 'Use at least 12 characters')}
+            </span>
+          )}
+        </div>
+        {!registerMode && (
+          <div className="text-right text-sm">
+            <Link href="/reset-password" className="text-primary">
+              {t('Forgot password?')}
+            </Link>
           </div>
-          {!registerMode && (
-            <div className="text-right text-sm">
-              <Link href="/reset-password" className="text-primary">
-                {t('Forgot password?')}
-              </Link>
-            </div>
-          )}
-          <ApiErrorNotice error={error} />
-          <button
-            className="button w-full"
-            disabled={isSubmitting || !hydrated}
-          >
-            {t(
-              isSubmitting
-                ? 'Just a moment…'
-                : registerMode
-                  ? 'Create account'
-                  : 'Sign in',
-            )}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-muted">
-          {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
-          <Link className="text-primary" href={switchModeHref}>
-            {t(registerMode ? 'Sign in' : 'Create an account')}
-          </Link>
-        </p>
-        <p className="mt-8 text-xs leading-relaxed text-muted">
+        )}
+        <ApiErrorNotice error={error} />
+        <button className="button w-full" disabled={isSubmitting || !hydrated}>
           {t(
-            'Portfolio environment · limited capacity. Keep sensitive information out of shared demo boards.',
+            isSubmitting
+              ? 'Just a moment…'
+              : registerMode
+                ? 'Create account'
+                : 'Sign in',
           )}
-        </p>
-      </div>
-    </main>
+        </button>
+      </form>
+      <p className="mt-6 text-center text-sm text-muted">
+        {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
+        <Link className="text-primary" href={switchModeHref}>
+          {t(registerMode ? 'Sign in' : 'Create an account')}
+        </Link>
+      </p>
+      <p className="mt-8 text-xs leading-relaxed text-muted">
+        {t(
+          'Portfolio environment · limited capacity. Keep sensitive information out of shared demo boards.',
+        )}
+      </p>
+    </AuthShell>
   );
 }

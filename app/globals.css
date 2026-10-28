@@ -255,6 +255,29 @@ button:disabled {
 .home-evidence-link:hover {
   color: #c4f06b;
 }
+.auth-story {
+  background: #15221b;
+  color: #f0f4ed;
+}
+.auth-story-kicker {
+  color: #c4f06b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.auth-story-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(#6f8475, #6f8475) center / 100% 1px no-repeat;
+}
+.auth-story-line span {
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid #c4f06b;
+  border-radius: 50%;
+  background: #15221b;
+}
 @media (min-width: 48rem) {
   .home-flow-step + .home-flow-step {
     border-left: 1px solid var(--color-border);

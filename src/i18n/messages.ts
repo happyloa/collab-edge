@@ -8,6 +8,12 @@ export function parseLocale(value?: string): Locale {
 export const zh = {
   'Main navigation': '主要導覽',
   'Illustrative flow': '示意流程',
+  'PRIVATE WORKSPACE': '私人工作區',
+  'A shared place for work in progress.': '一起推進工作的共同空間。',
+  'Keep the board, its changes, and the people working on it in context.':
+    '讓看板、變更與參與的成員都在同一個脈絡中。',
+  'One board · ordered changes · shared context':
+    '同一個看板 · 有序的變更 · 共同的脈絡',
   'Work moves forward.': '讓工作持續向前。',
   'Changes stay in view.': '每次變更，清楚可見。',
   'See how synchronization works': '看看同步如何運作',
