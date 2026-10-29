@@ -159,14 +159,6 @@ export function Dashboard() {
             <p className="mt-4 text-xs text-muted">
               {t('Up to 3 workspaces per account.')}
             </p>
-            {session.data?.canDeleteAccount && list.data && (
-              <DeleteAccount
-                key={session.data.user?.id}
-                ownsWorkspace={list.data.some(
-                  (workspace) => workspace.role === 'OWNER',
-                )}
-              />
-            )}
           </aside>
           <main
             id="main-content"
@@ -350,6 +342,14 @@ export function Dashboard() {
                   )}
                 </details>
               </>
+            )}
+            {session.data?.canDeleteAccount && list.data && (
+              <DeleteAccount
+                key={session.data.user?.id}
+                ownsWorkspace={list.data.some(
+                  (workspace) => workspace.role === 'OWNER',
+                )}
+              />
             )}
           </main>
         </fieldset>

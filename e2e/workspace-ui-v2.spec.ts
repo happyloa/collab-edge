@@ -31,6 +31,11 @@ test('board access comes before management and remains usable on narrow screens'
     .getByText('Workspace management', { exact: true })
     .boundingBox())!.y;
   expect(boardY).toBeLessThan(managementY);
+  const accountRemoval = page.getByRole('button', {
+    name: 'Delete my account',
+  });
+  await expect(accountRemoval).toBeVisible();
+  expect(boardY).toBeLessThan((await accountRemoval.boundingBox())!.y);
   const invitation = page.getByLabel('Invite a registered teammate');
   await invitation.fill('saved@example.com');
   await page.getByText('Workspace management', { exact: true }).click();
