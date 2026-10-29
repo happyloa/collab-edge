@@ -95,3 +95,24 @@ test('landing remains operable with forced colors and 200% zoom', async ({
   }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
 });
+
+test('product preview uses demo board titles in both languages', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const preview = page.getByRole('region', { name: 'Product preview' });
+  await expect(
+    preview.getByText('Draft the launch announcement'),
+  ).toBeVisible();
+  await expect(preview.getByText('Build the new home page')).toBeVisible();
+  await expect(
+    preview.getByText('Review keyboard accessibility'),
+  ).toBeVisible();
+  await page
+    .getByRole('combobox', { name: 'Language / 語言' })
+    .selectOption('zh-TW');
+  await expect(page.getByText('草擬上線公告')).toBeVisible();
+  await expect(page.getByText('製作新版首頁')).toBeVisible();
+  await expect(page.getByText('檢查鍵盤無障礙操作')).toBeVisible();
+});

@@ -364,17 +364,17 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               [
                 'Backlog',
                 'Map the customer journey',
-                'Explore a clearer first impression',
+                'Draft the launch announcement',
               ],
               [
                 'In Progress',
-                'Build a home for the next chapter',
-                'Bring the visual identity to life',
+                'Build the new home page',
+                'Refine the mobile navigation',
               ],
               [
                 'Review',
-                'Make every interaction accessible',
-                'Test the details that matter',
+                'Review keyboard accessibility',
+                'Approve the visual direction',
               ],
             ].map(([name, ...titles], i) => (
               <div key={t(name)}>
@@ -383,17 +383,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
                   {t(name)}
                   <span className="ml-auto text-muted">02</span>
                 </div>
-                {titles.map((title, j) => (
+                {titles.map((title) => (
                   <div
                     key={t(title)}
                     className="surface interactive-surface mb-3 p-5"
                   >
-                    <span className="tag">{t(j ? 'Design' : 'Product')}</span>
-                    <h3 className="my-4 font-medium">{t(title)}</h3>
-                    <div className="flex justify-between text-xs text-muted">
-                      <span>CE–{i * 2 + j + 1}</span>
-                      <span className="avatar">{j ? 'BK' : 'AL'}</span>
-                    </div>
+                    <h3 className="font-medium">{t(title)}</h3>
                   </div>
                 ))}
               </div>
