@@ -75,9 +75,9 @@ export function CollaborationStory() {
               <span className="text-[0.65rem] tracking-widest text-muted">
                 CE–01
               </span>
-              <h3 className="mt-2 min-h-14 text-sm leading-relaxed font-semibold">
+              <p className="mt-2 min-h-14 text-sm leading-relaxed font-semibold">
                 {t(draft ? 'My team’s next chapter' : 'Build a shared space')}
-              </h3>
+              </p>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 text-xs">
                 <span className={draft ? 'text-warning' : 'text-success'}>
                   {t(draft ? 'Draft preserved' : 'Committed')}

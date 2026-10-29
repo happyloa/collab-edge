@@ -232,6 +232,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
                     'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.',
                   )}
                 </p>
+                <Link
+                  href="/register"
+                  className="mt-3 inline-block text-sm text-primary underline underline-offset-4"
+                >
+                  {t('Create an account')}
+                </Link>
                 <DemoEntry />
               </div>
             )}

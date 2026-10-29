@@ -17,9 +17,9 @@ test('language persists across routes and reloads without losing drafts or recon
     .selectOption('zh-TW');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    '讓好點子成真',
+    '讓工作持續向前',
   );
-  await page.getByRole('link', { name: '開始使用' }).click();
+  await page.getByRole('link', { name: '註冊帳號' }).click();
   await page.getByLabel('你的姓名').fill('測試 User');
   await page.getByLabel('電子郵件').fill('example@example.com');
   await page.getByLabel('密碼', { exact: true }).fill('short');
@@ -97,7 +97,7 @@ test('saved locale renders on the server and invalid cookies fall back to Englis
   const page = await context.newPage();
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
-  await expect(page.getByRole('link', { name: '開始使用' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '註冊帳號' })).toBeVisible();
   await context.addCookies([
     {
       name: 'collabedge_locale',
