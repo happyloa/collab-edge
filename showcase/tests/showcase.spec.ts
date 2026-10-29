@@ -47,6 +47,7 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
     )
       apiRequests.push(request.url());
   });
+  page.on('websocket', (socket) => apiRequests.push(socket.url()));
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('./');
   await expect(
