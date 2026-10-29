@@ -157,3 +157,38 @@ test('mobile card actions stay available and cancel preserves the draft guard', 
     .click();
   await expect(page.getByLabel('Description')).toHaveValue(edit);
 });
+
+test('card comment indicator reflects the actual comments and locale', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Try as Alice' }).click();
+  await expect(
+    page.getByRole('status', { name: 'Connection status' }),
+  ).toHaveText('Connected');
+  const title = `Comments ${crypto.randomUUID().slice(0, 8)}`;
+  await page.getByLabel('New card in Backlog').fill(title);
+  await page
+    .getByRole('region', { name: 'Backlog', exact: true })
+    .getByRole('button', { name: 'Add card', exact: true })
+    .click();
+  const card = page.getByRole('button', { name: title, exact: true });
+  const surface = card.locator('xpath=../..');
+  await expect(surface.getByRole('img', { name: /comment/ })).toHaveCount(0);
+  await card.click();
+  await page.getByLabel('Add a comment').fill('First comment');
+  await page.getByRole('button', { name: 'Post comment' }).click();
+  await expect(
+    page.getByRole('dialog').locator('li').getByText('First comment', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Close card' }).click();
+  await expect(
+    surface.getByRole('img', { name: '1 comment(s)' }),
+  ).toBeVisible();
+  await page
+    .getByRole('combobox', { name: 'Language / 語言' })
+    .selectOption('zh-TW');
+  await expect(surface.getByRole('img', { name: '1 則留言' })).toBeVisible();
+});

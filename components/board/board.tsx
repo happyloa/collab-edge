@@ -91,12 +91,14 @@ function SortableCard({
   open,
   pending,
   people,
+  commentCount,
 }: {
   card: Card;
   readOnly: boolean;
   open: () => void;
   pending: boolean;
   people: BoardData['people'];
+  commentCount: number;
 }) {
   const { t } = useI18n();
   const {
@@ -140,9 +142,19 @@ function SortableCard({
           {card.description}
         </p>
       )}
-      <div className="mt-5 flex items-center justify-between text-xs text-muted">
+      <div className="mt-5 flex items-center justify-between gap-2 text-xs text-muted">
         <span>CE–{card.id.slice(0, 4).toUpperCase()}</span>
-        <span>{pending ? t('Saving…') : <MessageSquare size={13} />}</span>
+        {pending && <span>{t('Saving…')}</span>}
+        {commentCount > 0 && (
+          <span
+            role="img"
+            aria-label={t('{count} comment(s)', { count: commentCount })}
+            className="inline-flex items-center gap-1"
+          >
+            <MessageSquare size={13} aria-hidden="true" />
+            <span aria-hidden="true">{commentCount}</span>
+          </span>
+        )}
       </div>
       {(card.assigneeId || card.dueDate) && (
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
@@ -210,6 +222,12 @@ function Board({ initial }: { initial: BoardData }) {
     () => [...state.columns].sort((a, b) => a.position - b.position),
     [state.columns],
   );
+  const commentCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const comment of state.comments)
+      counts.set(comment.cardId, (counts.get(comment.cardId) ?? 0) + 1);
+    return counts;
+  }, [state.comments]);
   const keyboardCoordinates = useCallback<KeyboardCoordinateGetter>(
     (event, args) => {
       // Target neighboring columns explicitly; the sortable getter can keep the
@@ -780,6 +798,7 @@ function Board({ initial }: { initial: BoardData }) {
                       <SortableCard
                         key={card.id}
                         card={card}
+                        commentCount={commentCounts.get(card.id) ?? 0}
                         readOnly={readOnly || filtered}
                         people={initial.people}
                         open={() => {

@@ -406,6 +406,7 @@ export const zh = {
   Conversation: '討論',
   'Add a comment': '新增留言',
   'Post comment': '送出留言',
+  '{count} comment(s)': '{count} 則留言',
   Attachments: '附件',
   'Upload a file': '上傳檔案',
   'PNG, JPEG, WebP, PDF or text · 10 MB each · 10 files per card':
