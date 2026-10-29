@@ -323,30 +323,32 @@ export function Dashboard() {
                     </button>
                   </form>
                 )}
-                <p className="eyebrow mt-12 border-t border-border pt-8">
-                  {t('WORKSPACE MANAGEMENT')}
-                </p>
-                <Members
-                  key={`members:${detail.data.workspace.id}`}
-                  detail={detail.data}
-                  currentUserId={session.data?.user?.id}
-                  run={run}
-                  action={action}
-                  onLeave={() => setSelected('')}
-                />
-                {detail.data.role === 'OWNER' && (
-                  <Usage
-                    key={`usage:${detail.data.workspace.id}`}
-                    workspaceId={detail.data.workspace.id}
+                <details className="mt-12 border-t border-border pt-8" open>
+                  <summary className="cursor-pointer text-sm font-semibold text-foreground">
+                    {t('Workspace management')}
+                  </summary>
+                  <Members
+                    key={`members:${detail.data.workspace.id}`}
+                    detail={detail.data}
+                    currentUserId={session.data?.user?.id}
+                    run={run}
+                    action={action}
+                    onLeave={() => setSelected('')}
                   />
-                )}
-                {detail.data.role === 'OWNER' && session.data?.user && (
-                  <Restore
-                    key={`${detail.data.workspace.id}:${session.data.user.id}`}
-                    workspaceId={detail.data.workspace.id}
-                    members={detail.data.members}
-                  />
-                )}
+                  {detail.data.role === 'OWNER' && (
+                    <Usage
+                      key={`usage:${detail.data.workspace.id}`}
+                      workspaceId={detail.data.workspace.id}
+                    />
+                  )}
+                  {detail.data.role === 'OWNER' && session.data?.user && (
+                    <Restore
+                      key={`${detail.data.workspace.id}:${session.data.user.id}`}
+                      workspaceId={detail.data.workspace.id}
+                      members={detail.data.members}
+                    />
+                  )}
+                </details>
               </>
             )}
           </main>

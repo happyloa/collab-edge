@@ -16,7 +16,11 @@ export const zh = {
   'No boards here yet. Create one to get started.':
     '這裡還沒有看板，建立一個看板開始使用。',
   'WORKSPACE MANAGEMENT': '工作區管理',
+  'Workspace management': '工作區管理',
   'Move without dragging': '不拖曳移動',
+  Filters: '篩選',
+  '{count} active filter(s).': '已啟用 {count} 個篩選條件。',
+  'Board columns': '看板欄位',
   'PUBLIC PLAYGROUND / COLLABEDGE': '公開互動展示 / COLLABEDGE',
   'Try the shared workflow.': '親自體驗協作流程。',
   'Interactive simulation · no account, no live connection':

@@ -195,8 +195,13 @@ function Board({ initial }: { initial: BoardData }) {
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const filtered = Boolean(search.trim() || assignee || due);
+  const activeFilterCount =
+    Number(Boolean(search.trim())) +
+    Number(Boolean(assignee)) +
+    Number(Boolean(due));
   const today = localToday();
   const [settings, setSettings] = useState<Snapshot['board'] | null>(null);
   const readOnly =
@@ -351,7 +356,11 @@ function Board({ initial }: { initial: BoardData }) {
             {state.board.name}
           </h1>
           <p className="mt-2 text-sm text-muted">
-            {t('Make progress visible. Keep your team in sync.')}
+            {t(
+              live.status !== 'Connected' || live.pending.length > 0
+                ? 'Connect and finish pending edits before exporting.'
+                : 'Make progress visible. Keep your team in sync.',
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
@@ -393,11 +402,6 @@ function Board({ initial }: { initial: BoardData }) {
         </div>
       </div>
       <main id="main-content" tabIndex={-1} className="p-4 sm:p-6">
-        {(live.status !== 'Connected' || live.pending.length > 0) && (
-          <p className="mb-4 text-sm text-muted">
-            {t('Connect and finish pending edits before exporting.')}
-          </p>
-        )}
         {live.pending.some((item) => item.state === 'pending') && (
           <p className="notice mb-4" role="status">
             {t('{count} change(s) awaiting confirmation.', {
@@ -436,7 +440,7 @@ function Board({ initial }: { initial: BoardData }) {
           </button>
         )}
         <div className="surface motion-reveal motion-delay-1 mb-4 flex flex-wrap items-end gap-3 p-4">
-          <label className="field flex-1">
+          <label className="field min-w-[min(100%,12rem)] flex-1">
             {t('Search cards')}
             <input
               type="search"
@@ -444,41 +448,56 @@ function Board({ initial }: { initial: BoardData }) {
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <label className="field">
-            {t('Filter by assignee')}
-            <select
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-            >
-              <option value="">{t('All members')}</option>
-              <option value="unassigned">{t('Unassigned')}</option>
-              {initial.people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            {t('Filter by due date')}
-            <select value={due} onChange={(e) => setDue(e.target.value)}>
-              <option value="">{t('All dates')}</option>
-              <option value="overdue">{t('Overdue')}</option>
-              <option value="today">{t('Due today')}</option>
-              <option value="upcoming">{t('Upcoming')}</option>
-              <option value="none">{t('No due date')}</option>
-            </select>
-          </label>
           <button
-            className="button secondary"
-            onClick={() => {
-              setSearch('');
-              setAssignee('');
-              setDue('');
-            }}
+            type="button"
+            className="button secondary sm:hidden"
+            aria-expanded={filtersOpen}
+            aria-controls="board-filters"
+            onClick={() => setFiltersOpen((value) => !value)}
           >
-            {t('Clear filters')}
+            {t('Filters')}{' '}
+            {activeFilterCount > 0 && <span>({activeFilterCount})</span>}
           </button>
+          <div
+            id="board-filters"
+            className={`${filtersOpen ? 'flex' : 'hidden'} w-full flex-wrap items-end gap-3 sm:flex sm:w-auto`}
+          >
+            <label className="field">
+              {t('Filter by assignee')}
+              <select
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+              >
+                <option value="">{t('All members')}</option>
+                <option value="unassigned">{t('Unassigned')}</option>
+                {initial.people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              {t('Filter by due date')}
+              <select value={due} onChange={(e) => setDue(e.target.value)}>
+                <option value="">{t('All dates')}</option>
+                <option value="overdue">{t('Overdue')}</option>
+                <option value="today">{t('Due today')}</option>
+                <option value="upcoming">{t('Upcoming')}</option>
+                <option value="none">{t('No due date')}</option>
+              </select>
+            </label>
+            <button
+              className="button secondary"
+              onClick={() => {
+                setSearch('');
+                setAssignee('');
+                setDue('');
+              }}
+            >
+              {t('Clear filters')}
+            </button>
+          </div>
           <button
             className="button secondary"
             onClick={() => setShowArchive(!showArchive)}
@@ -487,6 +506,7 @@ function Board({ initial }: { initial: BoardData }) {
           </button>
           {filtered && (
             <p className="w-full text-xs text-muted">
+              {t('{count} active filter(s).', { count: activeFilterCount })}{' '}
               {t('Clear filters to drag cards. Editing remains available.')}
             </p>
           )}
@@ -656,7 +676,11 @@ function Board({ initial }: { initial: BoardData }) {
             },
           }}
         >
-          <div className="flex min-h-96 gap-4 overflow-x-auto pb-10">
+          <div
+            className="flex min-h-96 gap-4 overflow-x-auto pb-10"
+            role="region"
+            aria-label={t('Board columns')}
+          >
             {columns.map((column, index) => {
               const cards = state.cards
                 .filter(

@@ -28,9 +28,15 @@ test('board access comes before management and remains usable on narrow screens'
   await expect(board).toBeVisible();
   const boardY = (await board.boundingBox())!.y;
   const managementY = (await page
-    .getByText('WORKSPACE MANAGEMENT')
+    .getByText('Workspace management', { exact: true })
     .boundingBox())!.y;
   expect(boardY).toBeLessThan(managementY);
+  const invitation = page.getByLabel('Invite a registered teammate');
+  await invitation.fill('saved@example.com');
+  await page.getByText('Workspace management', { exact: true }).click();
+  await expect(invitation).toBeHidden();
+  await page.getByText('Workspace management', { exact: true }).click();
+  await expect(invitation).toHaveValue('saved@example.com');
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320);
