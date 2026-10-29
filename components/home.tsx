@@ -330,6 +330,22 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               </article>
             ))}
           </div>
+          <ol
+            aria-label={t('Path of a change')}
+            className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-medium text-primary"
+          >
+            {[
+              'Command',
+              'Validate and commit',
+              'Ordered event',
+              'Authorized peers',
+            ].map((step, index) => (
+              <li key={step} className="inline-flex items-center gap-3">
+                {index > 0 && <span aria-hidden="true">→</span>}
+                <span>{t(step)}</span>
+              </li>
+            ))}
+          </ol>
         </section>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -459,10 +475,22 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               )}
             </p>
           </div>
-          <a className="button" href="https://happyloa.github.io/collab-edge/">
-            {t('Explore the public playground')}
-            <ArrowUpRight size={18} />
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              className="button"
+              href="https://happyloa.github.io/collab-edge/"
+            >
+              {t('Explore the public playground')}
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+            <a
+              className="button secondary"
+              href="https://github.com/happyloa/collab-edge/blob/main/docs/architecture.md"
+            >
+              {t('Read the architecture')}
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </a>
+          </div>
         </section>
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 border-t border-border px-5 py-8 text-sm text-muted sm:px-8">

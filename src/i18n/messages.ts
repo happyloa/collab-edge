@@ -8,6 +8,11 @@ export function parseLocale(value?: string): Locale {
 export const zh = {
   'Main navigation': '主要導覽',
   'Skip to main content': '跳至主要內容',
+  'Path of a change': '變更的流程',
+  Command: '操作指令',
+  'Validate and commit': '驗證並提交',
+  'Ordered event': '排序後的事件',
+  'Authorized peers': '有權限的成員',
   'Illustrative flow': '示意流程',
   'PRIVATE WORKSPACE': '私人工作區',
   'Your boards': '你的看板',

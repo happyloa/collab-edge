@@ -102,6 +102,15 @@ test('product preview uses demo board titles in both languages', async ({
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const preview = page.getByRole('region', { name: 'Product preview' });
+  const changePath = page.getByRole('list', { name: 'Path of a change' });
+  await expect(changePath.getByRole('listitem')).toHaveCount(4);
+  for (const step of [
+    'Command',
+    'Validate and commit',
+    'Ordered event',
+    'Authorized peers',
+  ])
+    await expect(changePath.getByText(step, { exact: true })).toBeVisible();
   await expect(
     preview.getByText('Draft the launch announcement'),
   ).toBeVisible();
@@ -115,4 +124,5 @@ test('product preview uses demo board titles in both languages', async ({
   await expect(page.getByText('草擬上線公告')).toBeVisible();
   await expect(page.getByText('製作新版首頁')).toBeVisible();
   await expect(page.getByText('檢查鍵盤無障礙操作')).toBeVisible();
+  await expect(page.getByRole('list', { name: '變更的流程' })).toBeVisible();
 });
