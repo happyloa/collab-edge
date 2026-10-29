@@ -186,9 +186,15 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       bob.getByRole('button', { name: 'Bob proposal', exact: true }),
     ).toBeVisible();
     await alice.getByRole('button', { name: 'Save changes' }).click();
+    const conflict = alice
+      .getByRole('alert')
+      .filter({ hasText: 'Edit conflict' });
+    await expect(conflict).toContainText('Alice proposal');
+    await expect(conflict.getByText('Title', { exact: true })).toBeVisible();
     await expect(
-      alice.getByRole('alert').filter({ hasText: 'Edit conflict' }),
-    ).toContainText('Alice proposal');
+      conflict.getByText('Edit card', { exact: true }),
+    ).toBeVisible();
+    await expect(conflict.locator('pre')).toHaveCount(0);
     await alice.getByRole('button', { name: 'Retry my draft' }).click();
     await expect(
       bob.getByRole('button', { name: 'Alice proposal', exact: true }),

@@ -239,6 +239,12 @@ test('a recovered committed mutation keeps its UUID and does not duplicate a com
   await expect(
     page.getByRole('alert').filter({ hasText: 'Recovered edit' }),
   ).toContainText(body);
+  await expect(
+    page
+      .getByRole('alert')
+      .filter({ hasText: 'Recovered edit' })
+      .getByText('Comment', { exact: true }),
+  ).toBeVisible();
   const before = (await (
     await page.request.get(`/api/boards/${boardId}`)
   ).json()) as { snapshot: Snapshot };
