@@ -43,7 +43,7 @@ test('landing fits small screens in both languages and themes', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const width of [320, 390, 768, 1440]) {
+  for (const width of [320, 375, 390, 768, 1024, 1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     for (const locale of ['en', 'zh-TW']) {
@@ -65,4 +65,33 @@ test('landing fits small screens in both languages and themes', async ({
       }
     }
   }
+});
+
+test('landing remains operable with forced colors and 200% zoom', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
+  await page.goto('/');
+  await expect(
+    page.getByRole('button', { name: 'Toggle color theme' }),
+  ).toBeEnabled();
+  await page.evaluate(() => {
+    document.documentElement.style.zoom = '200%';
+  });
+  await page.keyboard.press('Tab');
+  const skip = page.getByRole('link', { name: 'Skip to main content' });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport();
+  expect(
+    await skip.evaluate((element) => getComputedStyle(element).outlineStyle),
+  ).not.toBe('none');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('main')).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const dimensions = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
 });
