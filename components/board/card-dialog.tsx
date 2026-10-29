@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
 import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
@@ -47,6 +47,8 @@ export function CardDialog({
   const { t, locale } = useI18n();
 
   const dialog = useRef<HTMLDialogElement>(null);
+  const closeGuard = useRef<HTMLDivElement>(null);
+  const editFormId = useId();
   const [restored] = useState(() => {
     const current: DraftFields = {
       title: initial.title,
@@ -167,6 +169,9 @@ export function CardDialog({
       else document.querySelector<HTMLElement>('[data-board-heading]')?.focus();
     };
   }, []);
+  useEffect(() => {
+    if (confirmClose) closeGuard.current?.focus();
+  }, [confirmClose]);
   function requestClose() {
     if (busy) return;
     if (dirty) setConfirmClose(true);
@@ -237,7 +242,7 @@ export function CardDialog({
         requestClose();
       }}
       aria-labelledby="card-dialog-title"
-      className="motion-dialog m-auto max-h-[calc(100dvh_-_1rem)] w-[calc(100%_-_1rem)] max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-5 text-foreground shadow-float backdrop:bg-black/40 sm:p-7 lg:max-w-4xl"
+      className="motion-dialog card-detail-dialog m-auto max-h-[calc(100dvh_-_1rem)] w-[calc(100%_-_1rem)] max-w-xl overflow-y-auto rounded-2xl border border-border bg-surface p-5 text-foreground shadow-float backdrop:bg-black/40 sm:p-7 lg:max-w-4xl"
     >
       <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
         <h2 id="card-dialog-title" className="eyebrow">
@@ -265,7 +270,12 @@ export function CardDialog({
         </p>
       )}
       {confirmClose && (
-        <div role="alert" className="notice attention mb-4 space-y-3">
+        <div
+          ref={closeGuard}
+          role="alert"
+          tabIndex={-1}
+          className="notice attention mb-4 space-y-3"
+        >
           <p>{t('Keep your edits on this device before closing?')}</p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -314,6 +324,7 @@ export function CardDialog({
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div className="min-w-0">
           <form
+            id={editFormId}
             className="space-y-5"
             onSubmit={async (e) => {
               e.preventDefault();
@@ -429,7 +440,7 @@ export function CardDialog({
             </label>
             {!readOnly && (
               <div className="flex flex-wrap justify-between gap-3">
-                <button className="button" disabled={busy}>
+                <button className="button card-desktop-save" disabled={busy}>
                   {t('Save changes')}
                 </button>
                 <button
@@ -661,6 +672,26 @@ export function CardDialog({
           />
         </div>
       </div>
+      {!readOnly && (
+        <div className="card-mobile-actions sticky bottom-0 z-10 -mx-5 mt-6 -mb-5 flex gap-3 border-t border-border bg-surface px-5 pt-3 sm:hidden">
+          <button
+            type="submit"
+            form={editFormId}
+            className="button"
+            disabled={busy}
+          >
+            {t('Save changes')}
+          </button>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={requestClose}
+            disabled={busy}
+          >
+            {t('Cancel')}
+          </button>
+        </div>
+      )}
     </dialog>
   );
 }

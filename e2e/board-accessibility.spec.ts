@@ -112,3 +112,48 @@ for (const mode of [
     expect(failures).toEqual([]);
   });
 }
+
+test('mobile card actions stay available and cancel preserves the draft guard', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Try as Alice' }).click();
+  await expect(
+    page.getByRole('status', { name: 'Connection status' }),
+  ).toHaveText('Connected');
+  await page
+    .getByRole('button', { name: 'Map the customer journey', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'CARD DETAILS' });
+  const actions = dialog.locator('.card-mobile-actions');
+  const save = dialog.getByRole('button', { name: 'Save changes' });
+  const cancel = actions.getByRole('button', { name: 'Cancel' });
+  await expect(save).toBeInViewport();
+  await expect(cancel).toBeInViewport();
+  const description = dialog.getByLabel('Description');
+  const edit = `Mobile edit ${crypto.randomUUID()}`;
+  await description.fill(edit);
+  const inputBox = await description.boundingBox();
+  const actionsBox = await actions.boundingBox();
+  expect(inputBox).not.toBeNull();
+  expect(actionsBox).not.toBeNull();
+  expect(inputBox!.y + inputBox!.height).toBeLessThanOrEqual(actionsBox!.y);
+  await cancel.click();
+  const guard = dialog.getByRole('alert');
+  await expect(guard).toBeFocused();
+  await expect(guard).toBeInViewport();
+  await guard.getByRole('button', { name: 'Continue editing' }).click();
+  await expect(description).toHaveValue(edit);
+  await save.click();
+  await expect(dialog).not.toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole('status', { name: 'Connection status' }),
+  ).toHaveText('Connected');
+  await page
+    .getByRole('button', { name: 'Map the customer journey', exact: true })
+    .click();
+  await expect(page.getByLabel('Description')).toHaveValue(edit);
+});

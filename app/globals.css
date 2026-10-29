@@ -315,6 +315,22 @@ button:disabled {
   color: var(--color-primary);
   font-size: 1.1rem;
 }
+@media (max-width: 39.999rem) {
+  .card-detail-dialog {
+    scroll-padding-bottom: 6rem;
+  }
+  .card-detail-dialog .card-desktop-save {
+    display: none;
+  }
+  .card-mobile-actions {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+}
+@media (max-height: 32.5rem) {
+  .card-mobile-actions {
+    position: static;
+  }
+}
 @keyframes motion-rise {
   from {
     opacity: 0;
