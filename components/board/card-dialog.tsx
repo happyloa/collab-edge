@@ -1,5 +1,12 @@
 'use client';
-import { useState, useRef, useEffect, useId, type KeyboardEvent } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useId,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { X } from 'lucide-react';
 import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
@@ -30,6 +37,7 @@ export function CardDialog({
   ownerId,
   draftLease,
   restoredDraft,
+  attention,
 }: {
   initial: Card;
   state: Snapshot;
@@ -43,6 +51,7 @@ export function CardDialog({
   ownerId: string;
   draftLease: DraftLease | null;
   restoredDraft?: CardDraft | null;
+  attention?: ReactNode;
 }) {
   const { t, locale } = useI18n();
 
@@ -250,6 +259,7 @@ export function CardDialog({
         </h2>
         <button
           className="icon-button"
+          data-card-dialog-close
           aria-label={t('Close card')}
           onClick={requestClose}
           disabled={busy}
@@ -257,6 +267,7 @@ export function CardDialog({
           <X size={20} />
         </button>
       </div>
+      {attention}
       {dirty && (
         <p
           role="status"

@@ -186,6 +186,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       bob.getByRole('button', { name: 'Bob proposal', exact: true }),
     ).toBeVisible();
     await alice.getByRole('button', { name: 'Save changes' }).click();
+    await expect(alice.getByRole('dialog')).not.toBeVisible();
     const conflict = alice
       .getByRole('alert')
       .filter({ hasText: 'Edit conflict' });
@@ -195,10 +196,23 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       conflict.getByText('Edit card', { exact: true }),
     ).toBeVisible();
     await expect(conflict.locator('pre')).toHaveCount(0);
-    await alice.getByRole('button', { name: 'Retry my draft' }).click();
+    await conflict.getByRole('button', { name: 'Review draft' }).click();
+    const dialog = alice.getByRole('dialog');
+    const dialogConflict = dialog.getByRole('alert');
+    await expect(dialogConflict).toContainText('Alice proposal');
+    await expect(dialog.getByLabel('Title', { exact: true })).toHaveValue(
+      'Bob proposal',
+    );
+    await dialogConflict
+      .getByRole('button', { name: 'Retry my draft' })
+      .click();
+    await expect(
+      dialog.getByRole('button', { name: 'Close card' }),
+    ).toBeFocused();
     await expect(
       bob.getByRole('button', { name: 'Alice proposal', exact: true }),
     ).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close card' }).click();
     await bobContext.setOffline(true);
     await expect(
       bob.getByRole('status', { name: 'Connection status' }),

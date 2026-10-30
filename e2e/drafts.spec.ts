@@ -164,15 +164,29 @@ test('separate tabs keep independent drafts and restored edits retain conflict g
     'First tab draft',
   );
   await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(
     page.getByRole('alert').filter({ hasText: 'Edit conflict' }),
   ).toContainText('First tab draft');
   await page
     .getByRole('alert')
     .filter({ hasText: 'Edit conflict' })
+    .getByRole('button', { name: 'Review draft', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('alert')).toContainText('First tab draft');
+  await expect(dialog.getByLabel('Description', { exact: true })).toHaveValue(
+    'The committed teammate update',
+  );
+  await dialog
+    .getByRole('alert')
     .getByRole('button', { name: 'Discard draft', exact: true })
     .click();
+  await expect(
+    dialog.getByRole('button', { name: 'Close card' }),
+  ).toBeFocused();
   await expect.poll(() => drafts(page)).toEqual([]);
+  await dialog.getByRole('button', { name: 'Close card' }).click();
   await other.close();
 });
 

@@ -49,6 +49,12 @@ type BoardData = {
   people: { id: string; name: string }[];
 };
 type Card = Snapshot['cards'][number];
+function focusCardDialogClose(button: HTMLButtonElement) {
+  button
+    .closest('dialog')
+    ?.querySelector<HTMLButtonElement>('[data-card-dialog-close]')
+    ?.focus();
+}
 function AttemptedChange({
   command,
   state,
@@ -777,7 +783,25 @@ function Board({ initial }: { initial: BoardData }) {
                 state={state}
                 people={initial.people}
               />
-              <div className="mt-3 flex gap-4">
+              <div className="mt-3 flex flex-wrap gap-4">
+                {p.state === 'conflicted' &&
+                  p.mutation.command.type === 'card.update' &&
+                  (() => {
+                    const card = state.cards.find(
+                      (item) => item.id === p.mutation.command.payload.id,
+                    );
+                    return card ? (
+                      <button
+                        className="button secondary"
+                        onClick={() => {
+                          setRestoredDraft(null);
+                          setSelected({ ...card });
+                        }}
+                      >
+                        {t('Review draft')}
+                      </button>
+                    ) : null;
+                  })()}
                 <button
                   className="button secondary"
                   onClick={() => live.retry(p)}
@@ -1028,6 +1052,47 @@ function Board({ initial }: { initial: BoardData }) {
           ownerId={initial.user.id}
           draftLease={drafts.lease}
           restoredDraft={restoredDraft}
+          attention={live.pending
+            .filter(
+              (p) =>
+                p.state === 'conflicted' &&
+                p.mutation.command.type === 'card.update' &&
+                p.mutation.command.payload.id === selected.id,
+            )
+            .map((p) => (
+              <div
+                key={p.mutation.clientMutationId}
+                role="alert"
+                className="notice attention mb-4"
+              >
+                <strong>{t('Edit conflict')}</strong>
+                <p className="my-2">{errorText(p.error)}</p>
+                <AttemptedChange
+                  command={p.mutation.command}
+                  state={state}
+                  people={initial.people}
+                />
+                <div className="mt-3 flex flex-wrap gap-4">
+                  <button
+                    className="button secondary"
+                    onClick={(event) => {
+                      focusCardDialogClose(event.currentTarget);
+                      void live.retry(p);
+                    }}
+                  >
+                    {t('Retry my draft')}
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      focusCardDialogClose(event.currentTarget);
+                      void live.dismiss(p.mutation.clientMutationId);
+                    }}
+                  >
+                    {t('Discard draft')}
+                  </button>
+                </div>
+              </div>
+            ))}
           close={() => {
             setSelected(null);
             setRestoredDraft(null);
