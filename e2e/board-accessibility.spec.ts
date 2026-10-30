@@ -142,6 +142,14 @@ test('mobile card actions stay available and cancel preserves the draft guard', 
   expect(inputBox!.y + inputBox!.height).toBeLessThanOrEqual(actionsBox!.y);
   await page.setViewportSize({ width: 320, height: 800 });
   const due = dialog.getByLabel('Due date');
+  await due.evaluate((field) => {
+    for (const name of ['focus', 'focusin'])
+      field.addEventListener(
+        name,
+        () => field.setAttribute(`data-native-${name}`, 'observed'),
+        { once: true },
+      );
+  });
   await due.focus();
   await due.evaluate(
     () =>
@@ -161,7 +169,25 @@ test('mobile card actions stay available and cancel preserves the draft guard', 
         );
       }),
     )
-    .toBe(true);
+    .toBe(true)
+    .catch(async (error) => {
+      console.error(
+        'Date focus diagnostics',
+        await due.evaluate((field) => ({
+          activeTag: document.activeElement?.tagName,
+          hostFocused: document.activeElement === field,
+          focusWithin: field.matches(':focus-within'),
+          nativeFocus: field.getAttribute('data-native-focus'),
+          nativeFocusIn: field.getAttribute('data-native-focusin'),
+          field: field.getBoundingClientRect().toJSON(),
+          content: field
+            .closest('.card-detail-content')
+            ?.getBoundingClientRect()
+            .toJSON(),
+        })),
+      );
+      throw error;
+    });
   const dueBox = await due.boundingBox();
   const mobileActions = await actions.boundingBox();
   expect(dueBox).not.toBeNull();
