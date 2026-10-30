@@ -6,11 +6,11 @@
 
 首頁、帳號頁、工作區、看板、卡片與公開體驗已套用雙主題視覺系統。首頁及看板首屏已獲使用者同意。首頁進場位移最多 24px、時間最多 700ms；減少動態時內容直接顯示。拖曳欄位不套用裝飾性 transform。
 
-程式版本 `bd15ac5`：卡片移動提示使用同一 mutation UUID 的提交事件確認成功；逐欄位區分裝置草稿、提交、衝突及伺服器確認；附件介面依伺服器設定顯示停用。手機捲動區與動作列分離，原生日期欄位聚焦後保持可見，對話框明確設定初始焦點。資料庫、WebSocket 格式、UUID／revision 規則及正式資源設定未變更。
+本輪修補：卡片移動提示使用同一 mutation UUID 的提交事件確認成功；逐欄位區分裝置草稿、提交、衝突及伺服器確認；附件介面依伺服器設定顯示停用。手機捲動區與動作列分離，日期欄位使用原生焦點監聽保持可見，對話框明確設定初始焦點。資料庫、WebSocket 格式、UUID／revision 規則及正式資源設定未變更。
 
 ## 自動驗證
 
-- 本輪完整 `verify`、88 個 Workers 測試、20 個 React UI 測試、安全探針、17 個看板重點跨瀏覽器情境及 2 個 showcase 情境通過。最終完整 CI 另列於發布紀錄。
+- 本輪完整 `verify`、88 個 Workers 測試、21 個 React UI 測試、安全探針、17 個看板重點跨瀏覽器情境及 2 個 showcase 情境通過。最終完整 CI 另列於發布紀錄。
 - 前一版 `b881609` 的 [CI](https://github.com/happyloa/collab-edge/actions/runs/41078413441) 成功，包含 66 個 E2E；[CodeQL](https://github.com/happyloa/collab-edge/actions/runs/41078413388) 成功。
 - 本輪以相同 lockfile 比較改版前 `393274b` 與 `bd15ac5`，三組本機配對包含 25／100／200 卡、最多 4,000 則留言。ready、LCP、開卡、篩選及移動確認的最大中位數退步為 15.0%，未超過 20%；六份 log 在本機 `.tools/spec-perf-{baseline,current}-{1,2,3}.log`。
 - 前一輪本機 Lighthouse 四項均為 100，LCP 1.1s、CLS 0.007、TBT 20ms；這是單次實驗室結果，不代表正式站或真實使用者 INP。

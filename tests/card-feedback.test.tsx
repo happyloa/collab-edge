@@ -1,11 +1,34 @@
-import { act, cleanup, renderHook } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  renderHook,
+  render,
+  screen,
+  fireEvent,
+} from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { cardFieldStatus } from '../components/board/card-field-status';
 import { useCardMovement } from '../components/board/use-card-movement';
+import { CardDialog } from '../components/board/card-dialog';
 import type { Pending, useBoard } from '../src/realtime/socket-client';
 import type { BoardEvent, Command, Snapshot } from '../src/realtime/protocol';
 
-afterEach(cleanup);
+const showModalDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLDialogElement.prototype,
+  'showModal',
+);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  if (showModalDescriptor)
+    Object.defineProperty(
+      HTMLDialogElement.prototype,
+      'showModal',
+      showModalDescriptor,
+    );
+  else Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+});
 const card: Snapshot['cards'][number] = {
   id: 'card',
   boardId: 'board',
@@ -49,6 +72,53 @@ const command: Extract<Command, { type: 'card.move' }> = {
   type: 'card.move',
   payload: { id: card.id, columnId: 'backlog', beforeId: null },
 };
+it('reveals a native date editor that emits focus without focusin', () => {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value: function (this: HTMLDialogElement) {
+      this.open = true;
+    },
+  });
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0);
+    return 1;
+  });
+  render(
+    <CardDialog
+      initial={card}
+      state={state}
+      readOnly={false}
+      mutate={vi.fn().mockResolvedValue(true)}
+      close={vi.fn()}
+      people={[]}
+      reconnect={vi.fn()}
+      connectionStatus="Connected"
+      connectionError=""
+      ownerId="alice"
+      draftLease={null}
+      attachmentsEnabled={false}
+      pending={[]}
+      moveCard={vi.fn().mockResolvedValue(true)}
+      moveMessage=""
+    />,
+  );
+  const input = screen.getByLabelText('Due date', { exact: true });
+  const content = input.closest('.card-detail-content')!;
+  vi.spyOn(content, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(0, 0, 320, 500),
+  );
+  vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(20, 600, 280, 44),
+  );
+  const scroll = vi.fn();
+  Object.defineProperty(input, 'scrollIntoView', { value: scroll });
+  fireEvent(input, new FocusEvent('focus', { bubbles: false, composed: true }));
+  expect(scroll).toHaveBeenCalledWith({
+    block: 'center',
+    inline: 'nearest',
+    behavior: 'instant',
+  });
+});
 function fieldStatus(pending: Pending[], current = card) {
   return cardFieldStatus({
     field: 'title',
