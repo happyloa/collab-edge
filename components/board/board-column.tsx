@@ -1,4 +1,5 @@
 'use client';
+import { memo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -12,7 +13,7 @@ import type { Snapshot, Command } from '../../src/realtime/protocol';
 import type { Pending } from '../../src/realtime/socket-client';
 import type { BoardData, Card } from './types';
 
-function SortableCard({
+const SortableCard = memo(function SortableCard({
   card,
   readOnly,
   open,
@@ -22,7 +23,7 @@ function SortableCard({
 }: {
   card: Card;
   readOnly: boolean;
-  open: () => void;
+  open: (card: Card) => void;
   pending: boolean;
   people: BoardData['people'];
   commentCount: number;
@@ -49,7 +50,7 @@ function SortableCard({
       <div className="flex items-start gap-2">
         <button
           className="min-h-11 flex-1 text-left text-sm leading-relaxed font-medium"
-          onClick={open}
+          onClick={() => open(card)}
         >
           {card.title}
         </button>
@@ -96,7 +97,7 @@ function SortableCard({
       )}
     </div>
   );
-}
+});
 function Column({
   column,
   children,
@@ -229,7 +230,7 @@ export function BoardColumn({
             commentCount={commentCounts.get(card.id) ?? 0}
             readOnly={readOnly || filtered}
             people={people}
-            open={() => openCard(card)}
+            open={openCard}
             pending={pending.some(
               (p) =>
                 p.state === 'pending' &&

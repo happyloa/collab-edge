@@ -159,6 +159,7 @@ it('announces a move only after its exact server receipt, including a no-op move
   expect(result.current.message).toContain('Waiting for server confirmation.');
   rerender({ live: { ...live, activity: [event] } });
   expect(result.current.message).toBe('Moved Launch to Backlog.');
+  expect(result.current.cardId).toBe(card.id);
 });
 it('names the destination on rejected and server-failed moves without announcing success', async () => {
   const { result, rerender, live } = movement();
@@ -177,6 +178,8 @@ it('names the destination on rejected and server-failed moves without announcing
   expect(result.current.message).toBe(
     'Move of Launch to Backlog needs review. Your attempted move is preserved.',
   );
+  rerender({ live });
+  expect(result.current.message).toBe('');
   live.mutate = vi
     .fn<ReturnType<typeof useBoard>['mutate']>()
     .mockResolvedValue(false);

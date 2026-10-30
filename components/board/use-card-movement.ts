@@ -41,10 +41,19 @@ export function useCardMovement(
       .reverse()
       .find(
         (entry) =>
-          entry.mutation.command === request.current?.command &&
-          entry.state !== 'pending',
+          entry.mutation.clientMutationId ===
+            request.current?.clientMutationId && entry.state !== 'pending',
       );
-    if (!item || item.mutation.command.type !== 'card.move') return;
+    if (!item) {
+      setNotice((current) =>
+        current?.key ===
+        'Move of {title} to {column} needs review. Your attempted move is preserved.'
+          ? null
+          : current,
+      );
+      return;
+    }
+    if (item.mutation.command.type !== 'card.move') return;
     const identity = `${item.mutation.clientMutationId}:${item.state}`;
     if (identity === lastFailure.current) return;
     lastFailure.current = identity;
@@ -94,6 +103,7 @@ export function useCardMovement(
       : t('Destination: end of {column}.', { column: column.title });
   }
   return {
+    cardId: notice?.cardId,
     move,
     destination,
     message: notice

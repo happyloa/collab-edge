@@ -96,6 +96,10 @@ function Board({
   const { t, errorText, locale } = useI18n();
   const [selected, setSelected] = useState<Card | null>(null);
   const [restoredDraft, setRestoredDraft] = useState<CardDraft | null>(null);
+  const openCard = useCallback((card: Card) => {
+    setRestoredDraft(null);
+    setSelected({ ...card });
+  }, []);
   const drafts = useBoardDrafts(initial.user.id, initial.snapshot.board.id);
   const [showActivity, setShowActivity] = useState(false);
   const live = useBoard(
@@ -562,10 +566,7 @@ function Board({
                 commentCounts={commentCounts}
                 pending={live.pending}
                 mutate={live.mutate}
-                openCard={(card) => {
-                  setRestoredDraft(null);
-                  setSelected({ ...card });
-                }}
+                openCard={openCard}
               />
             ))}
             {!readOnly && (
@@ -620,7 +621,7 @@ function Board({
           attachmentsEnabled={attachmentsEnabled}
           pending={live.pending}
           moveCard={movement.move}
-          moveMessage={movement.message}
+          moveMessage={movement.cardId === selected.id ? movement.message : ''}
           people={initial.people}
           mutate={live.mutate}
           reconnect={live.reconnect}
