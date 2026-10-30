@@ -8,6 +8,7 @@ import { CollaborationStory } from './collaboration-story';
 import Link from 'next/link';
 import {
   ArrowUpRight,
+  ArrowRight,
   Radio,
   ShieldCheck,
   GitBranch,
@@ -341,7 +342,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               'Authorized peers',
             ].map((step, index) => (
               <li key={step} className="inline-flex items-center gap-3">
-                {index > 0 && <span aria-hidden="true">→</span>}
+                {index > 0 && <ArrowRight size={14} aria-hidden="true" />}
                 <span>{t(step)}</span>
               </li>
             ))}
