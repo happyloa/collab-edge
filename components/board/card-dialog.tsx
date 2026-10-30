@@ -70,6 +70,7 @@ export function CardDialog({
   const dialog = useRef<HTMLDialogElement>(null);
   const closeGuard = useRef<HTMLDivElement>(null);
   const editFormId = useId();
+  const focusVersion = useRef(0);
   const [restored] = useState(() => {
     const current: DraftFields = {
       title: initial.title,
@@ -294,13 +295,20 @@ export function CardDialog({
       <div
         className="card-detail-content min-h-0 overflow-auto p-5 sm:p-7"
         onFocusCapture={(event) => {
-          const field = event.target;
-          if (!field.matches('input, select, textarea')) return;
+          const version = ++focusVersion.current;
+          const field = event.nativeEvent
+            .composedPath()
+            .find(
+              (target): target is HTMLElement =>
+                target instanceof HTMLElement &&
+                target.matches('input, select, textarea'),
+            );
+          if (!field) return;
           const content = event.currentTarget;
           // Native date inputs may scroll their inner editor after focus.
           requestAnimationFrame(() =>
             requestAnimationFrame(() => {
-              if (document.activeElement !== field || !field.isConnected)
+              if (version !== focusVersion.current || !field.isConnected)
                 return;
               const bounds = field.getBoundingClientRect();
               const viewport = content.getBoundingClientRect();
