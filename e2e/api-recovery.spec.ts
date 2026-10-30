@@ -115,10 +115,17 @@ test('reconnecting under another account preserves the draft without submitting 
   context,
 }) => {
   await page.goto('/');
+  const demoSession = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/auth/demo' &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Try as Alice' }).click();
+  expect((await demoSession).status()).toBe(200);
+  await expect(page).toHaveURL(/\/boards\/[0-9a-f-]+$/);
   await expect(
     page.getByRole('status', { name: 'Connection status' }),
-  ).toHaveText('Connected');
+  ).toHaveText('Connected', { timeout: 15000 });
   const boardUrl = page.url();
   const boardId = new URL(boardUrl).pathname.split('/').at(-1)!;
   const initial = (await (
