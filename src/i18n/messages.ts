@@ -6,6 +6,8 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'A submitted value is awaiting confirmation. Your input is preserved.':
+    '已送出的值正在等待確認，目前輸入的內容仍保留。',
   'File uploads and downloads are disabled in this environment.':
     '此環境已停用檔案上傳與下載。',
   'Card movement': '卡片移動狀態',

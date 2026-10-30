@@ -84,6 +84,14 @@ it('does not call an optimistic matching field server-confirmed while its write 
     'Submission needs review. Your attempted value is preserved.',
   );
   expect(fieldStatus([])).toBe('Server-confirmed value.');
+  const anotherValue = update('pending');
+  anotherValue.mutation.command = {
+    type: 'card.update',
+    payload: { id: card.id, title: 'Queued edit' },
+  };
+  expect(fieldStatus([anotherValue], { ...card, title: 'Queued edit' })).toBe(
+    'A submitted value is awaiting confirmation. Your input is preserved.',
+  );
 });
 it('keeps independent fields confirmed and distinguishes a local draft from a changed server value', () => {
   const unrelated = update('pending');
@@ -180,4 +188,10 @@ it('names the destination on rejected and server-failed moves without announcing
   expect(result.current.destination('backlog')).toBe(
     'Destination: end of Backlog.',
   );
+  live.mutate = vi
+    .fn<ReturnType<typeof useBoard>['mutate']>()
+    .mockRejectedValue(new Error('Socket closed'));
+  rerender({ live });
+  await act(async () => expect(await result.current.move(command)).toBe(false));
+  expect(result.current.message).toContain('Could not submit');
 });
