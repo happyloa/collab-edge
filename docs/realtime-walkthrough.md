@@ -1,6 +1,6 @@
 # Realtime collaboration walkthrough
 
-CollabEdge's [public playground](https://happyloa.github.io/collab-edge/) is a browser-only simulation. This walkthrough points to the separate **two-browser Workers test** that exercises the actual HTTP API, WebSocket, Durable Object, D1 and local R2 paths. It runs against local workerd, not the Access-protected production Worker. Owner-authenticated production behavior remains [unverified](delivery-status.md).
+CollabEdge's [public playground](https://happyloa.github.io/collab-edge/) is a browser-only simulation. This walkthrough points to the separate **two-browser Workers test** that exercises the actual HTTP API, WebSocket, Durable Object, D1 and local R2 paths. It runs against local workerd, not the Access-protected production Worker. Owner-authenticated production behavior remains [unverified](release-status.md).
 
 [Watch Alice and Bob side by side](https://happyloa.github.io/collab-edge/#recorded-collaboration) in the prerecorded local test. The two video tracks were captured from one passing Playwright run; playback is not a live multi-user session on GitHub Pages.
 

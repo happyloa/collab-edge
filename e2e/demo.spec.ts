@@ -1,7 +1,7 @@
 import { test, expect } from './fixture';
 test('public demo supports keyboard entry, mobile layout, and dark theme', async ({
   page,
-}) => {
+}, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
@@ -21,7 +21,7 @@ test('public demo supports keyboard entry, mobile layout, and dark theme', async
     page.getByRole('heading', { name: 'Website Launch' }),
   ).toBeVisible();
   await page.screenshot({
-    path: 'docs/screenshots/demo-board.png',
+    path: testInfo.outputPath('demo-board.png'),
     fullPage: true,
     animations: 'disabled',
   });
@@ -37,7 +37,7 @@ test('public demo supports keyboard entry, mobile layout, and dark theme', async
     ),
   ).toBe(true);
   await page.screenshot({
-    path: 'docs/screenshots/mobile-dark.png',
+    path: testInfo.outputPath('mobile-dark.png'),
     fullPage: true,
     animations: 'disabled',
   });

@@ -1,36 +1,40 @@
 # Testing
 
-`pnpm verify` checks formatting, ESLint, strict TypeScript, Workers tests, React DOM tests, lint compatibility probes, Vinext compatibility and production build. `pnpm test:e2e` runs the full Chromium suite, including independent collaboration contexts, plus targeted Firefox and WebKit projects for auth navigation, keyboard dialogs and history maintenance. CI installs all three browsers and runs both gates without production credentials. These are Playwright's engine builds, not physical-phone, installed-Safari or screen-reader acceptance.
-
-Each local `pnpm test:e2e` run creates a fresh, ignored Cloudflare state directory and selects an unused local port. The runner applies the committed D1 migrations to that directory, starts Vinext against the same state, and removes only that directory after the browser suite exits. It does not touch the normal `.wrangler/state` development database. An explicitly set `E2E_BASE_URL` instead targets the named environment and skips local migration and cleanup.
-
-Workers tests use @cloudflare/vitest-plugin and actual local D1/R2/SQLite Durable Objects. They cover PBKDF2, session digest binding, validation, field-level conflicts, stale creates, server ordering, reducer gaps, idempotency, atomic rollback, viewer rejection, event replay, snapshot fallback, limiter persistence, hibernation and R2 write authorization.
-
-Activity tests verify newest-first revision cursors, bounded pages, authorization and invalid cursor rejection. The activity panel fetches only when opened and can load older pages without affecting WebSocket replay.
-
-Retention tests exercise the 30-day/latest-200 policy, stable lost-response batch retries, unchanged UUID receipts and quotas, actor rejection, ownership/revision races, replay and snapshot fallback. A post-compaction backup drill evicts the restore coordinator after staging each chunk, retries the chunk, finalizes twice and cleans staging without duplicate boards or source changes. React tests cover explicit confirmation, double-click protection, identical retries, 409 preview refresh, disconnected controls and Chinese errors. The browser maintenance case uses real owner/demo sessions and the server's empty preview; populated cleanup is covered in workerd and React DOM tests. See [retention and restore limits](event-retention.md).
-
-The extracted activity panel has a React DOM test for closed-panel request avoidance, live/history overlap, descending order, preserved records after a failed next page, retrying the same cursor and cached reopening. The card keyboard scenarios verify modal focus boundaries, unsaved Escape behavior, opener restoration and archived-opener fallback at desktop and phone widths, including reduced motion. See [keyboard acceptance and remaining checks](keyboard-accessibility.md).
-
-React Testing Library checks viewer attachment controls, rejecting large uploads before fetch, accessible theme controls and account-deletion submission guards. Workspace browser coverage checks failed-request input retention, prevention of duplicate submissions, context-bound form resets, active-board discovery and absence of React duplicate-key errors. See [workspace management](workspace-management.md). `node tests/lint-tooling.mjs` proves the compatibility bridge still reports real React key and accessibility errors.
-
-The current app suite contains 88 Workers/core tests, 14 React tests and 35 Chromium scenarios. Authentication tests verify the signed Access identity, verified-email registration, legacy-account adoption, blocked demo-account adoption, password reset with old-session revocation, ownership transfer and password-confirmed account deletion. Deletion tests cover retained shared content and races with a concurrent password reset or session revocation. Workspace tests simulate ownership transfer or membership removal between an HTTP permission check and its D1 transaction, and confirm that stale renames, invitations, role changes, removals, exits and board creation fail without partial writes. Transfer tests also revoke the password or session after confirmation to verify the D1 transaction rejects stale proof. A full-board mutation test confirms that editing one card writes only that card, keeping D1 rows written bounded. Realtime tests check that revoked members stop receiving events and presence and that an idle tab cannot override the same user's active tab. The browser recovery scenario checks navigation, matching passwords and bilingual errors. Theme scenarios cover initial light/dark preferences, one-click switching, explicit theme overrides, and system-driven icons before JavaScript hydration. Language scenarios cover cookie persistence, server-rendered Chinese, fallback, retained drafts and sockets. Motion scenarios check animated feedback, reduced-motion opt-out, draggable-card position stability and the bilingual, keyboard-operated collaboration illustration without API requests. The other scenarios cover collaboration and demo/mobile behavior. CI runs all 35 plus six scenarios in each of the targeted Firefox/WebKit projects; these are local emulation tests, not authenticated production smoke tests. The separate public-demo workflow runs two browser-only scenarios with `pnpm build:showcase && pnpm test:showcase`.
-
-Board lifecycle tests verify rename patches retain their name revision, concurrent stale names and stale archival/restoration are rejected, archive/restore delivery is idempotent, and ordinary mutations cannot change an archived board. Metadata tests check calendar dates, independent field conflict revisions, filters, nonmember assignment rejection and metadata retention after restoration. The two-browser scenario additionally verifies synchronized assignment/due date, search, card archive/restore, read-only board archival, archived-board discovery and restoration.
-
-The primary Playwright scenario registers Alice and Bob, creates a workspace and board, invites Bob, verifies that Alice's viewed-card and active/idle presence reaches Bob, moves a card through both the editor and keyboard drag handle in both directions, and verifies that each move reaches both browsers. It then renames the card, submits concurrent conflicting edits, retries a preserved draft, disconnects/reconnects Bob, posts a comment, uploads an attachment, checks anonymous download rejection, downloads a board JSON export and verifies its snapshot and absence of private object keys, then captures the board screenshot. Page errors fail the scenario.
-
-`pnpm capture:demo` runs this scenario alone against a new local workerd state and saves synchronized Alice/Bob recordings plus preview images to `showcase/media/`. The runner rejects `E2E_BASE_URL` in capture mode so a recording cannot accidentally exercise production. The static public demo serves these prerecorded clips on demand; it does not create a live connection.
-
-`pnpm test:perf` selects three local browser fixtures: 25 cards/125 comments, 100 cards/1,000 comments and 200 cards/4,000 comments. It also rejects external `E2E_BASE_URL` before migration. The ordinary suite includes these cases. Performance reports record timings and bytes without fragile latency assertions; persisted movement, complete comments and absence of browser errors remain required. See [measurements and reproduction](snapshot-performance.md).
+Use Node.js 24 and the pinned pnpm version. Current results and untested acceptance items belong in [release status](release-status.md).
 
 ```sh
-pnpm install --frozen-lockfile
-pnpm exec playwright install chromium firefox webkit
-pnpm verify
-pnpm test:e2e
+corepack pnpm install --frozen-lockfile
+corepack pnpm exec playwright install chromium firefox webkit
+corepack pnpm verify
+corepack pnpm test:e2e
+corepack pnpm build:showcase
+corepack pnpm test:showcase
+corepack pnpm test:perf
 ```
 
-The test creates real users and boards in its disposable local state. Playwright gives each scenario a distinct test-only IP so one local loopback bucket does not exhaust the production-sized per-IP limit for the rest of the suite. Repeated `pnpm test:e2e` runs start with fresh quota counters and leave existing development data untouched. Never run cleanup against remote D1.
+## Coverage
 
-Set E2E_BASE_URL only for an explicitly authorized test environment. The complete scenario uploads files and therefore must not be used against production while attachments are disabled for cost control. Production smoke checks must respect its configured feature gates.
+| Command         | Checks                                                                                                                     |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `verify`        | Formatting, ESLint, strict TypeScript, Workers and React tests, security probes, Vinext compatibility and production build |
+| `test:e2e`      | Full Chromium suite; targeted Firefox/WebKit auth navigation, keyboard dialogs and history maintenance                     |
+| `test:showcase` | Static simulation, conflict recovery, reset, bilingual UI, recorded media and no private API/WS requests                   |
+| `test:perf`     | Local browser fixtures with 25/100/200 cards and 125/1,000/4,000 comments                                                  |
+
+Workers tests use local workerd, D1, R2 and SQLite Durable Objects. They cover authorization, session/key races, atomic rollback, quotas, UUID deduplication, field conflicts, ordering, replay, hibernation and private attachment access. Retention and restore tests exercise retries, compaction boundaries, staging cleanup and unchanged source data.
+
+React tests cover recovery controls, disabled attachments, pending and conflicting field states, receipt-bound move announcements, pagination retries and irreversible-action guards. ESLint compatibility probes verify that real React and accessibility errors remain detectable.
+
+The two-browser scenario creates Alice and Bob, invites a teammate, checks ordered updates and presence, moves a card, resolves a stale edit, reconnects, comments, uploads a local file and verifies a private export. Browser page errors fail the scenario. See the [walkthrough](realtime-walkthrough.md), [keyboard checks](keyboard-accessibility.md), [retention limits](event-retention.md) and [performance reproduction](snapshot-performance.md).
+
+## Local isolation
+
+Each E2E run reserves a local port, creates a fresh ignored state directory, applies committed D1 migrations and starts Vinext against that state. It removes only its temporary directory afterward; ordinary development data stays intact. Distinct test-only IPs isolate per-IP quotas between scenarios.
+
+Stop an existing Vinext preview before running the isolated suite: Vinext permits one dev server per checkout. Run builds and E2E sequentially so the dev server's generated files remain stable.
+
+`E2E_BASE_URL` skips local migration and cleanup and targets the named environment. Use it only for an explicitly authorized test environment. The full suite uploads files, so it must not target production while attachments are disabled. Never run cleanup against remote D1.
+
+`capture:demo` runs the collaboration scenario against fresh local state and replaces synchronized recordings and posters in `showcase/media/` only after success. Capture and performance modes reject `E2E_BASE_URL`.
+
+CI runs without production credentials. Playwright engine builds, local results and recorded clips do not establish physical-device, screen-reader or Access-authenticated production acceptance. Follow the separate [production smoke checklist](production-smoke.md).

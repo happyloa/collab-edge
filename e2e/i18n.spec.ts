@@ -2,7 +2,7 @@ import { test, expect, isolatedContext } from './fixture';
 
 test('language persists across routes and reloads without losing drafts or reconnecting the board', async ({
   page,
-}) => {
+}, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 390, height: 844 });
@@ -69,7 +69,7 @@ test('language persists across routes and reloads without losing drafts or recon
     ),
   ).toBe(true);
   await page.screenshot({
-    path: 'docs/screenshots/board-zh.png',
+    path: testInfo.outputPath('board-zh.png'),
     fullPage: true,
     animations: 'disabled',
   });

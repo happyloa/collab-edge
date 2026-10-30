@@ -313,7 +313,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
       'objectKey',
     );
     await alice.screenshot({
-      path: 'docs/screenshots/board.png',
+      path: testInfo.outputPath('board.png'),
       fullPage: true,
       animations: 'disabled',
     });

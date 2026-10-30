@@ -1,6 +1,6 @@
 # Deployment
 
-Worker URL: https://collab-edge.piafyoyo06.workers.dev. Owner-only hostname Access is configured, and the Worker is connected to GitHub native Builds. Remote D1 migrations, SESSION_SECRET and SQLite Durable Object namespaces are provisioned. See [delivery evidence](delivery-status.md).
+Worker URL: https://collab-edge.piafyoyo06.workers.dev. Owner-only hostname Access is configured, and the Worker is connected to GitHub native Builds. Remote D1 migrations, SESSION_SECRET and SQLite Durable Object namespaces are provisioned. See [delivery evidence](release-status.md).
 
 ## Private access configuration
 

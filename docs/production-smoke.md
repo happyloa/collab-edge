@@ -14,4 +14,4 @@ The Worker hostname is restricted to the owner's Cloudflare Access email. The ow
 
 Read-only checks that do not require an owner session: the anonymous Worker URL should redirect to Access (302); the Access policy should still allow only the owner email; Worker configuration should retain `ACCESS_REQUIRED=true`, `ATTACHMENTS_ENABLED=false` and disabled preview URLs; Cloudflare Builds and GitHub Actions should succeed for the release commit; Pages must load from `https://happyloa.github.io/collab-edge/`.
 
-Do not run the local upload end-to-end scenario against production: production attachment operations are disabled to control costs. Record checks as completed only after observing them, with the commit and build identifiers in [delivery status](delivery-status.md).
+Do not run the local upload end-to-end scenario against production: production attachment operations are disabled to control costs. Record checks as completed only after observing them, with the commit and build identifiers in [delivery status](release-status.md).

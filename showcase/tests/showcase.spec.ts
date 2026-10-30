@@ -34,7 +34,7 @@ test('shared illustration keeps its layout and keyboard interaction in the stati
 });
 test('public demo preserves conflicts, restores cards and never calls an API', async ({
   page,
-}) => {
+}, testInfo) => {
   const apiRequests: string[] = [];
   const videoRequests: string[] = [];
   const errors: string[] = [];
@@ -146,7 +146,7 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   });
   expect(fonts).toBe(true);
   await page.screenshot({
-    path: 'docs/screenshots/public-demo.png',
+    path: testInfo.outputPath('public-demo.png'),
     fullPage: true,
     animations: 'disabled',
   });

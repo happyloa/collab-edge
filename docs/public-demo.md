@@ -19,7 +19,7 @@ pnpm capture:demo
 pnpm exec vite preview --config showcase/vite.config.ts --port 4173
 ```
 
-Open `http://localhost:4173/collab-edge/`. The Playwright scenario checks conflict recovery, archive/restore, recorded-video playback, reset, bilingual persistence, fonts, mobile overflow and absence of API/WebSocket calls. The test also captures `docs/screenshots/public-demo.png`. `pnpm capture:demo` runs only the collaboration scenario against a fresh local workerd state; it rejects `E2E_BASE_URL` and replaces the two static videos and posters after the browser test passes. It does not use production data or Cloudflare R2 operations.
+Open `http://localhost:4173/collab-edge/`. Playwright checks conflict recovery, archive/restore, recorded-video playback, reset, bilingual persistence, fonts, mobile overflow and absence of API/WebSocket calls. Screenshots go to ignored test artifacts. `pnpm capture:demo` runs only the collaboration scenario against fresh local workerd state; it rejects `E2E_BASE_URL` and replaces the static videos and posters after success. It does not use production data or Cloudflare R2 operations.
 
 `.github/workflows/showcase.yml` builds and tests this static artifact, then publishes through the GitHub Pages deployment API. Pushes that only change documentation, tests or Worker configuration do not rebuild the demo; relevant app, shared source, assets and dependency changes still do. It has no Cloudflare credentials and does not deploy the Worker. Native Workers Builds remains the only Worker deployment path. Repository Settings → Pages uses GitHub Actions (`build_type: workflow`). The public repository uses the standard GitHub-hosted runner and Pages service, without a paid plan or custom domain.
 

@@ -2,7 +2,7 @@
 
 **繁體中文** · [English](architecture.en.md)
 
-CollabEdge 是在 Cloudflare Workers 上運行的多人協作看板。這份文件從「兩個人同時修改一張卡片」出發，說明資料由誰決定、提交失敗怎麼處理，以及系統為何拆成 HTTP、Durable Object 與 D1。內容對照目前程式碼；正式環境登入後的驗收邊界見[作品交接](portfolio-handoff.md)。
+CollabEdge 是在 Cloudflare Workers 上運行的多人協作看板。這份文件從「兩個人同時修改一張卡片」出發，說明資料由誰決定、提交失敗怎麼處理，以及系統為何拆成 HTTP、Durable Object 與 D1。內容對照目前程式碼；正式環境登入後的驗收邊界見[作品交接](release-status.md)。
 
 ## 核心設計
 
@@ -132,7 +132,7 @@ JSON 備份在瀏覽器建立，帶格式版本與校驗碼；還原須由工作
 
 原生建置在 high audit 與 `verify` 成功後，先通過部署防護，再套用不可改寫的 SQL migrations 並部署。純文件變更不觸發 Worker build。專案仍使用 Wrangler／Vinext adapter；帳號與資源操作優先使用官方 `cf`，完整 CLI 遷移尚待驗證。
 
-Workers Free 由使用者確認，未獨立讀取帳單方案。應用程式配額降低資源使用量，不能保證整個 Cloudflare 帳戶的帳單。實際設定、額度與發布證據見[部署](deployment.md)及[交付狀態](delivery-status.md)。
+Workers Free 由使用者確認，未獨立讀取帳單方案。應用程式配額降低資源使用量，不能保證整個 Cloudflare 帳戶的帳單。實際設定、額度與發布證據見[部署](deployment.md)及[交付狀態](release-status.md)。
 
 ## 驗證與閱讀順序
 
@@ -150,4 +150,4 @@ Workers Free 由使用者確認，未獨立讀取帳單方案。應用程式配�
 2. **擴充長期運作策略**：現有手動事件清理與看板還原演練之外，補齊整庫災難復原、孤立資料清理與配額耗盡後的管理流程。
 3. **擴充相容性與可觀測性**：Firefox／WebKit 已納入登入導航、鍵盤及維護流程；仍需慢速裝置、實機瀏覽器、螢幕閱讀器，以及不含敏感內容的運作指標。
 
-網站的視覺參考、動態範圍、可用性限制與設計取捨見[設計與動態紀錄](motion-references.md)。
+首頁支援減少動態效果，看板拖曳區不加入裝飾性位移。驗證結果與限制見[驗證狀態](release-status.md)。
