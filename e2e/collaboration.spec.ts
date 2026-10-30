@@ -102,6 +102,9 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await dragHandle.press('Space');
     await expect(dragHandle).toHaveAttribute('aria-pressed', 'true');
     await waitForKeyboardDrag(alice);
+    await expect(
+      alice.getByRole('region', { name: 'In Progress', exact: true }),
+    ).toHaveCSS('transform', 'none');
     await dragHandle.press('ArrowRight');
     await expect(
       alice.getByRole('region', { name: 'Review', exact: true }),
@@ -113,6 +116,9 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
           .getByRole('region', { name: 'Review', exact: true })
           .getByRole('button', { name: 'Plan our launch', exact: true }),
       ).toBeVisible();
+    await expect(
+      alice.getByRole('status', { name: 'Card movement' }),
+    ).toHaveText('Moved Plan our launch to Review.');
     await expect(dragHandle).not.toHaveAttribute('aria-pressed');
     await expect(dragHandle.locator('xpath=../..')).toHaveCSS(
       'transform',
@@ -202,6 +208,11 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await expect(dialogConflict).toContainText('Alice proposal');
     await expect(dialog.getByLabel('Title', { exact: true })).toHaveValue(
       'Bob proposal',
+    );
+    await expect(
+      dialog.getByLabel('Title', { exact: true }),
+    ).toHaveAccessibleDescription(
+      'Conflicting submission. Review your attempted value.',
     );
     await dialogConflict
       .getByRole('button', { name: 'Retry my draft' })

@@ -10,11 +10,13 @@ export function Attachments({
   items,
   references = [],
   readOnly,
+  enabled = false,
 }: {
   cardId: string;
   items: Snapshot['attachments'];
   references?: Snapshot['attachmentReferences'];
   readOnly: boolean;
+  enabled?: boolean;
 }) {
   const { t } = useI18n();
 
@@ -31,13 +33,17 @@ export function Attachments({
               key={a.id}
               className="flex items-center justify-between gap-3 text-sm"
             >
-              <a
-                className="text-primary underline"
-                href={`/api/attachments/${a.id}`}
-              >
-                {a.filename}
-              </a>
-              {!readOnly && (
+              {enabled ? (
+                <a
+                  className="text-primary underline"
+                  href={`/api/attachments/${a.id}`}
+                >
+                  {a.filename}
+                </a>
+              ) : (
+                <span className="break-all text-muted">{a.filename}</span>
+              )}
+              {!readOnly && enabled && (
                 <button
                   className="text-xs text-destructive"
                   onClick={async () => {
@@ -80,7 +86,12 @@ export function Attachments({
         </div>
       )}
       <ApiErrorNotice error={error} />
-      {!readOnly && (
+      {!enabled && (
+        <p className="notice mb-4 text-sm">
+          {t('File uploads and downloads are disabled in this environment.')}
+        </p>
+      )}
+      {!readOnly && enabled && (
         <label className="field">
           {t('Upload a file')}
           <input

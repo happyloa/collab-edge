@@ -26,7 +26,9 @@ test('a card can be positioned without dragging and the move persists', async ({
     .getByRole('combobox', { name: 'Position', exact: true })
     .selectOption({ label: 'Before Build the new home page' });
   await dialog.getByRole('button', { name: 'Move card', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Move submitted.');
+  await expect(
+    dialog.getByRole('status', { name: 'Card movement' }),
+  ).toHaveText(`Moved ${card} to In Progress.`);
   await dialog.getByRole('button', { name: 'Close card' }).click();
   const column = page.getByRole('region', { name: 'In Progress', exact: true });
   await expect(
