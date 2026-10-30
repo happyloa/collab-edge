@@ -1,5 +1,39 @@
 import { test, expect } from './fixture';
+import type { Page } from '@playwright/test';
 import { translate, type Locale } from '../src/i18n/messages';
+
+async function expectNamedControls(page: Page) {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const { nodes } = await session.send('Accessibility.getFullAXTree');
+    const interactive = new Set([
+      'button',
+      'link',
+      'textbox',
+      'searchbox',
+      'combobox',
+      'checkbox',
+      'radio',
+      'switch',
+      'slider',
+      'spinbutton',
+    ]);
+    const missing = nodes
+      .filter(
+        (node) =>
+          !node.ignored &&
+          interactive.has(String(node.role?.value)) &&
+          !String(node.name?.value ?? '').trim(),
+      )
+      .map((node) => ({
+        role: node.role?.value,
+        backendNode: node.backendDOMNodeId,
+      }));
+    expect(missing).toEqual([]);
+  } finally {
+    await session.detach();
+  }
+}
 
 test('account screens fit the requested widths in both languages and themes', async ({
   page,
@@ -23,6 +57,23 @@ test('account screens fit the requested widths in both languages and themes', as
             await page.evaluate(() => document.documentElement.scrollWidth),
             `${route}/${width}/${locale}/${theme}`,
           ).toBeLessThanOrEqual(width);
+          if (width === 1280) {
+            if (theme === 'light') await expectNamedControls(page);
+            await page.evaluate(() => {
+              document.documentElement.style.zoom = '200%';
+            });
+            const firstField = page.locator('main input').first();
+            await firstField.scrollIntoViewIfNeeded();
+            await expect(firstField).toBeInViewport();
+            const dimensions = await page.evaluate(() => ({
+              scroll: document.documentElement.scrollWidth,
+              client: document.documentElement.clientWidth,
+            }));
+            expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
+            await page.evaluate(() => {
+              document.documentElement.style.removeProperty('zoom');
+            });
+          }
         }
       }
     }
@@ -81,6 +132,26 @@ test('workspace and board fit the requested widths in both languages and themes'
               await target.evaluate(() => document.documentElement.scrollWidth),
               `${target === page ? 'workspace' : 'board'}/${width}/${locale}/${theme}`,
             ).toBeLessThanOrEqual(width);
+            if (width === 1280) {
+              if (theme === 'light') await expectNamedControls(target);
+              await target.evaluate(() => {
+                document.documentElement.style.zoom = '200%';
+              });
+              const primary =
+                target === page
+                  ? target.getByRole('link', { name: /Responsive board/ })
+                  : target.getByLabel(translate(locale, 'Search cards'));
+              await primary.scrollIntoViewIfNeeded();
+              await expect(primary).toBeInViewport();
+              const dimensions = await target.evaluate(() => ({
+                scroll: document.documentElement.scrollWidth,
+                client: document.documentElement.clientWidth,
+              }));
+              expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client);
+              await target.evaluate(() => {
+                document.documentElement.style.removeProperty('zoom');
+              });
+            }
           }
           await expect(
             board.getByRole('region', {
