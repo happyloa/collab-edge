@@ -140,6 +140,17 @@ test('mobile card actions stay available and cancel preserves the draft guard', 
   expect(inputBox).not.toBeNull();
   expect(actionsBox).not.toBeNull();
   expect(inputBox!.y + inputBox!.height).toBeLessThanOrEqual(actionsBox!.y);
+  await page.setViewportSize({ width: 320, height: 800 });
+  const due = dialog.getByLabel('Due date');
+  await due.focus();
+  const dueBox = await due.boundingBox();
+  const mobileActions = await actions.boundingBox();
+  expect(dueBox).not.toBeNull();
+  expect(mobileActions).not.toBeNull();
+  expect(dueBox!.y + dueBox!.height).toBeLessThanOrEqual(mobileActions!.y);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(320);
   await cancel.click();
   const guard = dialog.getByRole('alert');
   await expect(guard).toBeFocused();
@@ -174,6 +185,17 @@ test('card comment indicator reflects the actual comments and locale', async ({
     .click();
   const card = page.getByRole('button', { name: title, exact: true });
   const surface = card.locator('xpath=../..');
+  const cardBox = await card.boundingBox();
+  expect(cardBox).not.toBeNull();
+  expect(cardBox!.width).toBeGreaterThanOrEqual(44);
+  expect(cardBox!.height).toBeGreaterThanOrEqual(44);
+  const handle = page.getByRole('button', { name: `Move ${title}` });
+  const handleBox = await handle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  expect(handleBox!.width).toBeGreaterThanOrEqual(44);
+  expect(handleBox!.height).toBeGreaterThanOrEqual(44);
+  await handle.hover();
+  await expect(handle).toHaveCSS('transform', 'none');
   await expect(surface.getByRole('img', { name: /comment/ })).toHaveCount(0);
   await card.click();
   await page.getByLabel('Add a comment').fill('First comment');

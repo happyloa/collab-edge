@@ -235,19 +235,19 @@ function SortableCard({
     >
       <div className="flex items-start gap-2">
         <button
-          className="flex-1 text-left text-sm leading-relaxed font-medium"
+          className="min-h-11 flex-1 text-left text-sm leading-relaxed font-medium"
           onClick={open}
         >
           {card.title}
         </button>
         {!readOnly && (
           <button
-            className="text-muted"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-border"
             aria-label={t('Move {title}', { title: card.title })}
             {...attributes}
             {...listeners}
           >
-            <GripVertical size={16} />
+            <GripVertical size={16} aria-hidden="true" />
           </button>
         )}
       </div>
