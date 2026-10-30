@@ -1,7 +1,7 @@
 'use client';
 import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   DndContext,
@@ -216,7 +216,7 @@ export function BoardLoader({
     </>
   );
 }
-function SortableCard({
+const SortableCard = memo(function SortableCard({
   card,
   readOnly,
   open,
@@ -226,7 +226,7 @@ function SortableCard({
 }: {
   card: Card;
   readOnly: boolean;
-  open: () => void;
+  open: (card: Card) => void;
   pending: boolean;
   people: BoardData['people'];
   commentCount: number;
@@ -253,7 +253,7 @@ function SortableCard({
       <div className="flex items-start gap-2">
         <button
           className="min-h-11 flex-1 text-left text-sm leading-relaxed font-medium"
-          onClick={open}
+          onClick={() => open(card)}
         >
           {card.title}
         </button>
@@ -300,7 +300,7 @@ function SortableCard({
       )}
     </div>
   );
-}
+});
 function Column({
   column,
   children,
@@ -329,6 +329,10 @@ function Board({
   const { t, errorText, locale } = useI18n();
   const [selected, setSelected] = useState<Card | null>(null);
   const [restoredDraft, setRestoredDraft] = useState<CardDraft | null>(null);
+  const openCard = useCallback((card: Card) => {
+    setRestoredDraft(null);
+    setSelected({ ...card });
+  }, []);
   const drafts = useBoardDrafts(initial.user.id, initial.snapshot.board.id);
   const [showActivity, setShowActivity] = useState(false);
   const live = useBoard(
@@ -964,10 +968,7 @@ function Board({
                         commentCount={commentCounts.get(card.id) ?? 0}
                         readOnly={readOnly || filtered}
                         people={initial.people}
-                        open={() => {
-                          setRestoredDraft(null);
-                          setSelected({ ...card });
-                        }}
+                        open={openCard}
                         pending={live.pending.some(
                           (p) =>
                             p.state === 'pending' &&
@@ -1073,7 +1074,7 @@ function Board({
           attachmentsEnabled={attachmentsEnabled}
           pending={live.pending}
           moveCard={movement.move}
-          moveMessage={movement.message}
+          moveMessage={movement.cardId === selected.id ? movement.message : ''}
           people={initial.people}
           mutate={live.mutate}
           reconnect={live.reconnect}

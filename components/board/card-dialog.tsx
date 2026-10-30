@@ -207,6 +207,9 @@ export function CardDialog({
   useEffect(() => {
     const previousFocus = document.activeElement;
     dialog.current?.showModal();
+    dialog.current
+      ?.querySelector<HTMLButtonElement>('[data-card-dialog-close]')
+      ?.focus();
     return () => {
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected)
         previousFocus.focus();

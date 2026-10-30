@@ -30,6 +30,13 @@ test('a card can be positioned without dragging and the move persists', async ({
     dialog.getByRole('status', { name: 'Card movement' }),
   ).toHaveText(`Moved ${card} to In Progress.`);
   await dialog.getByRole('button', { name: 'Close card' }).click();
+  await page
+    .getByRole('button', { name: 'Build the new home page', exact: true })
+    .click();
+  await expect(
+    dialog.getByRole('status', { name: 'Card movement' }),
+  ).toBeEmpty();
+  await dialog.getByRole('button', { name: 'Close card' }).click();
   const column = page.getByRole('region', { name: 'In Progress', exact: true });
   await expect(
     column.getByRole('button', { name: card, exact: true }),
