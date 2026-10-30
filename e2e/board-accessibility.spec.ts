@@ -143,6 +143,25 @@ test('mobile card actions stay available and cancel preserves the draft guard', 
   await page.setViewportSize({ width: 320, height: 800 });
   const due = dialog.getByLabel('Due date');
   await due.focus();
+  await due.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
+  );
+  await expect
+    .poll(() =>
+      due.evaluate((field) => {
+        const footer = field
+          .closest('dialog')!
+          .querySelector('.card-mobile-actions')!;
+        return (
+          field.getBoundingClientRect().bottom <=
+          footer.getBoundingClientRect().top
+        );
+      }),
+    )
+    .toBe(true);
   const dueBox = await due.boundingBox();
   const mobileActions = await actions.boundingBox();
   expect(dueBox).not.toBeNull();

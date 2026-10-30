@@ -65,9 +65,14 @@ export function useCardMovement(
       key: 'Moving {title} to {column}. Waiting for server confirmation.',
       ...values,
     });
-    const accepted = await live.mutate(command, undefined, (id) => {
-      requested.clientMutationId = id;
-    });
+    let accepted = false;
+    try {
+      accepted = await live.mutate(command, undefined, (id) => {
+        requested.clientMutationId = id;
+      });
+    } catch {
+      // Keep destination feedback when the socket closes during submission.
+    }
     if (!accepted)
       setNotice({
         key: 'Could not submit the move of {title} to {column}. Your input is preserved.',

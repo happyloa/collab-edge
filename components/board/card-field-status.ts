@@ -42,6 +42,8 @@ export function cardFieldStatus({
       ? 'Saved on this device. Not yet submitted.'
       : saveStatus ||
           'Draft storage is unavailable. Keep this tab open or copy your edits.';
+  if (submission)
+    return 'A submitted value is awaiting confirmation. Your input is preserved.';
   return value === current[field]
     ? 'Server-confirmed value.'
     : 'The server value changed. Review before submitting.';
