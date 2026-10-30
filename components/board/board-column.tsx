@@ -100,19 +100,16 @@ function SortableCard({
 function Column({
   column,
   children,
-  index,
 }: {
   column: Snapshot['columns'][number];
   children: React.ReactNode;
-  index: number;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
     <section
       ref={setNodeRef}
       aria-label={column.title}
-      className={`motion-reveal w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : 'bg-surface-subtle'}`}
-      style={{ animationDelay: `${Math.min(index, 5) * 70}ms` }}
+      className={`w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : 'bg-surface-subtle'}`}
     >
       {children}
     </section>
@@ -147,7 +144,7 @@ export function BoardColumn({
 }) {
   const { t } = useI18n();
   return (
-    <Column column={column} index={index}>
+    <Column column={column}>
       <div className="mb-4 flex items-center gap-2 px-1">
         <span className={`column-dot tone-${index % 4}`} />
         <h2 className="flex-1 text-sm font-semibold">{column.title}</h2>

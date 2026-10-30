@@ -51,8 +51,8 @@ export function Home({ signedIn }: { signedIn: boolean }) {
       () => {
         gsap.from('[data-hero-enter]', {
           opacity: 0,
-          y: 32,
-          duration: 0.8,
+          y: 24,
+          duration: 0.7,
           stagger: 0.11,
           ease: 'power3.out',
           clearProps: 'all',
@@ -61,7 +61,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           opacity: 0,
           scale: 0.96,
           rotation: 2,
-          duration: 0.9,
+          duration: 0.7,
           delay: 0.25,
           ease: 'power3.out',
           clearProps: 'opacity,scale,rotation',
@@ -80,12 +80,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
         });
         gsap.fromTo(
           '[data-preview]',
-          { opacity: 0, y: 48, scale: 0.97 },
+          { opacity: 0, y: 24, scale: 0.97 },
           {
             opacity: 1,
             y: 0,
             scale: 1,
-            duration: 0.9,
+            duration: 0.7,
             ease: 'power3.out',
             immediateRender: false,
             clearProps: 'all',
@@ -110,7 +110,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
         });
         gsap.fromTo(
           '[data-feature]',
-          { opacity: 0, y: 28 },
+          { opacity: 0, y: 24 },
           {
             opacity: 1,
             y: 0,

@@ -38,6 +38,7 @@ it('viewers can download attachments but cannot upload or remove', () => {
     <Attachments
       cardId="card"
       readOnly
+      enabled
       items={[
         {
           id: 'file',
@@ -61,7 +62,7 @@ it('viewers can download attachments but cannot upload or remove', () => {
 });
 it('rejects oversize uploads before sending their bytes', async () => {
   const fetch = vi.spyOn(globalThis, 'fetch');
-  render(<Attachments cardId="card" readOnly={false} items={[]} />);
+  render(<Attachments cardId="card" readOnly={false} enabled items={[]} />);
   const file = new File(['small'], 'huge.txt', { type: 'text/plain' });
   Object.defineProperty(file, 'size', { value: 11 * 1024 * 1024 });
   fireEvent.change(screen.getByLabelText(/Upload a file/), {
@@ -72,6 +73,15 @@ it('rejects oversize uploads before sending their bytes', async () => {
   );
   expect(fetch).not.toHaveBeenCalled();
   fetch.mockRestore();
+});
+it('explains disabled attachments before an editor can select a file', () => {
+  render(<Attachments cardId="card" readOnly={false} items={[]} />);
+  expect(
+    screen.getByText(
+      'File uploads and downloads are disabled in this environment.',
+    ),
+  ).toBeVisible();
+  expect(screen.queryByLabelText(/Upload a file/)).not.toBeInTheDocument();
 });
 it('provides a keyboard-accessible theme control', () => {
   render(<ThemeToggle />);

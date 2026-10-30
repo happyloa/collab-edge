@@ -419,13 +419,16 @@ export function useBoard(
   const mutate = async (
     command: Command,
     baseRevision = authoritative.current.board.revision,
+    onQueued?: (clientMutationId: string) => void,
   ) => {
     const mutation = {
       clientMutationId: crypto.randomUUID(),
       baseRevision,
       command,
     };
-    return submitMutation(mutation);
+    const accepted = await submitMutation(mutation);
+    if (accepted) onQueued?.(mutation.clientMutationId);
+    return accepted;
   };
   let state = confirmed;
   for (const item of pending)

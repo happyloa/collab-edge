@@ -29,6 +29,7 @@ import { BoardSettings } from './board-settings';
 import { useBoardExport } from './use-board-export';
 import type { BoardData, Card } from './types';
 import { useBoardDrafts } from './use-board-drafts';
+import { useCardMovement } from './use-card-movement';
 import type { CardDraft } from '../../src/drafts/store';
 import { useBoard } from '../../src/realtime/socket-client';
 import { matchesCard, localToday } from '../../src/realtime/card-filters';
@@ -39,7 +40,13 @@ function focusCardDialogClose(button: HTMLButtonElement) {
     ?.querySelector<HTMLButtonElement>('[data-card-dialog-close]')
     ?.focus();
 }
-export function BoardLoader({ id }: { id: string }) {
+export function BoardLoader({
+  id,
+  attachmentsEnabled,
+}: {
+  id: string;
+  attachmentsEnabled: boolean;
+}) {
   const { t } = useI18n();
 
   const query = useQuery({
@@ -71,11 +78,21 @@ export function BoardLoader({ id }: { id: string }) {
         className="m-6"
         onRetry={() => void query.refetch()}
       />
-      <Board key={`${id}:${query.data.user.id}`} initial={query.data} />
+      <Board
+        key={`${id}:${query.data.user.id}`}
+        initial={query.data}
+        attachmentsEnabled={attachmentsEnabled}
+      />
     </>
   );
 }
-function Board({ initial }: { initial: BoardData }) {
+function Board({
+  initial,
+  attachmentsEnabled,
+}: {
+  initial: BoardData;
+  attachmentsEnabled: boolean;
+}) {
   const { t, errorText, locale } = useI18n();
   const [selected, setSelected] = useState<Card | null>(null);
   const [restoredDraft, setRestoredDraft] = useState<CardDraft | null>(null);
@@ -88,6 +105,7 @@ function Board({ initial }: { initial: BoardData }) {
     drafts.lease,
   );
   const { state } = live;
+  const movement = useCardMovement(live, initial.user.id, state);
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
@@ -172,7 +190,7 @@ function Board({ initial }: { initial: BoardData }) {
     const targetCard = state.cards.find((c) => c.id === over.id);
     const destination = targetCard?.columnId ?? String(over.id);
     if (columns.some((c) => c.id === destination))
-      live.mutate({
+      void movement.move({
         type: 'card.move',
         payload: {
           id: String(active.id),
@@ -504,9 +522,17 @@ function Board({ initial }: { initial: BoardData }) {
                   : t('Drag instructions'),
             },
             announcements: {
-              onDragStart: () => t('Picked up card.'),
-              onDragOver: () => t('Card moved.'),
-              onDragEnd: () => t('Card dropped.'),
+              onDragStart: ({ active }) =>
+                t('Picked up {title}.', {
+                  title:
+                    state.cards.find((card) => card.id === active.id)?.title ??
+                    t('Card'),
+                }),
+              onDragOver: ({ over }) => movement.destination(over?.id),
+              onDragEnd: ({ over }) =>
+                over
+                  ? movement.destination(over.id)
+                  : t('Move cancelled. No destination selected.'),
               onDragCancel: () => t('Drag cancelled.'),
             },
           }}
@@ -574,6 +600,9 @@ function Board({ initial }: { initial: BoardData }) {
             )}
           </div>
         </DndContext>
+        <p role="status" aria-label={t('Card movement')} className="sr-only">
+          {selected ? '' : movement.message}
+        </p>
         <ActivityPanel
           boardId={state.board.id}
           open={showActivity}
@@ -588,6 +617,10 @@ function Board({ initial }: { initial: BoardData }) {
           initial={selected}
           state={state}
           readOnly={readOnly || selected.archived}
+          attachmentsEnabled={attachmentsEnabled}
+          pending={live.pending}
+          moveCard={movement.move}
+          moveMessage={movement.message}
           people={initial.people}
           mutate={live.mutate}
           reconnect={live.reconnect}

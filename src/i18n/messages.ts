@@ -6,6 +6,31 @@ export function parseLocale(value?: string): Locale {
 
 // English source strings are stable keys. User content never goes through this catalog.
 export const zh = {
+  'File uploads and downloads are disabled in this environment.':
+    '此環境已停用檔案上傳與下載。',
+  'Card movement': '卡片移動狀態',
+  'Picked up {title}.': '已拿起「{title}」。',
+  'Move cancelled. No destination selected.': '已取消移動，未選擇目的地。',
+  'Destination: {column}, before {title}.':
+    '目的地：「{column}」，放在「{title}」之前。',
+  'Destination: end of {column}.': '目的地：「{column}」末端。',
+  'Moving {title} to {column}. Waiting for server confirmation.':
+    '正在將「{title}」移至「{column}」，等待伺服器確認。',
+  'Moved {title} to {column}.': '已將「{title}」移至「{column}」。',
+  'Move of {title} to {column} needs review. Your attempted move is preserved.':
+    '將「{title}」移至「{column}」的操作需要檢視，已保留嘗試的移動。',
+  'Could not submit the move of {title} to {column}. Your input is preserved.':
+    '無法送出將「{title}」移至「{column}」的操作，輸入內容已保留。',
+  'Conflicting submission. Review your attempted value.':
+    '提交發生衝突，請檢視嘗試儲存的值。',
+  'Submission needs review. Your attempted value is preserved.':
+    '提交需要檢視，嘗試儲存的值已保留。',
+  'Submitting changes…': '正在送出變更…',
+  'Waiting for server confirmation.': '等待伺服器確認。',
+  'Saved on this device. Not yet submitted.': '已儲存在此裝置，尚未送出。',
+  'Server-confirmed value.': '伺服器已確認的值。',
+  'The server value changed. Review before submitting.':
+    '伺服器上的值已變更，送出前請先檢視。',
   'Main navigation': '主要導覽',
   'Skip to main content': '跳至主要內容',
   'Path of a change': '變更的流程',

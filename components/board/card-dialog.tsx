@@ -12,6 +12,8 @@ import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError } from '../../src/lib/api-client';
 import { Attachments } from './attachments';
+import { cardFieldStatus, type CardField } from './card-field-status';
+import type { Pending } from '../../src/realtime/socket-client';
 import type { Snapshot, Command } from '../../src/realtime/protocol';
 import { restoreCardDraft } from '../../src/drafts/restore';
 import {
@@ -38,6 +40,10 @@ export function CardDialog({
   draftLease,
   restoredDraft,
   attention,
+  attachmentsEnabled,
+  pending,
+  moveCard,
+  moveMessage,
 }: {
   initial: Card;
   state: Snapshot;
@@ -52,6 +58,12 @@ export function CardDialog({
   draftLease: DraftLease | null;
   restoredDraft?: CardDraft | null;
   attention?: ReactNode;
+  attachmentsEnabled: boolean;
+  pending: Pending[];
+  moveCard: (
+    command: Extract<Command, { type: 'card.move' }>,
+  ) => Promise<boolean>;
+  moveMessage: string;
 }) {
   const { t, locale } = useI18n();
 
@@ -82,8 +94,8 @@ export function CardDialog({
   const [confirmClose, setConfirmClose] = useState(false);
   const [base] = useState(restoredDraft?.baseRevision ?? state.board.revision);
   const [busy, setBusy] = useState(false);
+  const [submittingFields, setSubmittingFields] = useState(false);
   const [beforeId, setBeforeId] = useState('');
-  const [moveStatus, setMoveStatus] = useState('');
   const [positionOpen, setPositionOpen] = useState(false);
   const movePending = useRef(false);
   const [saveStatus, setSaveStatus] = useState(
@@ -98,6 +110,29 @@ export function CardDialog({
     (assigneeId || null) !== original.assigneeId ||
     (dueDate || null) !== (original.dueDate || null) ||
     comment !== '';
+  const currentCard =
+    state.cards.find((card) => card.id === initial.id) ?? initial;
+  const fieldStatusId = (field: CardField) => `${editFormId}-${field}-status`;
+  function fieldStatus(field: CardField, value: string | null) {
+    return (
+      <span
+        id={fieldStatusId(field)}
+        className="block text-xs font-normal text-muted"
+      >
+        {t(
+          cardFieldStatus({
+            field,
+            value,
+            original: original[field],
+            current: currentCard,
+            pending,
+            busy: submittingFields,
+            saveStatus,
+          }),
+        )}
+      </span>
+    );
+  }
   useEffect(() => {
     if (readOnly) return;
     if (!draftLease) return;
@@ -356,6 +391,7 @@ export function CardDialog({
               if (Object.keys(payload).length === 1) return;
               if (busy) return;
               setBusy(true);
+              setSubmittingFields(true);
               try {
                 if (await mutate({ type: 'card.update', payload }, base)) {
                   // The socket queue is durable before clearing the form draft.
@@ -394,6 +430,7 @@ export function CardDialog({
               } catch (error) {
                 setSaveStatus(draftErrorMessage(error));
               } finally {
+                setSubmittingFields(false);
                 setBusy(false);
               }
             }}
@@ -401,6 +438,8 @@ export function CardDialog({
             <label className="field">
               {t('Title')}
               <input
+                aria-label={t('Title')}
+                aria-describedby={fieldStatusId('title')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -408,22 +447,26 @@ export function CardDialog({
                 readOnly={readOnly}
                 disabled={busy}
               />
+              {fieldStatus('title', title)}
             </label>
             <label className="field">
               {t('Description')}
               <textarea
                 aria-label={t('Description')}
+                aria-describedby={fieldStatusId('description')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={10000}
                 readOnly={readOnly}
                 disabled={busy}
               />
+              {fieldStatus('description', description)}
             </label>
             <label className="field">
               {t('Assignee')}
               <select
                 aria-label={t('Assignee')}
+                aria-describedby={fieldStatusId('assigneeId')}
                 disabled={readOnly || busy}
                 value={assigneeId}
                 onChange={(e) => setAssigneeId(e.target.value)}
@@ -438,16 +481,20 @@ export function CardDialog({
                   </option>
                 ))}
               </select>
+              {fieldStatus('assigneeId', assigneeId || null)}
             </label>
             <label className="field">
               {t('Due date')}
               <input
                 type="date"
+                aria-label={t('Due date')}
+                aria-describedby={fieldStatusId('dueDate')}
                 readOnly={readOnly}
                 disabled={busy}
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
+              {fieldStatus('dueDate', dueDate || null)}
             </label>
             {!readOnly && (
               <div className="flex flex-wrap justify-between gap-3">
@@ -501,8 +548,7 @@ export function CardDialog({
                   disabled={busy}
                   onChange={(e) => {
                     setBeforeId('');
-                    setMoveStatus('');
-                    void mutate({
+                    void moveCard({
                       type: 'card.move',
                       payload: {
                         id: initial.id,
@@ -537,22 +583,15 @@ export function CardDialog({
                         ?.columnId ?? initial.columnId;
                     movePending.current = true;
                     setBusy(true);
-                    setMoveStatus('');
                     try {
-                      if (
-                        await mutate({
-                          type: 'card.move',
-                          payload: {
-                            id: initial.id,
-                            columnId,
-                            beforeId: beforeId || null,
-                          },
-                        })
-                      ) {
-                        setMoveStatus(
-                          'Move submitted. The board will show the result when confirmed.',
-                        );
-                      }
+                      await moveCard({
+                        type: 'card.move',
+                        payload: {
+                          id: initial.id,
+                          columnId,
+                          beforeId: beforeId || null,
+                        },
+                      });
                     } finally {
                       movePending.current = false;
                       setBusy(false);
@@ -596,8 +635,12 @@ export function CardDialog({
                   </button>
                 </form>
               )}
-              <p role="status" className="text-sm text-muted">
-                {t(moveStatus)}
+              <p
+                role="status"
+                aria-label={t('Card movement')}
+                className="text-sm text-muted"
+              >
+                {moveMessage}
               </p>
             </section>
           )}
@@ -680,6 +723,7 @@ export function CardDialog({
             items={state.attachments}
             references={state.attachmentReferences}
             readOnly={readOnly}
+            enabled={attachmentsEnabled}
           />
         </div>
       </div>
