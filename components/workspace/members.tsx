@@ -96,7 +96,7 @@ export function Members({
               });
             }}
           >
-            <label className="field flex-1">
+            <label className="field min-w-48 flex-1">
               {t('Invite a registered teammate')}
               <input
                 type="email"
@@ -189,7 +189,7 @@ export function Members({
                     });
                   }}
                 >
-                  <label className="field flex-1">
+                  <label className="field min-w-48 flex-1">
                     {t('Transfer to')}
                     <select name="userId" required defaultValue="">
                       <option value="" disabled>
@@ -208,7 +208,7 @@ export function Members({
                         ))}
                     </select>
                   </label>
-                  <div className="field flex-1">
+                  <div className="field min-w-48 flex-1">
                     <label htmlFor="transfer-propose-password">
                       {t('Confirm with your password')}
                     </label>
@@ -268,7 +268,7 @@ export function Members({
               });
             }}
           >
-            <div className="field flex-1">
+            <div className="field min-w-48 flex-1">
               <label htmlFor="transfer-accept-password">
                 {t('Confirm with your password')}
               </label>

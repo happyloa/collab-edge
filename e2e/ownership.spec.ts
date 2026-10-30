@@ -1,5 +1,6 @@
 import { test, expect, isolatedContext } from './fixture';
 import type { Page } from '@playwright/test';
+import { translate, type Locale } from '../src/i18n/messages';
 
 const password = 'Portfolio-transfer-password-2026';
 
@@ -43,6 +44,35 @@ test('owner and recipient confirm an ownership transfer from separate accounts',
     await expect(
       owner.getByText(recipientEmail, { exact: true }),
     ).toBeVisible();
+
+    for (const width of [320, 390]) {
+      await owner.setViewportSize({ width, height: 844 });
+      for (const locale of ['en', 'zh-TW'] as Locale[]) {
+        await owner.getByLabel('Language / 語言').selectOption(locale);
+        for (const label of [
+          'Invite a registered teammate',
+          'Transfer to',
+          'Confirm with your password',
+        ]) {
+          const field =
+            label === 'Transfer to'
+              ? owner.getByRole('combobox', {
+                  name: translate(locale, label),
+                  exact: true,
+                })
+              : owner.getByLabel(translate(locale, label), { exact: true });
+          await expect(field).toBeVisible();
+          expect(
+            (await field.boundingBox())?.width,
+            `${width}/${locale}/${label}`,
+          ).toBeGreaterThanOrEqual(160);
+        }
+        expect(
+          await owner.evaluate(() => document.documentElement.scrollWidth),
+        ).toBeLessThanOrEqual(width);
+      }
+    }
+    await owner.getByLabel('Language / 語言').selectOption('en');
 
     await recipient.reload();
     await expect(
