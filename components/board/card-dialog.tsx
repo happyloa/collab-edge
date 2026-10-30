@@ -70,7 +70,6 @@ export function CardDialog({
   const dialog = useRef<HTMLDialogElement>(null);
   const closeGuard = useRef<HTMLDivElement>(null);
   const editFormId = useId();
-  const focusVersion = useRef(0);
   const [restored] = useState(() => {
     const current: DraftFields = {
       title: initial.title,
@@ -206,6 +205,46 @@ export function CardDialog({
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [dirty, saveStatus]);
   useEffect(() => {
+    const content = dialog.current?.querySelector<HTMLElement>(
+      '.card-detail-content',
+    );
+    if (!content) return;
+    let focusVersion = 0;
+    function revealField(event: FocusEvent) {
+      const version = ++focusVersion;
+      const field = event
+        .composedPath()
+        .find(
+          (target): target is HTMLElement =>
+            target instanceof HTMLElement &&
+            target.matches('input, select, textarea'),
+        );
+      if (!field) return;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (version !== focusVersion || !field.isConnected) return;
+          const bounds = field.getBoundingClientRect();
+          const viewport = content!.getBoundingClientRect();
+          if (
+            bounds.top < viewport.top + 12 ||
+            bounds.bottom > viewport.bottom - 12
+          )
+            field.scrollIntoView({
+              block: 'center',
+              inline: 'nearest',
+              behavior: 'instant',
+            });
+        }),
+      );
+    }
+    // WebKit date editors can emit focus without React's delegated focusin.
+    content.addEventListener('focus', revealField, true);
+    return () => {
+      focusVersion++;
+      content.removeEventListener('focus', revealField, true);
+    };
+  }, []);
+  useEffect(() => {
     const previousFocus = document.activeElement;
     dialog.current?.showModal();
     dialog.current
@@ -292,39 +331,7 @@ export function CardDialog({
       aria-labelledby="card-dialog-title"
       className="motion-dialog card-detail-dialog m-auto max-h-[calc(100dvh_-_1rem)] w-[calc(100%_-_1rem)] max-w-xl overflow-hidden rounded-2xl border border-border bg-surface p-0 text-foreground shadow-float backdrop:bg-black/40 open:flex open:flex-col lg:max-w-4xl"
     >
-      <div
-        className="card-detail-content min-h-0 overflow-auto p-5 sm:p-7"
-        onFocusCapture={(event) => {
-          const version = ++focusVersion.current;
-          const field = event.nativeEvent
-            .composedPath()
-            .find(
-              (target): target is HTMLElement =>
-                target instanceof HTMLElement &&
-                target.matches('input, select, textarea'),
-            );
-          if (!field) return;
-          const content = event.currentTarget;
-          // Native date inputs may scroll their inner editor after focus.
-          requestAnimationFrame(() =>
-            requestAnimationFrame(() => {
-              if (version !== focusVersion.current || !field.isConnected)
-                return;
-              const bounds = field.getBoundingClientRect();
-              const viewport = content.getBoundingClientRect();
-              if (
-                bounds.top < viewport.top + 12 ||
-                bounds.bottom > viewport.bottom - 12
-              )
-                field.scrollIntoView({
-                  block: 'center',
-                  inline: 'nearest',
-                  behavior: 'instant',
-                });
-            }),
-          );
-        }}
-      >
+      <div className="card-detail-content min-h-0 overflow-auto p-5 sm:p-7">
         <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
           <h2 id="card-dialog-title" className="eyebrow">
             {t('CARD DETAILS')}
