@@ -1,6 +1,21 @@
 import { test, expect, isolatedContext } from './fixture';
 import { DEMO } from '../src/db/demo';
 
+test('following authentication links does not report page errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByLabel('Email address')).toBeEnabled();
+  await page.getByRole('link', { name: 'Create an account' }).click();
+  await expect(page.getByLabel('Your name')).toBeEnabled();
+  await page.getByRole('link', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByLabel('Email address')).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
 test('login and registration inputs wait for client initialization', async ({
   browser,
 }, testInfo) => {
