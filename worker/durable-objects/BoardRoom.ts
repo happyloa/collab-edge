@@ -497,6 +497,16 @@ export class BoardRoom extends DurableObject<Env> {
       createdAt: new Date().toISOString(),
     };
     const statements: D1PreparedStatement[] = [];
+    // Entity IDs are client-chosen primary keys shared by every board. The
+    // snapshot only proves an ID is unused on this board, so upserts are scoped
+    // to it and this guard aborts the batch unless every row landed here.
+    const persistedHere = (table: 'board_columns' | 'cards', ids: string[]) =>
+      this.env.DB.prepare(
+        `INSERT INTO mutation_guard(value) SELECT CASE WHEN (
+          SELECT count(*) FROM ${table}
+          WHERE board_id=? AND id IN (SELECT value FROM json_each(?))
+        )=? THEN 1 ELSE 0 END`,
+      ).bind(boardId, JSON.stringify(ids), ids.length);
     if (assignment)
       statements.push(
         this.env.DB.prepare(
@@ -517,7 +527,7 @@ export class BoardRoom extends DurableObject<Env> {
     for (const col of patch.columns ?? [])
       statements.push(
         this.env.DB.prepare(
-          'INSERT INTO board_columns(id,board_id,title,position,updated_revision,title_revision) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,position=excluded.position,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision',
+          'INSERT INTO board_columns(id,board_id,title,position,updated_revision,title_revision) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,position=excluded.position,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision WHERE board_columns.board_id=excluded.board_id',
         ).bind(
           col.id,
           boardId,
@@ -525,6 +535,13 @@ export class BoardRoom extends DurableObject<Env> {
           col.position,
           col.updatedRevision,
           col.titleRevision,
+        ),
+      );
+    if (patch.columns?.length)
+      statements.push(
+        persistedHere(
+          'board_columns',
+          patch.columns.map((col) => col.id),
         ),
       );
     if (mutation.command.type === 'card.move' && patch.cards?.length) {
@@ -553,7 +570,7 @@ export class BoardRoom extends DurableObject<Env> {
       for (const card of patch.cards ?? [])
         statements.push(
           this.env.DB.prepare(
-            'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision,assignee_id,due_date,assignee_revision,due_date_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision,assignee_id=excluded.assignee_id,due_date=excluded.due_date,assignee_revision=excluded.assignee_revision,due_date_revision=excluded.due_date_revision',
+            'INSERT INTO cards(id,board_id,column_id,title,description,position,archived,updated_revision,title_revision,description_revision,assignee_id,due_date,assignee_revision,due_date_revision) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title,description=excluded.description,position=excluded.position,archived=excluded.archived,updated_revision=excluded.updated_revision,title_revision=excluded.title_revision,description_revision=excluded.description_revision,assignee_id=excluded.assignee_id,due_date=excluded.due_date,assignee_revision=excluded.assignee_revision,due_date_revision=excluded.due_date_revision WHERE cards.board_id=excluded.board_id',
           ).bind(
             card.id,
             boardId,
@@ -569,6 +586,13 @@ export class BoardRoom extends DurableObject<Env> {
             card.dueDate,
             card.assigneeRevision,
             card.dueDateRevision,
+          ),
+        );
+      if (patch.cards?.length)
+        statements.push(
+          persistedHere(
+            'cards',
+            patch.cards.map((card) => card.id),
           ),
         );
     }
