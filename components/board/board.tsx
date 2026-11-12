@@ -9,165 +9,35 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable,
   type DragEndEvent,
   type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  useSortable,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-  Plus,
-  GripVertical,
-  MessageSquare,
-  ArrowLeft,
-  Activity,
-  Download,
-} from 'lucide-react';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { ArrowLeft, Activity, Download } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ApiErrorNotice } from '../ui/api-error-notice';
-import { ApiError, asError } from '../../src/lib/api-client';
-import { createBoardBackup } from '../../src/backups/format';
+import { ApiError } from '../../src/lib/api-client';
 import { ThemeToggle } from '../ui/theme';
 import { BrandMark } from '../ui/brand-mark';
 import { ConnectionStatus } from '../ui/connection-status';
 import { CardDialog } from './card-dialog';
 import { ActivityPanel } from './activity-panel';
+import { AttemptedChange } from './attempted-change';
+import { BoardColumn } from './board-column';
+import { BoardFilters } from './board-filters';
+import { BoardSettings } from './board-settings';
+import { useBoardExport } from './use-board-export';
+import type { BoardData, Card } from './types';
 import { useBoardDrafts } from './use-board-drafts';
 import type { CardDraft } from '../../src/drafts/store';
 import { useBoard } from '../../src/realtime/socket-client';
 import { matchesCard, localToday } from '../../src/realtime/card-filters';
-import type { Snapshot, Command } from '../../src/realtime/protocol';
-type BoardData = {
-  snapshot: Snapshot;
-  role: string;
-  user: { id: string; name: string };
-  people: { id: string; name: string }[];
-};
-type Card = Snapshot['cards'][number];
+import type { Snapshot } from '../../src/realtime/protocol';
 function focusCardDialogClose(button: HTMLButtonElement) {
   button
     .closest('dialog')
     ?.querySelector<HTMLButtonElement>('[data-card-dialog-close]')
     ?.focus();
-}
-function AttemptedChange({
-  command,
-  state,
-  people,
-}: {
-  command: Command;
-  state: Snapshot;
-  people: BoardData['people'];
-}) {
-  const { t } = useI18n();
-  const rows: { label: string; value: string }[] = [];
-  const add = (label: string, value: string) => {
-    rows.push({ label, value: value || t('Empty') });
-  };
-  const cardName = (id: string) =>
-    state.cards.find((card) => card.id === id)?.title ?? t('Card unavailable');
-  const columnName = (id: string) =>
-    state.columns.find((column) => column.id === id)?.title ??
-    t('Column unavailable');
-  const action = {
-    'board.rename': 'Rename board',
-    'board.archive': 'Archive board',
-    'board.restore': 'Restore board',
-    'column.create': 'Create column',
-    'column.rename': 'Rename column',
-    'column.move': 'Move column',
-    'column.remove': 'Remove empty column',
-    'card.create': 'Create card',
-    'card.update': 'Edit card',
-    'card.move': 'Move card',
-    'card.archive': 'Archive card',
-    'card.restore': 'Restore card',
-    'comment.create': 'Post comment',
-  }[command.type];
-
-  switch (command.type) {
-    case 'board.rename':
-    case 'column.create':
-      add('Title', command.payload.title);
-      break;
-    case 'column.rename':
-      add('Column', columnName(command.payload.id));
-      add('Title', command.payload.title);
-      break;
-    case 'column.move':
-    case 'column.remove':
-      add('Column', columnName(command.payload.id));
-      if (command.type === 'column.move')
-        add(
-          'Position',
-          command.payload.beforeId
-            ? t('Before {title}', {
-                title: columnName(command.payload.beforeId),
-              })
-            : t('At end'),
-        );
-      break;
-    case 'card.create':
-      add('Title', command.payload.title);
-      add('Destination column', columnName(command.payload.columnId));
-      break;
-    case 'card.update':
-      add('Card', cardName(command.payload.id));
-      if (command.payload.title !== undefined)
-        add('Title', command.payload.title);
-      if (command.payload.description !== undefined)
-        add('Description', command.payload.description);
-      if (command.payload.assigneeId !== undefined)
-        add(
-          'Assignee',
-          command.payload.assigneeId
-            ? (people.find((person) => person.id === command.payload.assigneeId)
-                ?.name ?? t('Former member'))
-            : t('Unassigned'),
-        );
-      if (command.payload.dueDate !== undefined)
-        add('Due date', command.payload.dueDate ?? t('No due date'));
-      break;
-    case 'card.move':
-      add('Card', cardName(command.payload.id));
-      add('Destination column', columnName(command.payload.columnId));
-      add(
-        'Position',
-        command.payload.beforeId
-          ? t('Before {title}', { title: cardName(command.payload.beforeId) })
-          : t('At end'),
-      );
-      break;
-    case 'card.archive':
-    case 'card.restore':
-      add('Card', cardName(command.payload.id));
-      break;
-    case 'comment.create':
-      add('Card', cardName(command.payload.cardId));
-      add('Comment', command.payload.body);
-      break;
-  }
-
-  return (
-    <div className="text-sm">
-      <p className="font-medium">{t(action)}</p>
-      {rows.length > 0 && (
-        <dl className="mt-2 space-y-2">
-          {rows.map(({ label, value }) => (
-            <div key={label}>
-              <dt className="text-xs font-medium text-muted">{t(label)}</dt>
-              <dd className="break-words whitespace-pre-wrap">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </div>
-  );
 }
 export function BoardLoader({ id }: { id: string }) {
   const { t } = useI18n();
@@ -205,112 +75,6 @@ export function BoardLoader({ id }: { id: string }) {
     </>
   );
 }
-function SortableCard({
-  card,
-  readOnly,
-  open,
-  pending,
-  people,
-  commentCount,
-}: {
-  card: Card;
-  readOnly: boolean;
-  open: () => void;
-  pending: boolean;
-  people: BoardData['people'];
-  commentCount: number;
-}) {
-  const { t } = useI18n();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: card.id, disabled: readOnly });
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.4 : 1,
-      }}
-      className="surface sortable-surface mb-3 p-4"
-    >
-      <div className="flex items-start gap-2">
-        <button
-          className="min-h-11 flex-1 text-left text-sm leading-relaxed font-medium"
-          onClick={open}
-        >
-          {card.title}
-        </button>
-        {!readOnly && (
-          <button
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-border"
-            aria-label={t('Move {title}', { title: card.title })}
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical size={16} aria-hidden="true" />
-          </button>
-        )}
-      </div>
-      {card.description && (
-        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted">
-          {card.description}
-        </p>
-      )}
-      <div className="mt-5 flex items-center justify-between gap-2 text-xs text-muted">
-        <span>CE–{card.id.slice(0, 4).toUpperCase()}</span>
-        {pending && <span>{t('Saving…')}</span>}
-        {commentCount > 0 && (
-          <span
-            role="img"
-            aria-label={t('{count} comment(s)', { count: commentCount })}
-            className="inline-flex items-center gap-1"
-          >
-            <MessageSquare size={13} aria-hidden="true" />
-            <span aria-hidden="true">{commentCount}</span>
-          </span>
-        )}
-      </div>
-      {(card.assigneeId || card.dueDate) && (
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
-          {card.assigneeId && (
-            <span>
-              {people.find((p) => p.id === card.assigneeId)?.name ??
-                t('Former member')}
-            </span>
-          )}
-          {card.dueDate && <time dateTime={card.dueDate}>{card.dueDate}</time>}
-        </div>
-      )}
-    </div>
-  );
-}
-function Column({
-  column,
-  children,
-  index,
-}: {
-  column: Snapshot['columns'][number];
-  children: React.ReactNode;
-  index: number;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: column.id });
-  return (
-    <section
-      ref={setNodeRef}
-      aria-label={column.title}
-      className={`motion-reveal w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : 'bg-surface-subtle'}`}
-      style={{ animationDelay: `${Math.min(index, 5) * 70}ms` }}
-    >
-      {children}
-    </section>
-  );
-}
 function Board({ initial }: { initial: BoardData }) {
   const { t, errorText, locale } = useI18n();
   const [selected, setSelected] = useState<Card | null>(null);
@@ -327,7 +91,6 @@ function Board({ initial }: { initial: BoardData }) {
   const [search, setSearch] = useState('');
   const [assignee, setAssignee] = useState('');
   const [due, setDue] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const filtered = Boolean(search.trim() || assignee || due);
   const activeFilterCount =
@@ -397,34 +160,12 @@ function Board({ initial }: { initial: BoardData }) {
       coordinateGetter: keyboardCoordinates,
     }),
   );
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<Error | null>(null);
-  async function exportBoard() {
-    if (exporting || live.status !== 'Connected' || live.pending.length > 0)
-      return;
-    setExporting(true);
-    setExportError(null);
-    const snapshot = structuredClone(state);
-    const people = structuredClone(initial.people);
-    try {
-      const backup = await createBoardBackup(snapshot, people);
-      const file = new Blob([JSON.stringify(backup, null, 2)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(file);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `collabedge-board-${snapshot.board.id}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (caught) {
-      setExportError(asError(caught, 'Board export failed. Please try again.'));
-    } finally {
-      setExporting(false);
-    }
-  }
+  const canExport = live.status === 'Connected' && live.pending.length === 0;
+  const { exporting, exportError, exportBoard } = useBoardExport(
+    state,
+    initial.people,
+    canExport,
+  );
   function dragEnd({ active, over }: DragEndEvent) {
     if (filtered || readOnly) return;
     if (!over || active.id === over.id) return;
@@ -526,11 +267,7 @@ function Board({ initial }: { initial: BoardData }) {
           <button
             className="button secondary"
             onClick={exportBoard}
-            disabled={
-              exporting ||
-              live.status !== 'Connected' ||
-              live.pending.length > 0
-            }
+            disabled={exporting || !canExport}
             aria-busy={exporting}
             title={t('Exports current board data without attachment files.')}
           >
@@ -577,78 +314,18 @@ function Board({ initial }: { initial: BoardData }) {
             {t('Restore board')}
           </button>
         )}
-        <div className="surface motion-reveal motion-delay-1 mb-4 flex flex-wrap items-end gap-3 p-4">
-          <label className="field min-w-[min(100%,12rem)] flex-1">
-            {t('Search cards')}
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="button secondary sm:hidden"
-            aria-expanded={filtersOpen}
-            aria-controls="board-filters"
-            onClick={() => setFiltersOpen((value) => !value)}
-          >
-            {t('Filters')}{' '}
-            {activeFilterCount > 0 && <span>({activeFilterCount})</span>}
-          </button>
-          <div
-            id="board-filters"
-            className={`${filtersOpen ? 'flex' : 'hidden'} w-full flex-wrap items-end gap-3 sm:flex sm:w-auto`}
-          >
-            <label className="field">
-              {t('Filter by assignee')}
-              <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-              >
-                <option value="">{t('All members')}</option>
-                <option value="unassigned">{t('Unassigned')}</option>
-                {initial.people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              {t('Filter by due date')}
-              <select value={due} onChange={(e) => setDue(e.target.value)}>
-                <option value="">{t('All dates')}</option>
-                <option value="overdue">{t('Overdue')}</option>
-                <option value="today">{t('Due today')}</option>
-                <option value="upcoming">{t('Upcoming')}</option>
-                <option value="none">{t('No due date')}</option>
-              </select>
-            </label>
-            <button
-              className="button secondary"
-              onClick={() => {
-                setSearch('');
-                setAssignee('');
-                setDue('');
-              }}
-            >
-              {t('Clear filters')}
-            </button>
-          </div>
-          <button
-            className="button secondary"
-            onClick={() => setShowArchive(!showArchive)}
-          >
-            {t('Archived cards')}
-          </button>
-          {filtered && (
-            <p className="w-full text-xs text-muted">
-              {t('{count} active filter(s).', { count: activeFilterCount })}{' '}
-              {t('Clear filters to drag cards. Editing remains available.')}
-            </p>
-          )}
-        </div>
+        <BoardFilters
+          search={search}
+          assignee={assignee}
+          due={due}
+          onSearch={setSearch}
+          onAssignee={setAssignee}
+          onDue={setDue}
+          people={initial.people}
+          filtered={filtered}
+          activeFilterCount={activeFilterCount}
+          onToggleArchive={() => setShowArchive(!showArchive)}
+        />
         {showArchive && (
           <section
             className="surface motion-reveal mb-4 p-4"
@@ -839,165 +516,32 @@ function Board({ initial }: { initial: BoardData }) {
             role="region"
             aria-label={t('Board columns')}
           >
-            {columns.map((column, index) => {
-              const cards = state.cards
-                .filter(
-                  (c) =>
-                    c.columnId === column.id &&
-                    !c.archived &&
-                    matchesCard(c, search, assignee, due, today),
-                )
-                .sort((a, b) => a.position - b.position);
-              return (
-                <Column key={column.id} column={column} index={index}>
-                  <div className="mb-4 flex items-center gap-2 px-1">
-                    <span className={`column-dot tone-${index % 4}`} />
-                    <h2 className="flex-1 text-sm font-semibold">
-                      {column.title}
-                    </h2>
-                    <span className="text-xs text-muted">{cards.length}</span>
-                  </div>
-                  {!readOnly && (
-                    <details className="mb-3 text-xs text-muted">
-                      <summary className="cursor-pointer">
-                        {t('Column options')}
-                      </summary>
-                      <form
-                        className="my-2 flex gap-2"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          live.mutate({
-                            type: 'column.rename',
-                            payload: {
-                              id: column.id,
-                              title: String(
-                                new FormData(e.currentTarget).get('title'),
-                              ),
-                            },
-                          });
-                        }}
-                      >
-                        <input
-                          aria-label={t('Rename {title}', {
-                            title: column.title,
-                          })}
-                          name="title"
-                          defaultValue={column.title}
-                          required
-                          maxLength={160}
-                        />
-                        <button>{t('Save')}</button>
-                      </form>
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          onClick={() =>
-                            live.mutate({
-                              type: 'column.move',
-                              payload: {
-                                id: column.id,
-                                beforeId:
-                                  columns[Math.max(0, index - 1)]?.id ?? null,
-                              },
-                            })
-                          }
-                        >
-                          {t('Move left')}
-                        </button>
-                        <button
-                          onClick={() =>
-                            live.mutate({
-                              type: 'column.move',
-                              payload: {
-                                id: column.id,
-                                beforeId: columns[index + 2]?.id ?? null,
-                              },
-                            })
-                          }
-                        >
-                          {t('Move right')}
-                        </button>
-                        <button
-                          className="text-destructive"
-                          onClick={() =>
-                            live.mutate({
-                              type: 'column.remove',
-                              payload: { id: column.id },
-                            })
-                          }
-                        >
-                          {t('Remove empty column')}
-                        </button>
-                      </div>
-                    </details>
-                  )}
-                  <SortableContext
-                    items={cards.map((c) => c.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {cards.map((card) => (
-                      <SortableCard
-                        key={card.id}
-                        card={card}
-                        commentCount={commentCounts.get(card.id) ?? 0}
-                        readOnly={readOnly || filtered}
-                        people={initial.people}
-                        open={() => {
-                          setRestoredDraft(null);
-                          setSelected({ ...card });
-                        }}
-                        pending={live.pending.some(
-                          (p) =>
-                            p.state === 'pending' &&
-                            p.mutation.command.payload.id === card.id,
-                        )}
-                      />
-                    ))}
-                  </SortableContext>
-                  {cards.length === 0 && (
-                    <div className="mb-3 rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted">
-                      {t(
-                        filtered
-                          ? 'No matching cards'
-                          : 'Room for something new',
-                      )}
-                    </div>
-                  )}
-                  {!readOnly && (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const form = e.currentTarget;
-                        if (
-                          await live.mutate({
-                            type: 'card.create',
-                            payload: {
-                              id: crypto.randomUUID(),
-                              columnId: column.id,
-                              title: String(new FormData(form).get('title')),
-                            },
-                          })
-                        )
-                          form.reset();
-                      }}
-                    >
-                      <input
-                        name="title"
-                        aria-label={t('New card in {title}', {
-                          title: column.title,
-                        })}
-                        placeholder={t('Add a card…')}
-                        required
-                        maxLength={160}
-                      />
-                      <button className="mt-2 flex items-center gap-1 text-xs text-muted">
-                        <Plus size={14} />
-                        {t('Add card')}
-                      </button>
-                    </form>
-                  )}
-                </Column>
-              );
-            })}
+            {columns.map((column, index) => (
+              <BoardColumn
+                key={column.id}
+                column={column}
+                index={index}
+                columns={columns}
+                cards={state.cards
+                  .filter(
+                    (c) =>
+                      c.columnId === column.id &&
+                      !c.archived &&
+                      matchesCard(c, search, assignee, due, today),
+                  )
+                  .sort((a, b) => a.position - b.position)}
+                readOnly={readOnly}
+                filtered={filtered}
+                people={initial.people}
+                commentCounts={commentCounts}
+                pending={live.pending}
+                mutate={live.mutate}
+                openCard={(card) => {
+                  setRestoredDraft(null);
+                  setSelected({ ...card });
+                }}
+              />
+            ))}
             {!readOnly && (
               <form
                 className="w-64 shrink-0 p-2"
@@ -1100,83 +644,5 @@ function Board({ initial }: { initial: BoardData }) {
         />
       )}
     </div>
-  );
-}
-function BoardSettings({
-  initial,
-  mutate,
-  close,
-}: {
-  initial: Snapshot['board'];
-  mutate: (command: Command, base?: number) => Promise<boolean>;
-  close: () => void;
-}) {
-  const { t } = useI18n();
-
-  const [title, setTitle] = useState(initial.name);
-  const [confirmArchive, setConfirmArchive] = useState(false);
-  return (
-    <section
-      className="surface motion-reveal mb-4 space-y-4 p-5"
-      aria-label={t('Board settings')}
-    >
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          if (
-            await mutate(
-              { type: 'board.rename', payload: { id: initial.id, title } },
-              initial.revision,
-            )
-          )
-            close();
-        }}
-      >
-        <label className="field">
-          {t('Board name')}
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            required
-            maxLength={160}
-          />
-        </label>
-        <button className="button">{t('Save board name')}</button>
-        <button type="button" className="button secondary" onClick={close}>
-          {t('Cancel')}
-        </button>
-      </form>
-      {confirmArchive ? (
-        <div className="space-y-3">
-          <p>
-            {t(
-              'Archive this board? It will become read-only and disappear from the workspace list. History is retained and still counts toward usage limits.',
-            )}
-          </p>
-          <button
-            className="button secondary"
-            onClick={async () => {
-              if (
-                await mutate(
-                  { type: 'board.archive', payload: { id: initial.id } },
-                  initial.revision,
-                )
-              )
-                close();
-            }}
-          >
-            {t('Confirm archive board')}
-          </button>
-        </div>
-      ) : (
-        <button
-          className="text-sm text-destructive"
-          onClick={() => setConfirmArchive(true)}
-        >
-          {t('Archive board')}
-        </button>
-      )}
-    </section>
   );
 }
