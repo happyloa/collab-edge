@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   serverMessage,
+  HEARTBEAT,
   type Snapshot,
   type Mutation,
   type Command,
@@ -332,8 +333,7 @@ export function useBoard(
             ws.close(4000, 'Heartbeat timeout');
             return;
           }
-          if (ws.readyState === WebSocket.OPEN)
-            ws.send(JSON.stringify({ type: 'ping' }));
+          if (ws.readyState === WebSocket.OPEN) ws.send(HEARTBEAT.request);
         }, 30_000);
       };
     };

@@ -74,6 +74,14 @@ export const presenceSchema = z.object({
   selectedCardId: id.optional(),
 });
 export type Presence = z.infer<typeof presenceSchema>;
+/**
+ * Exact heartbeat frames. The room registers them as a WebSocket auto-response,
+ * so the client must send this literal text for the runtime to answer it.
+ */
+export const HEARTBEAT = Object.freeze({
+  request: JSON.stringify({ type: 'ping' }),
+  response: JSON.stringify({ type: 'pong' }),
+});
 export const clientMessage = z.discriminatedUnion('type', [
   z.object({ type: z.literal('resync'), lastSeenRevision: revision }),
   z.object({ type: z.literal('mutate'), mutation: mutationSchema }),

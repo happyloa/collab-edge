@@ -5,9 +5,11 @@ import { it, expect, beforeEach } from 'vitest';
 import { createSession } from '../src/auth/session';
 import {
   serverMessage,
+  HEARTBEAT,
   type ServerMessage,
   type Command,
 } from '../src/realtime/protocol';
+import { LIMITS } from '../src/lib/limits';
 beforeEach(async () => {
   await env.DB.prepare('DELETE FROM quotas').run();
 });
@@ -650,6 +652,25 @@ it('enforces comment limits and IDs from only the relevant discussion', async ()
         .bind(f.boardId)
         .first(),
     ).toEqual({ revision: 3 });
+  } finally {
+    f.ws.close();
+  }
+});
+
+it('answers heartbeats without spending the message budget', async () => {
+  const f = await fixture();
+  try {
+    // More heartbeats than one connection may send as ordinary messages.
+    const heartbeats = LIMITS.messagesPerMinute + 10;
+    for (let index = 0; index < heartbeats; index++)
+      f.ws.send(HEARTBEAT.request);
+    for (let index = 0; index < heartbeats; index++)
+      expect(await f.next('pong')).toEqual({ type: 'pong' });
+    f.mutate({
+      type: 'board.rename',
+      payload: { id: f.boardId, title: 'Still within budget' },
+    });
+    expect(await f.next('ack')).toMatchObject({ revision: 1 });
   } finally {
     f.ws.close();
   }

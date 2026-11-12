@@ -16,6 +16,7 @@ import {
 import { DEMO } from '../../src/db/demo';
 import {
   clientMessage,
+  HEARTBEAT,
   mutationSchema,
   eventSchema,
   type Mutation,
@@ -59,6 +60,15 @@ const socketState = z.object({
 });
 export class BoardRoom extends DurableObject<Env> {
   private queue: Promise<unknown> = Promise.resolve();
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    // The runtime answers heartbeats itself: they neither wake a hibernated
+    // room nor spend D1 reads on authorization. Every other message and every
+    // broadcast recipient is still checked against the session and membership.
+    ctx.setWebSocketAutoResponse(
+      new WebSocketRequestResponsePair(HEARTBEAT.request, HEARTBEAT.response),
+    );
+  }
   private serial<T>(fn: () => Promise<T>): Promise<T> {
     const result = this.queue.then(fn);
     this.queue = result.catch(() => undefined);
