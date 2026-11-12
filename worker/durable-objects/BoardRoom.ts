@@ -9,7 +9,10 @@ import {
   tokenFrom,
   sessionIdForToken,
 } from '../../src/auth/session';
-import { loadSnapshot } from '../../src/db/queries/snapshot';
+import {
+  loadSnapshot,
+  loadMutationContext,
+} from '../../src/db/queries/snapshot';
 import { DEMO } from '../../src/db/demo';
 import {
   clientMessage,
@@ -444,18 +447,9 @@ export class BoardRoom extends DurableObject<Env> {
       403,
       'The shared demo board cannot be archived',
     );
-    const db = drizzle(this.env.DB);
-    const duplicate = await db
-      .select()
-      .from(events)
-      .where(
-        and(
-          eq(events.boardId, boardId),
-          eq(events.clientMutationId, mutation.clientMutationId),
-        ),
-      )
-      .get();
-    if (duplicate) {
+    const context = await loadMutationContext(this.env.DB, boardId, mutation);
+    if (context.receipt) {
+      const duplicate = context.receipt;
       assert(
         duplicate.actorId === actorId,
         409,
@@ -471,7 +465,7 @@ export class BoardRoom extends DurableObject<Env> {
             }),
       };
     }
-    const state = await loadSnapshot(this.env.DB, boardId);
+    const { state } = context;
     assert(
       state.board.revision < LIMITS.eventsPerBoard,
       429,

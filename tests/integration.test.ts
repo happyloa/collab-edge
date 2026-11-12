@@ -561,3 +561,96 @@ it('keeps internal failure details out of upgrade responses', async () => {
   expect(foreign.status).toBe(403);
   expect(await foreign.json()).toEqual({ error: 'Invalid origin' });
 });
+
+it('enforces comment limits and IDs from only the relevant discussion', async () => {
+  const f = await fixture();
+  const first = crypto.randomUUID(),
+    second = crypto.randomUUID();
+  try {
+    f.mutate({
+      type: 'card.create',
+      payload: { id: first, columnId: f.columnId, title: 'First' },
+    });
+    expect(await f.next('ack')).toMatchObject({ revision: 1 });
+    f.mutate(
+      {
+        type: 'card.create',
+        payload: { id: second, columnId: f.columnId, title: 'Second' },
+      },
+      1,
+    );
+    expect(await f.next('ack')).toMatchObject({ revision: 2 });
+    // Fill the first card directly so the socket rate limit stays out of the way.
+    await env.DB.batch(
+      Array.from({ length: 50 }, (_, index) =>
+        env.DB.prepare(
+          'INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at) VALUES(?,?,?,?,?,?)',
+        ).bind(
+          crypto.randomUUID(),
+          first,
+          f.boardId,
+          f.userId,
+          `Comment ${index + 1}`,
+          '2026-11-12T00:00:00.000Z',
+        ),
+      ),
+    );
+    f.mutate(
+      {
+        type: 'comment.create',
+        payload: {
+          id: crypto.randomUUID(),
+          cardId: first,
+          body: 'One too many',
+        },
+      },
+      2,
+    );
+    expect(await f.next('error')).toMatchObject({
+      message: 'Comment limit reached',
+    });
+    // A full card must not block discussion on its neighbours.
+    f.mutate(
+      {
+        type: 'comment.create',
+        payload: {
+          id: crypto.randomUUID(),
+          cardId: second,
+          body: 'Still open',
+        },
+      },
+      2,
+    );
+    expect(await f.next('ack')).toMatchObject({ revision: 3 });
+    // An ID used by another card of this board is still recognised.
+    const existing = await env.DB.prepare(
+      'SELECT id FROM card_comments WHERE card_id=? LIMIT 1',
+    )
+      .bind(first)
+      .first<{ id: string }>();
+    f.mutate(
+      {
+        type: 'comment.create',
+        payload: { id: existing!.id, cardId: second, body: 'Reused ID' },
+      },
+      3,
+    );
+    expect(await f.next('error')).toMatchObject({
+      message: 'Comment ID already exists',
+    });
+    expect(
+      await env.DB.prepare(
+        'SELECT count(*) AS total FROM card_comments WHERE board_id=?',
+      )
+        .bind(f.boardId)
+        .first(),
+    ).toEqual({ total: 51 });
+    expect(
+      await env.DB.prepare('SELECT revision FROM boards WHERE id=?')
+        .bind(f.boardId)
+        .first(),
+    ).toEqual({ revision: 3 });
+  } finally {
+    f.ws.close();
+  }
+});

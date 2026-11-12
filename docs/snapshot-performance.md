@@ -40,6 +40,18 @@ The diff now returns an empty comment patch when the comment array is unchanged.
 
 These are individual local runs, not a statistical latency guarantee. A reported zero reflects the timer's resolution. The optimized run also counted comment ID reads: zero for the title update and 16,000 for creating a comment on the largest fixture. The test checks operation counts against linear bounds instead of asserting fragile timing thresholds. Existing comments remain intact and only the new comment enters the patch.
 
+## Mutation load
+
+Measured on 2026-11-12 with Vitest 5.1.0 and the Cloudflare workerd test plugin 1.7.0 on the same fixtures. Accepting a mutation previously started by reading the complete snapshot. It now reads its UUID receipt, the board, columns and cards in one consistent batch, and comments only for `comment.create`: those of the target card plus any row already using the new ID. Attachments are not read. Conflict responses, resynchronization and the HTTP board endpoint still return the complete snapshot.
+
+| Cards | Comments | Full snapshot rows read | Card update rows read | New comment rows read |
+| ----- | -------- | ----------------------- | --------------------- | --------------------- |
+| 25    | 125      | 155                     | 30                    | 36                    |
+| 100   | 1,000    | 1,105                   | 105                   | 116                   |
+| 200   | 4,000    | 4,208                   | 207                   | 228                   |
+
+These are local `rows_read` values, not production billing measurements. A first version of the comment lookup also filtered by board; SQLite then scanned the board's whole comment index and read more than 4,200 rows while returning 225. The scale test therefore bounds scanned rows as well as returned rows, and checks that the reduced state produces the same patch as the complete snapshot. Field conflict checks, UUID receipts, limits and the atomic commit are unchanged; a workerd test covers the per-card comment limit and duplicate comment IDs across cards.
+
 ## Browser baseline
 
 Measured on 2026-10-06 with Playwright 1.63.0 and Chromium 153.0.8010.12 on Windows. The three scenarios passed on disposable local Vite/workerd state. Browser cache was disabled; CPU and network were unthrottled. Registration and fixture setup precede measurement. This is a development-server baseline, with warm Vite dependency compilation and local service state, rather than a cold production benchmark.
@@ -68,6 +80,6 @@ The measurements do not establish field Core Web Vitals or production Workers CP
 
 ## Remaining work
 
-The largest fixture still produces about 2.62 MiB of JSON. Maximum-length multilingual content can produce larger snapshots. This change reduces mutation preparation work; it does not reduce snapshot bytes or D1 rows read.
+The largest fixture still produces about 2.62 MiB of JSON. Maximum-length multilingual content can produce larger snapshots. The linear diff and the reduced mutation load lower the work per accepted change; they do not reduce the bytes or rows of the snapshot each browser loads.
 
 Authenticated production latency, slower-device performance and maximum-length multilingual browser fixtures remain unmeasured. The local browser baseline shows increasing detail-opening and keyboard-move time, while snapshot transfer remains proportional to all comments. Further work should assess bounded card-detail loading and comment pagination, preserving coherent revisions, reconnect/replay behavior, exports and authorization. Any such change needs its own protocol and concurrency tests. No persistent snapshot cache or truncated comment response was introduced in this release.

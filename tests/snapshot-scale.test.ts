@@ -1,8 +1,9 @@
 import { env } from 'cloudflare:workers';
 import { expect, it } from 'vitest';
-import { loadSnapshot } from '../src/db/queries/snapshot';
+import { loadSnapshot, loadMutationContext } from '../src/db/queries/snapshot';
 import { LIMITS } from '../src/lib/limits';
 import { prepareMutation } from '../src/realtime/mutations';
+import type { Command } from '../src/realtime/protocol';
 
 // Synthetic, isolated local D1 fixtures; no remote data or authentication
 // credentials. These test representative text sizes, not worst-case payloads.
@@ -180,6 +181,74 @@ it.for([
       1 + 4 + size.cards + size.cards * size.commentsPerCard,
     );
     expect(bytes).toBeLessThan(4 * 1024 * 1024);
+    // Accepting a mutation must not reread the board's whole discussion: it
+    // loads the receipt, board, columns and cards, plus one card's comments
+    // only when a comment is being added.
+    const mutationLoad = async (command: Command) => {
+      const start = { ...metrics };
+      const context = await loadMutationContext(measured, boardId, {
+        clientMutationId: crypto.randomUUID(),
+        baseRevision: snapshot.board.revision,
+        command,
+      });
+      return {
+        context,
+        batches: metrics.batches - start.batches,
+        rows: metrics.rowsReturned - start.rowsReturned,
+        rowsRead:
+          metrics.rowsRead === null || start.rowsRead === null
+            ? null
+            : metrics.rowsRead - start.rowsRead,
+      };
+    };
+    const updateCommand: Command = {
+      type: 'card.update',
+      payload: { id: card.id, title: 'Updated card' },
+    };
+    const updateLoad = await mutationLoad(updateCommand);
+    expect(updateLoad.batches).toBe(1);
+    expect(updateLoad.rows).toBe(1 + 4 + size.cards);
+    expect(updateLoad.context.receipt).toBeNull();
+    expect(updateLoad.context.state?.comments).toEqual([]);
+    expect(
+      prepareMutation(
+        updateLoad.context.state!,
+        {
+          clientMutationId: crypto.randomUUID(),
+          baseRevision: snapshot.board.revision,
+          command: updateCommand,
+        },
+        actorId,
+      ),
+    ).toEqual(update);
+    const commentCommand: Command = {
+      type: 'comment.create',
+      payload: { id: commentId, cardId: card.id, body: 'New comment' },
+    };
+    const commentLoad = await mutationLoad(commentCommand);
+    expect(commentLoad.batches).toBe(1);
+    expect(commentLoad.rows).toBe(1 + 4 + size.cards + size.commentsPerCard);
+    // Scanned rows, where local D1 reports them, must stay proportional to
+    // the cards and one discussion: an index choice can hide a full scan.
+    const scanBudget = 2 * (1 + 4 + size.cards + size.commentsPerCard) + 16;
+    for (const load of [updateLoad, commentLoad])
+      if (load.rowsRead !== null)
+        expect(load.rowsRead).toBeLessThanOrEqual(scanBudget);
+    const withoutTime = (patch: typeof comment) =>
+      patch.comments?.map(({ createdAt: _createdAt, ...rest }) => rest);
+    expect(
+      withoutTime(
+        prepareMutation(
+          commentLoad.context.state!,
+          {
+            clientMutationId: crypto.randomUUID(),
+            baseRevision: snapshot.board.revision,
+            command: commentCommand,
+          },
+          actorId,
+        ),
+      ),
+    ).toEqual(withoutTime(comment));
     await annotate(
       'SNAPSHOT_SCALE ' +
         JSON.stringify({
@@ -191,6 +260,10 @@ it.for([
           commentMs: Math.round(commentMs * 100) / 100,
           updateCommentIdReads,
           createCommentIdReads: commentIdReads,
+          updateMutationRows: updateLoad.rows,
+          updateMutationRowsRead: updateLoad.rowsRead,
+          commentMutationRows: commentLoad.rows,
+          commentMutationRowsRead: commentLoad.rowsRead,
           ...metrics,
         }),
     );
