@@ -190,3 +190,20 @@ test('session state keeps guests and signed-in users on the right pages', async 
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/workspaces$/);
 });
+
+test('pages and API responses carry baseline security headers', async ({
+  page,
+}) => {
+  const document = await page.goto('/login');
+  const api = await page.request.get('/api/auth/session');
+  for (const headers of [document!.headers(), api.headers()]) {
+    expect(headers['x-frame-options']).toBe('DENY');
+    expect(headers['x-content-type-options']).toBe('nosniff');
+    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+    expect(headers['content-security-policy']).toContain(
+      "frame-ancestors 'none'",
+    );
+  }
+  // The page still hydrates under the policy.
+  await expect(page.getByLabel('Email')).toBeEnabled();
+});
