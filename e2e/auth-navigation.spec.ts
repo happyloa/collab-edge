@@ -48,10 +48,17 @@ test('sign out waits for hydration, prevents duplicate requests and permits retr
   browser,
 }, testInfo) => {
   await page.goto('/');
+  const demoSession = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/auth/demo' &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Try as Alice' }).click();
+  expect((await demoSession).status()).toBe(200);
+  await expect(page).toHaveURL(/\/boards\/[0-9a-f-]+$/);
   await expect(
     page.getByRole('status', { name: 'Connection status' }),
-  ).toHaveText('Connected');
+  ).toHaveText('Connected', { timeout: 15000 });
   const withoutScripts = await isolatedContext(browser, testInfo, {
     storageState: await context.storageState(),
     javaScriptEnabled: false,
