@@ -167,31 +167,23 @@ it('fails closed for missing, malformed or retired password keys without leaking
   ).toEqual({ valid: false, needsUpgrade: false });
 });
 
-it('ends legacy session acceptance at a fixed grace deadline and rejects malformed tokens', async () => {
+it('no longer accepts legacy unprefixed sessions and rejects malformed tokens', async () => {
   const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
   const user = await account(await newPasswordHash(password, first));
+  // A stored legacy digest must not authenticate, whatever the environment says.
   const id = await sessionHash(token, first.SESSION_SECRET);
   await env.DB.prepare(
     'INSERT INTO sessions(id,user_id,expires_at) VALUES(?,?,?)',
   )
     .bind(id, user.id, Date.now() + 60000)
     .run();
-  const grace = {
+  expect(await sessionIdForToken(token, first)).toBeNull();
+  expect(await currentUserForToken(token, first)).toBeNull();
+  const reopened = {
     ...first,
     LEGACY_SESSIONS_UNTIL: new Date(Date.now() + 60000).toISOString(),
   };
-  expect(await currentUserForToken(token, grace)).toMatchObject({
-    id: user.id,
-  });
-  expect(
-    await currentUserForToken(token, {
-      ...grace,
-      LEGACY_SESSIONS_UNTIL: new Date(Date.now() - 1).toISOString(),
-    }),
-  ).toBeNull();
-  expect(
-    await currentUserForToken(token, { ...grace, LEGACY_SESSIONS_UNTIL: '' }),
-  ).toBeNull();
+  expect(await currentUserForToken(token, reopened)).toBeNull();
   expect(await sessionIdForToken('ce2.'.repeat(100), first)).toBeNull();
   expect(await sessionIdForToken('ce2.not-a-session', first)).toBeNull();
   await expect(

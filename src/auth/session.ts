@@ -14,29 +14,15 @@ export function tokenFrom(request: Request) {
     ?.slice(11);
 }
 export async function sessionIdForToken(token: string, authEnv: Env = env) {
-  if (token.length > 80) return null;
-  if (token.startsWith('ce2.')) {
-    if (!/^ce2\.[a-f0-9-]{72}$/.test(token)) return null;
-    assert(
-      authEnv.SESSION_SIGNING_KEY?.length >= 32,
-      503,
-      'Session configuration unavailable',
-    );
-    return sessionHash(token, authEnv.SESSION_SIGNING_KEY);
-  }
-  const graceUntil = Date.parse(authEnv.LEGACY_SESSIONS_UNTIL);
-  if (
-    !/^[a-f0-9-]{72}$/.test(token) ||
-    !Number.isFinite(graceUntil) ||
-    Date.now() >= graceUntil
-  )
-    return null;
+  // Only `ce2.` tokens exist. Unprefixed cookies keyed by SESSION_SECRET
+  // stopped authenticating on 2026-10-13 and are no longer recognised.
+  if (token.length > 80 || !/^ce2\.[a-f0-9-]{72}$/.test(token)) return null;
   assert(
-    authEnv.SESSION_SECRET?.length >= 32,
+    authEnv.SESSION_SIGNING_KEY?.length >= 32,
     503,
     'Session configuration unavailable',
   );
-  return sessionHash(token, authEnv.SESSION_SECRET);
+  return sessionHash(token, authEnv.SESSION_SIGNING_KEY);
 }
 export async function currentUserForToken(
   token: string | undefined,

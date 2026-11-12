@@ -2,13 +2,12 @@
 
 New password hashes and session digests use independent secrets. The old `SESSION_SECRET` stays unchanged while legacy password hashes still exist. Its value cannot be retrieved from Cloudflare; do not replace it to perform an ordinary session rotation.
 
-| Setting                 | Purpose                                                                                                     |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `SESSION_SIGNING_KEY`   | HMAC key for new `ce2.` session tokens. Replacing it invalidates those sessions without changing passwords. |
-| `PASSWORD_PEPPERS`      | Secret JSON object with one to four named password peppers. Values stay outside D1.                         |
-| `PASSWORD_PEPPER_ID`    | Public identifier of the current pepper, initially `p1`.                                                    |
-| `SESSION_SECRET`        | Frozen legacy password pepper, legacy session key and stable hashed auth-limit identifiers.                 |
-| `LEGACY_SESSIONS_UNTIL` | Fixed legacy-cookie cutoff, initially `2026-10-13T00:00:00Z`. Do not extend it during routine releases.     |
+| Setting               | Purpose                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `SESSION_SIGNING_KEY` | HMAC key for new `ce2.` session tokens. Replacing it invalidates those sessions without changing passwords.  |
+| `PASSWORD_PEPPERS`    | Secret JSON object with one to four named password peppers. Values stay outside D1.                          |
+| `PASSWORD_PEPPER_ID`  | Public identifier of the current pepper, initially `p1`.                                                     |
+| `SESSION_SECRET`      | Frozen legacy password pepper and stable hashed auth-limit identifiers. It no longer authenticates sessions. |
 
 The new hash format is `pbkdf2-sha256-peppered-v2$100000$pepper-id$salt$digest`. Verification selects only the recorded pepper, never a trial loop over all secrets. A successful login upgrades legacy or previous-pepper hashes to the current pepper. The account hash check, upgrade and session insert share one D1 transaction. If a password reset or deletion races with verification, that transaction fails and returns no cookie. Wrong passwords and failed transactions leave the existing hash untouched.
 
@@ -26,9 +25,9 @@ New local environments get all three secrets from `node scripts/setup-local.mjs`
 
 ## Session rotation
 
-Replace only `SESSION_SIGNING_KEY` with a new cryptographically random value, using a protected secret file. Existing `ce2.` cookies stop authenticating because their stored digests no longer match. Users sign in again with their existing passwords. At the fixed grace deadline, old unprefixed cookies stop authenticating too. HTTP requests, password confirmations, logout and WebSocket recipients use the same token-to-digest rule.
+Replace only `SESSION_SIGNING_KEY` with a new cryptographically random value, using a protected secret file. Existing `ce2.` cookies stop authenticating because their stored digests no longer match. Users sign in again with their existing passwords. Old unprefixed cookies keyed by `SESSION_SECRET` stopped authenticating at their fixed 2026-10-13 deadline; the code path and its `LEGACY_SESSIONS_UNTIL` setting were removed afterwards, so only `ce2.` tokens are parsed. HTTP requests, password confirmations, logout and WebSocket recipients use the same token-to-digest rule.
 
-Before the legacy cutoff, a session-key rotation alone does not revoke legacy cookies. For immediate revocation, set `LEGACY_SESSIONS_UNTIL` to a past timestamp in the same release. Keep the old password pepper intact. Revoking sessions does not delete board data or change passwords.
+Keep the old password pepper intact. Revoking sessions does not delete board data or change passwords.
 
 ## Pepper rotation and retirement
 

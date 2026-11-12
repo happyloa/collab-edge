@@ -19,7 +19,6 @@
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
   "vars": {
     "PASSWORD_PEPPER_ID": "p1",
-    "LEGACY_SESSIONS_UNTIL": "2026-10-13T00:00:00Z",
     "ATTACHMENTS_ENABLED": "false",
     "REGISTRATION_ENABLED": "true",
     "ACCESS_REQUIRED": "true",
