@@ -23,11 +23,15 @@ if (performanceOnly && process.env.E2E_BASE_URL)
   throw new Error(
     'Performance measurements must use isolated local workerd state',
   );
+// Local CLIs run through Node directly. This avoids nested package-manager
+// processes and Corepack, which current Node releases no longer bundle.
+const playwright = 'node node_modules/@playwright/test/cli.js test';
+const wrangler = 'node node_modules/wrangler/bin/wrangler.js';
 const playwrightCommand = captureDemo
-  ? 'corepack pnpm exec playwright test e2e/collaboration.spec.ts --project=chromium'
+  ? `${playwright} e2e/collaboration.spec.ts --project=chromium`
   : performanceOnly
-    ? 'corepack pnpm exec playwright test e2e/board-performance.spec.ts --project=chromium'
-    : 'corepack pnpm exec playwright test';
+    ? `${playwright} e2e/board-performance.spec.ts --project=chromium`
+    : playwright;
 let activeChild;
 
 function run(command, env) {
@@ -104,7 +108,7 @@ try {
       COLLABEDGE_CAPTURE_DEMO: captureDemo ? '1' : undefined,
     };
     await run(
-      `corepack pnpm exec wrangler d1 migrations apply DB --local --persist-to .wrangler/${stateName}`,
+      `${wrangler} d1 migrations apply DB --local --persist-to .wrangler/${stateName}`,
       env,
     );
     await run(playwrightCommand, env);

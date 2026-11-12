@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `corepack pnpm dev --port ${localPort}`,
+        command: `node node_modules/vite/bin/vite.js dev --port ${localPort}`,
         url: localUrl,
         reuseExistingServer:
           !process.env.CI && !process.env.COLLABEDGE_E2E_STATE_PATH,
