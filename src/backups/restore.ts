@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { assert, AppError } from '../lib/errors';
+import { assert, AppError, isGuardFailure } from '../lib/errors';
 import {
   ownerWriteGuard,
   guardedWorkspaceWrite,
@@ -157,11 +157,7 @@ export function restoreError(error: unknown): AppError {
       409,
       'Another restore needs to finish or be cleaned up first.',
     );
-  if (
-    /CHECK constraint failed.*(?:mutation_guard|value)|Restore is unavailable/i.test(
-      message,
-    )
-  )
+  if (isGuardFailure(error) || /Restore is unavailable/i.test(message))
     return new AppError(409, 'Restore state or workspace ownership changed.');
   if (/UNIQUE constraint failed.*board_restore_items/i.test(message))
     return new AppError(409, 'Backup contains duplicate IDs');

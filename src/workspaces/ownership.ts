@@ -1,5 +1,5 @@
 import { DEMO } from '../db/demo';
-import { AppError, assert } from '../lib/errors';
+import { AppError, assert, isGuardFailure } from '../lib/errors';
 import { LIMITS } from '../lib/limits';
 import type { ConfirmedAccount } from '../auth/reauth';
 
@@ -48,10 +48,7 @@ async function guardedBatch(
         409,
         'Recipient owns the maximum number of workspaces',
       );
-    if (
-      error instanceof Error &&
-      /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
-    )
+    if (isGuardFailure(error))
       throw new AppError(
         409,
         'Workspace membership changed. Reload and retry.',

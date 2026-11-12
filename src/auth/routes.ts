@@ -4,7 +4,7 @@ import { drizzle } from 'drizzle-orm/d1';
 import { and, eq, isNull } from 'drizzle-orm';
 import { users, sessions } from '../db/schema';
 import { body, route } from '../lib/http';
-import { AppError, assert } from '../lib/errors';
+import { AppError, assert, isGuardFailure } from '../lib/errors';
 import { sessionHash } from './crypto';
 import { checkPassword, dummyPasswordHash, newPasswordHash } from './password';
 import {
@@ -140,10 +140,7 @@ export const authenticate = (register: boolean, authEnv: Env = env) =>
         authEnv.DB.prepare('DELETE FROM mutation_guard'),
       ]);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
-      )
+      if (isGuardFailure(error))
         throw new AppError(409, 'Account state changed. Please sign in again.');
       throw error;
     }
@@ -301,10 +298,7 @@ export const deleteAccountFor = (authEnv: Env = env) =>
         authEnv.DB.prepare('DELETE FROM mutation_guard'),
       ]);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
-      )
+      if (isGuardFailure(error))
         throw new AppError(
           409,
           'Account or workspace state changed. Reload and retry.',

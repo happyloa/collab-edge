@@ -30,3 +30,13 @@ export function assert(
 ): asserts condition {
   if (!condition) throw new AppError(status, message, code);
 }
+/**
+ * True when D1 aborted a batch because a `mutation_guard` row was not 1: a
+ * precondition checked inside the transaction no longer held at commit time.
+ */
+export function isGuardFailure(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    /CHECK constraint failed.*(?:mutation_guard|value)/i.test(error.message)
+  );
+}
