@@ -108,9 +108,12 @@ export class BoardRoom extends DurableObject<Env> {
         await this.broadcastPresence(boardId);
         return new Response(null, { status: 101, webSocket: client });
       } catch (error) {
+        // Validation, database and runtime failures can carry query text or
+        // parameters; only deliberate application errors describe themselves.
         return Response.json(
           {
-            error: error instanceof Error ? error.message : 'Connection failed',
+            error:
+              error instanceof AppError ? error.message : 'Connection failed',
           },
           { status: error instanceof AppError ? error.status : 400 },
         );

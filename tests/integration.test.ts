@@ -545,3 +545,19 @@ it('keeps R2 private and enforces upload permissions before object creation', as
     f.ws.close();
   }
 });
+
+it('keeps internal failure details out of upgrade responses', async () => {
+  const boardId = crypto.randomUUID();
+  const upgrade = (path: string, origin = 'https://test.dev') =>
+    env.BOARD_ROOMS.getByName(boardId).fetch(
+      new Request(`https://test.dev/realtime/${path}`, {
+        headers: { Upgrade: 'websocket', Origin: origin },
+      }),
+    );
+  const invalid = await upgrade('not-a-board-id');
+  expect(invalid.status).toBe(400);
+  expect(await invalid.json()).toEqual({ error: 'Connection failed' });
+  const foreign = await upgrade(boardId, 'https://attacker.example');
+  expect(foreign.status).toBe(403);
+  expect(await foreign.json()).toEqual({ error: 'Invalid origin' });
+});
