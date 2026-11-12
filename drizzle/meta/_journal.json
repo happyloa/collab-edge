@@ -50,6 +50,13 @@
       "when": 1791556592194,
       "tag": "0006_lean_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794450221682,
+      "tag": "0007_board_scoped_cards",
+      "breakpoints": true
     }
   ]
 }

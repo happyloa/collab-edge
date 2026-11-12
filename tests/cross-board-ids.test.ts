@@ -201,3 +201,58 @@ it('still creates cards and columns with fresh IDs', async () => {
     f.ws.close();
   }
 });
+
+it('keeps a card and its column on one board at the database level', async () => {
+  const home = await board();
+  const other = await board();
+  const cardId = crypto.randomUUID();
+  const insertCard = (boardId: string, columnId: string, id: string) =>
+    env.DB.prepare(
+      'INSERT INTO cards(id,board_id,column_id,title,position,updated_revision,title_revision,description_revision) VALUES(?,?,?,?,0,0,0,0)',
+    )
+      .bind(id, boardId, columnId, 'Card')
+      .run();
+  try {
+    await expect(
+      insertCard(home.boardId, other.columnId, crypto.randomUUID()),
+    ).rejects.toThrow(/Card column is not on this board/);
+    await insertCard(home.boardId, home.columnId, cardId);
+    await expect(
+      env.DB.prepare('UPDATE cards SET column_id=? WHERE id=?')
+        .bind(other.columnId, cardId)
+        .run(),
+    ).rejects.toThrow(/Card column is not on this board/);
+    await expect(
+      env.DB.prepare('UPDATE cards SET board_id=? WHERE id=?')
+        .bind(other.boardId, cardId)
+        .run(),
+    ).rejects.toThrow(/Card column is not on this board/);
+    await expect(
+      env.DB.prepare('UPDATE board_columns SET board_id=? WHERE id=?')
+        .bind(other.boardId, home.columnId)
+        .run(),
+    ).rejects.toThrow(/Column cannot move to another board/);
+    // The unscoped upsert that once crossed boards is refused by the schema.
+    await expect(
+      env.DB.prepare(
+        'INSERT INTO cards(id,board_id,column_id,title,position,updated_revision,title_revision,description_revision) VALUES(?,?,?,?,0,0,0,0) ON CONFLICT(id) DO UPDATE SET column_id=excluded.column_id,title=excluded.title',
+      )
+        .bind(cardId, other.boardId, other.columnId, 'Overwritten')
+        .run(),
+    ).rejects.toThrow(/Card column is not on this board/);
+    expect(
+      await env.DB.prepare(
+        'SELECT board_id,column_id,title FROM cards WHERE id=?',
+      )
+        .bind(cardId)
+        .first(),
+    ).toEqual({
+      board_id: home.boardId,
+      column_id: home.columnId,
+      title: 'Card',
+    });
+  } finally {
+    home.ws.close();
+    other.ws.close();
+  }
+});
