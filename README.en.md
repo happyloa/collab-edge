@@ -96,20 +96,20 @@ The browser tracks lastSeenRevision and retries with exponential backoff and jit
 
 ## Technology stack
 
-| Layer                              | Installed version        |
-| ---------------------------------- | ------------------------ |
-| Vinext / Cloudflare adapter        | 1.0.1 / 1.0.1            |
-| React / React DOM / RSC runtime    | 19.3.0                   |
-| Vite / TypeScript                  | 8.3.2 / 6.0.3            |
-| Tailwind / Vite integration        | 4.3.3                    |
-| Wrangler / Cloudflare Vite plugin  | 4.147.0 / 1.62.5         |
-| Drizzle ORM / Kit                  | 0.45.3 / 0.31.11         |
-| Zod / TanStack Query               | 4.6.5 / 5.104.1          |
-| React Hook Form / resolvers        | 7.89.0 / 5.9.1           |
-| dnd-kit core / sortable            | 6.3.1 / 10.0.0           |
-| Vitest / Cloudflare test plugin    | 4.1.11 / 1.3.6           |
-| Playwright / React Testing Library | 1.63.0 / 16.3.3          |
-| ESLint / Prettier / pnpm           | 10.12.0 / 3.9.9 / 12.5.1 |
+| Layer                              | Installed version         |
+| ---------------------------------- | ------------------------- |
+| Vinext / Cloudflare adapter        | 1.4.5 / 1.3.4             |
+| React / React DOM / RSC runtime    | 19.3.1                    |
+| Vite / TypeScript                  | 8.3.7 / 6.0.3             |
+| Tailwind / Vite integration        | 4.3.5                     |
+| Wrangler / Cloudflare Vite plugin  | 4.160.0 / 1.68.0          |
+| Drizzle ORM / Kit                  | 0.45.4 / 0.31.11          |
+| Zod / TanStack Query               | 4.6.7 / 5.107.1           |
+| React Hook Form / resolvers        | 7.91.0 / 7.0.5            |
+| dnd-kit core / sortable            | 6.3.1 / 10.0.0            |
+| Vitest / Cloudflare test plugin    | 5.1.0 / 1.7.0             |
+| Playwright / React Testing Library | 1.65.0 / 16.3.3           |
+| ESLint / Prettier / pnpm           | 10.14.0 / 3.9.10 / 12.5.1 |
 
 The exact reproducible graph lives in pnpm-lock.yaml. Compatibility pins, the ESLint bridge and Drizzle loader override are explained in [dependency decisions](docs/dependencies.md).
 
@@ -133,7 +133,7 @@ docs/                Architecture, protocol, security, tests and deployment
 
 ## Local development
 
-Use Node.js 24 and pnpm 12.5.1. On Windows, `corepack pnpm` works without a global pnpm shim.
+Use Node.js 24 and pnpm 12.5.1. On Windows, `corepack pnpm` works without a global pnpm shim. Node.js 25 and later no longer bundle Corepack; install pnpm 12.5.1 directly there (for example `npm install -g pnpm@12.5.1`) and use `pnpm` in place of `corepack pnpm` below.
 
 ```sh
 git clone https://github.com/happyloa/collab-edge.git
@@ -180,7 +180,7 @@ Passwords use an independent pepper HMAC followed by PBKDF2-HMAC-SHA256 with 100
 
 ## Engineering decisions and tradeoffs
 
-- **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. The project uses stable 1.0.1 and checks its App Router compatibility on every release.
+- **Vinext:** App Router and React Server Components on Vite, with direct Worker bindings. The project uses stable 1.4.5 and checks its App Router compatibility on every release.
 - **Durable Objects:** a natural coordination boundary per board, with explicit serialization across asynchronous I/O and hibernating sockets.
 - **D1:** one durable source of truth and atomic event/entity batches. Full-column card moves write changed positions with one JSON-expanded SQL statement inside the batch, avoiding a per-card query burst on Workers Free. A large move still counts every changed row toward D1's daily write allowance. Event and presence broadcasts reauthorize all recipients with one batched D1 query; the room remains capped at 20 sockets.
 - **R2:** private binary storage with random keys. R2 and D1 are not a distributed transaction; crashes can leave inaccessible objects, bounded by the upload budget.

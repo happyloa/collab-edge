@@ -77,7 +77,7 @@ Cloudflare Access 是外層門禁，通過後仍需登入 CollabEdge 帳號或�
 
 ## 本機啟動
 
-使用 Node.js 24 與 pnpm **12.5.1**。Windows 可用 `corepack pnpm`，不必另外安裝全域 pnpm。
+使用 Node.js 24 與 pnpm **12.5.1**。Windows 可用 `corepack pnpm`，不必另外安裝全域 pnpm。Node.js 25 以上不再內建 Corepack，請直接安裝 pnpm 12.5.1（例如 `npm install -g pnpm@12.5.1`），並把下列指令的 `corepack pnpm` 換成 `pnpm`。
 
 ```sh
 git clone https://github.com/happyloa/collab-edge.git
@@ -117,7 +117,7 @@ Vinext 處理頁面與 HTTP API。每個看板由一個 BoardRoom 序列化變�
 
 ## 技術與目錄
 
-Vinext 1.0.1、React 19.3.0、Vite 8.3.2、TypeScript 6.0.3、Tailwind CSS 4.3.3，搭配 Drizzle、Zod、TanStack Query 與 dnd-kit。實際鎖定版本以 [package.json](package.json) 與 [pnpm-lock.yaml](pnpm-lock.yaml) 為準；相容性取捨見 [dependencies.md](docs/dependencies.md)。
+Vinext 1.4.5、React 19.3.1、Vite 8.3.7、TypeScript 6.0.3、Tailwind CSS 4.3.5，搭配 Drizzle、Zod、TanStack Query 與 dnd-kit。實際鎖定版本以 [package.json](package.json) 與 [pnpm-lock.yaml](pnpm-lock.yaml) 為準；相容性取捨見 [dependencies.md](docs/dependencies.md)。
 
 | 目錄                   | 用途                          |
 | ---------------------- | ----------------------------- |
@@ -161,7 +161,7 @@ GitHub Actions 負責 CI、CodeQL 與獨立展示頁發布；Cloudflare 原生 W
 - **帳號刪除與資料保留**：非示範帳號先轉移所有工作區擁有權，再輸入密碼刪除。登入資料與成員資格會移除，共享的卡片、留言與檔案保留，作者匿名化。已刪除帳號仍占終身帳號總額；封存資料仍占配額。目前沒有自動清理孤立附件或事件壓縮。
 - **尚待驗收**：擁有者登入正式站後的完整流程、多瀏覽器、慢速裝置與螢幕閱讀器驗收仍未完成。本機與 CI 通過不代表這些項目已完成，詳見[作品交接](docs/portfolio-handoff.md)。
 - **安全稽核例外**：`braces@3.0.3` 的既有高風險公告使用本機修補、回歸測試及明列的稽核例外。相容性限制與修補依據見[套件文件](docs/dependencies.md)。
-- **後續功能**：富文字共同編輯、看板範本、通知、游標同步、長期離線寫入及組織管理尚未實作。Vinext 使用穩定版 1.0.1，升級前仍需驗證相容性。
+- **後續功能**：富文字共同編輯、看板範本、通知、游標同步、長期離線寫入及組織管理尚未實作。Vinext 使用穩定版 1.4.5，升級前仍需驗證相容性。
 
 ## 延伸文件
 

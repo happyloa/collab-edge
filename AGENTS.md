@@ -5,7 +5,7 @@
 - Entity writes, revision and event must commit in one D1 batch. Broadcast only after commit. Never bypass mutation UUID uniqueness, revision guards or field conflict checks.
 - Authorize every HTTP/WS operation and event recipient. Validate external payloads. Preserve attempted edits on failure. Never trust client ordering numbers.
 - User requires zero additional Cloudflare costs. Do not upgrade plans or enable production R2 until billing allowances are verified. Keep deployment gated. Enforce quotas server-side and fail closed.
-- pnpm 12.5.1 only. Use `corepack pnpm` if no pnpm shim exists on Windows. The lockfile is authoritative.
+- pnpm 12.5.1 only. Use `corepack pnpm` if no pnpm shim exists on Windows; Node 25+ no longer bundles Corepack, so install pnpm 12.5.1 directly there. The lockfile is authoritative.
 - Commands: `pnpm dev`, `pnpm cf:typegen`, `pnpm db:migrate:local`, `pnpm verify`, `pnpm test:e2e`, `pnpm outdated`, `pnpm audit`.
 - Strict TypeScript, ESLint flat config, Prettier, Tailwind 4 Vite integration. No blanket type/lint suppressions.
 - Read docs/dependencies.md before replacing compatibility pins, loader override or ESLint bridge.
