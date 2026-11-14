@@ -180,12 +180,13 @@ export function BoardColumn({
           </form>
           <div className="flex flex-wrap gap-3">
             <button
+              disabled={index === 0}
               onClick={() =>
                 mutate({
                   type: 'column.move',
                   payload: {
                     id: column.id,
-                    beforeId: columns[Math.max(0, index - 1)]?.id ?? null,
+                    beforeId: columns[index - 1]?.id ?? null,
                   },
                 })
               }
@@ -193,6 +194,7 @@ export function BoardColumn({
               {t('Move left')}
             </button>
             <button
+              disabled={index === columns.length - 1}
               onClick={() =>
                 mutate({
                   type: 'column.move',

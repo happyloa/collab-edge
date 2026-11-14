@@ -15,6 +15,7 @@ import { Attachments } from './attachments';
 import { cardFieldStatus, type CardField } from './card-field-status';
 import type { Pending } from '../../src/realtime/socket-client';
 import type { Snapshot, Command } from '../../src/realtime/protocol';
+import { byPosition } from '../../src/realtime/board-reducer';
 import { restoreCardDraft } from '../../src/drafts/restore';
 import {
   saveDraft,
@@ -664,7 +665,7 @@ export function CardDialog({
                                   (item) => item.id === initial.id,
                                 )?.columnId ?? initial.columnId),
                           )
-                          .sort((a, b) => a.position - b.position)
+                          .sort(byPosition)
                           .map((card) => (
                             <option key={card.id} value={card.id}>
                               {t('Before {title}', { title: card.title })}

@@ -36,16 +36,24 @@ export function applyEvent(state: Snapshot, event: BoardEvent) {
   const patched = applyPatch(state, event.payload);
   return { ...patched, board: { ...patched.board, revision: event.revision } };
 }
-export function ordered<T extends { id: string; position: number }>(
+type Positioned = { id: string; position: number };
+/** The one ordering used by the server, the optimistic state and the UI. */
+export function byPosition(a: Positioned, b: Positioned) {
+  return a.position - b.position || a.id.localeCompare(b.id);
+}
+// Counting siblings would reuse a position left behind by a moved or removed
+// entity, so new items always go after the highest existing position.
+function nextPosition(items: Positioned[]) {
+  return items.reduce((max, item) => Math.max(max, item.position + 1), 0);
+}
+export function ordered<T extends Positioned>(
   items: T[],
   movingId: string,
   beforeId: string | null,
 ) {
   const moving = items.find((item) => item.id === movingId);
   if (!moving) throw new Error('Entity not found');
-  const rest = items
-    .filter((item) => item.id !== movingId)
-    .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+  const rest = items.filter((item) => item.id !== movingId).sort(byPosition);
   const index = beforeId
     ? rest.findIndex((item) => item.id === beforeId)
     : rest.length;
@@ -74,9 +82,9 @@ export function optimistic(
             boardId: state.board.id,
             description: '',
             archived: false,
-            position: state.cards.filter(
-              (v) => v.columnId === c.payload.columnId,
-            ).length,
+            position: nextPosition(
+              state.cards.filter((v) => v.columnId === c.payload.columnId),
+            ),
             updatedRevision: revision,
             titleRevision: revision,
             descriptionRevision: revision,
@@ -93,7 +101,7 @@ export function optimistic(
           {
             ...c.payload,
             boardId: state.board.id,
-            position: state.columns.length,
+            position: nextPosition(state.columns),
             updatedRevision: revision,
             titleRevision: revision,
           },

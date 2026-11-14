@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { hashPassword, verifyPassword, sessionHash } from '../src/auth/crypto';
 import { prepareMutation, ConflictError } from '../src/realtime/mutations';
-import { applyEvent, applyPatch, ordered } from '../src/realtime/board-reducer';
+import {
+  applyEvent,
+  applyPatch,
+  byPosition,
+  ordered,
+} from '../src/realtime/board-reducer';
 import { clientMessage, type Snapshot } from '../src/realtime/protocol';
 import { matchesCard } from '../src/realtime/card-filters';
 const boardId = crypto.randomUUID(),
@@ -286,6 +291,44 @@ describe('security and synchronization', () => {
       { id: 'b', position: 0 },
       { id: 'a', position: 1 },
     ]);
+  });
+  it('places new cards and columns after the highest position', () => {
+    // A card moved out of the column leaves a gap; counting the remaining
+    // cards would hand the new card the position of the existing one.
+    const gapped = {
+      ...state,
+      columns: [{ ...state.columns[0], position: 3 }],
+      cards: [{ ...state.cards[0], position: 1 }],
+    };
+    const create = (
+      command: Parameters<typeof prepareMutation>[1]['command'],
+    ) =>
+      prepareMutation(
+        gapped,
+        { clientMutationId: crypto.randomUUID(), baseRevision: 2, command },
+        actorId,
+      );
+    const card = create({
+      type: 'card.create',
+      payload: { id: crypto.randomUUID(), columnId, title: 'New' },
+    });
+    expect(card.cards?.[0]?.position).toBe(2);
+    const column = create({
+      type: 'column.create',
+      payload: { id: crypto.randomUUID(), title: 'Later' },
+    });
+    expect(column.columns?.[0]?.position).toBe(4);
+  });
+  it('breaks position ties by ID so every client shows the same order', () => {
+    expect(
+      [
+        { id: 'b', position: 1 },
+        { id: 'a', position: 1 },
+        { id: 'c', position: 0 },
+      ]
+        .sort(byPosition)
+        .map((item) => item.id),
+    ).toEqual(['c', 'a', 'b']);
   });
   it('detects replay gaps and ignores already applied events', () => {
     const event = {

@@ -33,6 +33,7 @@ import { useCardMovement } from './use-card-movement';
 import type { CardDraft } from '../../src/drafts/store';
 import { useBoard } from '../../src/realtime/socket-client';
 import { matchesCard, localToday } from '../../src/realtime/card-filters';
+import { byPosition } from '../../src/realtime/board-reducer';
 import type { Snapshot } from '../../src/realtime/protocol';
 function focusCardDialogClose(button: HTMLButtonElement) {
   button
@@ -124,7 +125,7 @@ function Board({
   const readOnly =
     (live.role ?? initial.role) === 'VIEWER' || state.board.archived;
   const columns = useMemo(
-    () => [...state.columns].sort((a, b) => a.position - b.position),
+    () => [...state.columns].sort(byPosition),
     [state.columns],
   );
   const commentCounts = useMemo(() => {
@@ -193,15 +194,23 @@ function Board({
     if (!over || active.id === over.id) return;
     const targetCard = state.cards.find((c) => c.id === over.id);
     const destination = targetCard?.columnId ?? String(over.id);
-    if (columns.some((c) => c.id === destination))
-      void movement.move({
-        type: 'card.move',
-        payload: {
-          id: String(active.id),
-          columnId: destination,
-          beforeId: targetCard?.id ?? null,
-        },
-      });
+    if (!columns.some((c) => c.id === destination)) return;
+    let beforeId = targetCard?.id ?? null;
+    const moving = state.cards.find((c) => c.id === active.id);
+    if (targetCard && moving?.columnId === destination) {
+      // The sortable list shows a card dragged downward after its target, so
+      // the anchor is the card that follows the target.
+      const siblings = state.cards
+        .filter((c) => c.columnId === destination && !c.archived)
+        .sort(byPosition);
+      const from = siblings.findIndex((c) => c.id === moving.id);
+      const to = siblings.findIndex((c) => c.id === targetCard.id);
+      if (from < to) beforeId = siblings[to + 1]?.id ?? null;
+    }
+    void movement.move({
+      type: 'card.move',
+      payload: { id: String(active.id), columnId: destination, beforeId },
+    });
   }
   return (
     <div className="min-h-screen">
@@ -559,7 +568,7 @@ function Board({
                       !c.archived &&
                       matchesCard(c, search, assignee, due, today),
                   )
-                  .sort((a, b) => a.position - b.position)}
+                  .sort(byPosition)}
                 readOnly={readOnly}
                 filtered={filtered}
                 people={initial.people}
