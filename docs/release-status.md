@@ -12,9 +12,7 @@
 
 ## 部署
 
-- 最後一筆有紀錄的部署：應用 commit `69a4f09`，Workers Build `31aa86a6-af71-43e2-af95-0becd8d3efb4`，version `f5a933a7-2983-49fc-b028-6592fe8063db`。
-- 2026-11-12 推上 `main` 的那批（含 migration `0007_board_scoped_cards`）會自動觸發 Workers Builds，但沒有留下部署紀錄。下次請在 Cloudflare 後台確認 build 與 migration 結果後補記。
-- `fix/uiux-spec-completion` 分支的修補尚未合併，也尚未部署。
+- 2026-11-14：commit `75bb8be` 由 Workers Build `ef94189b-b7fb-4174-a257-4bf6311c5603` 部署成功。部署指令先執行 `db:migrate:remote`，因此到 `0007_board_scoped_cards` 為止的 migration 皆已套用。同一 commit 的 GitHub CI、CodeQL 與公開體驗發布皆成功。
 
 正式站只允許擁有者的 Access 信箱。匿名請求會導向 Access，正式附件停用，未使用付費服務；Workers Free 方案由擁有者確認，未另外讀取帳單。
 
