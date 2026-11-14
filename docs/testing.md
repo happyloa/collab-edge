@@ -25,7 +25,7 @@ Workers tests use local workerd, D1, R2 and SQLite Durable Objects. They cover a
 
 React tests cover recovery controls, disabled attachments, pending and conflicting field states, receipt-bound move announcements, pagination retries and irreversible-action guards. ESLint compatibility probes verify that real React and accessibility errors remain detectable.
 
-The two-browser scenario creates Alice and Bob, invites a teammate, checks ordered updates and presence, moves a card, resolves a stale edit, reconnects, comments, uploads a local file and verifies a private export. Browser page errors fail the scenario. See the [walkthrough](realtime-walkthrough.md), [keyboard checks](keyboard-accessibility.md), [retention limits](event-retention.md) and [performance reproduction](snapshot-performance.md).
+The two-browser scenario creates Alice and Bob, invites a teammate, checks ordered updates and presence, moves a card, resolves a stale edit, reconnects, comments, uploads a local file and verifies a private export. Browser page errors fail the scenario. See the [walkthrough](realtime-walkthrough.md), [keyboard checks](interface.md), [retention limits](event-retention.md) and [performance reproduction](snapshot-performance.md).
 
 ## Local isolation
 
@@ -37,4 +37,4 @@ Stop an existing Vinext preview before running the isolated suite: Vinext permit
 
 `capture:demo` runs the collaboration scenario against fresh local state and replaces synchronized recordings and posters in `showcase/media/` only after success. Capture and performance modes reject `E2E_BASE_URL`.
 
-CI runs without production credentials. Playwright engine builds, local results and recorded clips do not establish physical-device, screen-reader or Access-authenticated production acceptance. Follow the separate [production smoke checklist](production-smoke.md).
+CI runs without production credentials. Playwright engine builds, local results and recorded clips do not establish physical-device, screen-reader or Access-authenticated production acceptance. Follow the separate [production smoke checklist](deployment.md#production-smoke-check).

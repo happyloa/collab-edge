@@ -1,47 +1,48 @@
 # CollabEdge
 
-[繁體中文](README.md) · [Public playground](https://happyloa.github.io/collab-edge/) · [Private application](https://collab-edge.piafyoyo06.workers.dev)
+[繁體中文](README.md) · [Public playground](https://happyloa.github.io/collab-edge/) · [Private app (owner only)](https://collab-edge.piafyoyo06.workers.dev)
 
-A collaborative board with cards, comments, filters, archives, backup restoration, and recovery from disconnections and conflicting edits. Includes English and Traditional Chinese, light and dark themes, and keyboard controls.
+A realtime collaborative board on Cloudflare Workers: cards, comments, assignees, filters, archives and backup restore, with recovery from disconnects and conflicting edits. English and Traditional Chinese, light and dark themes, keyboard controls.
 
-The public playground is a browser-only simulation with no production API connection. The private application requires owner-only Cloudflare Access; attachments are disabled. Authenticated production acceptance remains incomplete.
+The public playground is a browser-only simulation with no production API. The private app is owner-only, attachments are disabled, and the signed-in production flow has not been accepted yet.
+
+## Core design
+
+| Problem                                  | Approach                                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Who orders concurrent edits?             | One Durable Object serializes each board; D1 is canonical                                         |
+| A write committed but the peer missed it | Entity, revision and event commit in one batch before broadcast; reconnect replays or resnapshots |
+| Does a retry create duplicates?          | Every operation carries a UUID, deduplicated by a unique constraint                               |
+| Someone changed the same field           | Per-field revisions detect it; your attempted edit is kept for retry or discard                   |
 
 ## Local development
 
-Requires Node.js 24 and pnpm 12.5.1. Node.js 25 and later no longer bundle Corepack; install pnpm 12.5.1 directly there (for example `npm install -g pnpm@12.5.1`) and use `pnpm` in place of `corepack pnpm` below.
+Requires Node.js 24 and pnpm 12.5.1 (Node.js 25+ has no Corepack: install pnpm directly and use `pnpm` instead of `corepack pnpm`).
 
 ```sh
 corepack pnpm install --frozen-lockfile
-node scripts/setup-local.mjs
+node scripts/setup-local.mjs   # creates local .dev.vars
 corepack pnpm cf:typegen
 corepack pnpm db:migrate:local
 corepack pnpm dev
 ```
 
-Setup creates local `.dev.vars` only. Keep secrets and test data out of Git. Use Alice and Bob in separate browsers to try the same demo board.
+Choose Alice and Bob in two browsers to join the same demo board.
 
-## Validation
+## Testing
 
 ```sh
-corepack pnpm verify
+corepack pnpm verify      # format, lint, types, Workers/React tests, build
 corepack pnpm exec playwright install chromium firefox webkit
-corepack pnpm test:e2e
-corepack pnpm build:showcase
-corepack pnpm test:showcase
-corepack pnpm test:perf
-corepack pnpm audit
+corepack pnpm test:e2e    # isolated local browser suite
 ```
 
-Browser tests use isolated local resources. The audit retains one reviewed, patched `braces@3.0.3` exception; see [dependency decisions](docs/dependencies.md).
+Pushing to `main` deploys automatically; run `test:e2e` first.
 
-## Architecture and operations
+## Docs
 
-Vinext and React handle pages and HTTP. One Durable Object serializes each board's operations; D1 is canonical. Entity writes, revisions and events commit together, UUIDs prevent duplicate operations, and conflicts preserve attempted edits.
-
-This remains a Wrangler project. Prefer `cf` for Cloudflare account and resource management; a full migration requires separate configuration, binding, build and deployment validation.
-
-- [Architecture](docs/architecture.en.md) · [Realtime protocol](docs/realtime-protocol.md) · [Two-browser walkthrough](docs/realtime-walkthrough.md)
-- [Testing](docs/testing.md) · [Deployment](docs/deployment.md) · [Security](docs/security.md)
-- [Verification status and limitations](docs/release-status.md) · [Development rules](AGENTS.md)
+- Design: [Architecture](docs/architecture.en.md) · [Realtime protocol, conflicts and drafts](docs/realtime-protocol.md) · [Error recovery (zh)](docs/error-recovery.md) · [Two-browser walkthrough](docs/realtime-walkthrough.md)
+- Features: [Workspaces](docs/workspaces.md) · [Backups](docs/board-backups.md) · [Event retention](docs/event-retention.md) · [Languages and keyboard](docs/interface.md) · [Public playground](docs/public-demo.md)
+- Operations: [Deployment and rollback](docs/deployment.md) · [Security and quotas](docs/security.md) · [Key rotation](docs/auth-key-rotation.md) · [Testing](docs/testing.md) · [Performance](docs/snapshot-performance.md) · [Dependencies](docs/dependencies.md) · [Release status (zh)](docs/release-status.md)
 
 [MIT](LICENSE)

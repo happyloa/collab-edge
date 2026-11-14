@@ -8,25 +8,25 @@ CollabEdge's [public playground](https://happyloa.github.io/collab-edge/) is a b
 
 ## Reproduce it
 
-From a fresh checkout, follow the [local setup](../README.en.md#local-development), install Chromium, then run:
+From a fresh checkout, follow the [local setup](../README.en.md#local-development), install the browsers (`pnpm exec playwright install chromium firefox webkit`), then run:
 
 ```sh
 corepack pnpm test:e2e
 ```
 
-The command migrates a fresh local D1 state, runs 13 Chromium scenarios and removes that temporary state afterward. It leaves the normal development database untouched. The [collaboration scenario](../e2e/collaboration.spec.ts) gives Alice and Bob independent browser contexts and accounts. The current [CI workflow](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml) runs the same suite on every push.
+The command migrates a fresh local D1 state, runs the full Chromium suite plus targeted Firefox and WebKit scenarios and removes that temporary state afterward. It leaves the normal development database untouched. The [collaboration scenario](../e2e/collaboration.spec.ts) gives Alice and Bob independent browser contexts and accounts. The current [CI workflow](https://github.com/happyloa/collab-edge/actions/workflows/ci.yml) runs the same suite on every push.
 
 To regenerate the public recordings and poster images from only the collaboration scenario, run `corepack pnpm capture:demo`. This command refuses `E2E_BASE_URL`, creates disposable local D1 state and writes the media under `showcase/media/` only after the test passes.
 
 ## What the test demonstrates
 
-| Checkpoint           | Visible behavior                                                                                                                                                  | Where to inspect                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Ordered delivery     | Alice creates a card; Bob sees it without reloading. Bob changes its title, assignee and due date; Alice receives the update.                                     | [Browser scenario](../e2e/collaboration.spec.ts), [socket client](../src/realtime/socket-client.ts) |
-| Recoverable conflict | Both edit the same title. Bob saves first; Alice's stale edit shows a conflict with her attempted title intact. Alice explicitly retries and Bob sees the result. | [Browser scenario](../e2e/collaboration.spec.ts), [field conflict rules](conflict-resolution.md)    |
-| Reconnect            | Bob goes offline while Alice changes the card. After reconnect, Bob reaches the current authoritative state without a page reload.                                | [Browser scenario](../e2e/collaboration.spec.ts), [replay protocol](realtime-protocol.md)           |
-| Authorization        | An anonymous browser cannot download the private attachment. Other workerd tests reject viewer writes and stop delivering events to revoked members.              | [Browser scenario](../e2e/collaboration.spec.ts), [integration tests](../tests/integration.test.ts) |
-| Persistence          | The board export contains the synchronized snapshot, comments and attachment metadata, without private R2 object keys.                                            | [Browser scenario](../e2e/collaboration.spec.ts), [board UI](../components/board/board.tsx)         |
+| Checkpoint           | Visible behavior                                                                                                                                                  | Where to inspect                                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Ordered delivery     | Alice creates a card; Bob sees it without reloading. Bob changes its title, assignee and due date; Alice receives the update.                                     | [Browser scenario](../e2e/collaboration.spec.ts), [socket client](../src/realtime/socket-client.ts)      |
+| Recoverable conflict | Both edit the same title. Bob saves first; Alice's stale edit shows a conflict with her attempted title intact. Alice explicitly retries and Bob sees the result. | [Browser scenario](../e2e/collaboration.spec.ts), [field conflict rules](realtime-protocol.md#conflicts) |
+| Reconnect            | Bob goes offline while Alice changes the card. After reconnect, Bob reaches the current authoritative state without a page reload.                                | [Browser scenario](../e2e/collaboration.spec.ts), [replay protocol](realtime-protocol.md)                |
+| Authorization        | An anonymous browser cannot download the private attachment. Other workerd tests reject viewer writes and stop delivering events to revoked members.              | [Browser scenario](../e2e/collaboration.spec.ts), [integration tests](../tests/integration.test.ts)      |
+| Persistence          | The board export contains the synchronized snapshot, comments and attachment metadata, without private R2 object keys.                                            | [Browser scenario](../e2e/collaboration.spec.ts), [board UI](../components/board/board.tsx)              |
 
 ```mermaid
 sequenceDiagram

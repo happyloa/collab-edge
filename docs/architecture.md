@@ -102,7 +102,7 @@ BoardRoom 的 Promise queue 讓快照、修改與附件流程跨 `await` 保持�
 | session 過期或權限撤銷                 | 拒絕後續未授權操作，重新授權廣播接收者；登入恢復須是原帳號  |
 | 瀏覽器無法保存草稿或容量達上限         | 保留表單輸入並阻擋看板送出，避免使用者以為草稿已安全保存    |
 
-客戶端分開保存 confirmed 與 pending，再以 optimistic reducer 組成畫面。重複事件忽略，版本缺口觸發重同步；重連使用帶 jitter 的退避。離線時可保留表單草稿，沒有長期自動送出的離線佇列，也不是 CRDT 文字合併。細節見[協定](realtime-protocol.md)、[衝突](conflict-resolution.md)、[草稿](local-drafts.md)與[錯誤恢復](error-recovery.md)。
+客戶端分開保存 confirmed 與 pending，再以 optimistic reducer 組成畫面。重複事件忽略，版本缺口觸發重同步；重連使用帶 jitter 的退避。離線時可保留表單草稿，沒有長期自動送出的離線佇列，也不是 CRDT 文字合併。細節見[協定](realtime-protocol.md)、[衝突](realtime-protocol.md#conflicts)、[草稿](realtime-protocol.md#local-drafts)與[錯誤恢復](error-recovery.md)。
 
 ## 身分與授權
 

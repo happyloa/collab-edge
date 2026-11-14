@@ -1,8 +1,8 @@
 # Architecture
 
-[????](architecture.md) ? **English**
+[繁體中文](architecture.md) · **English**
 
-CollabEdge uses Vinext App Router, React Server Components, Vite 8 and Workers. The custom Worker only routes `/realtime/:boardId` and exports Durable Objects. App Router owns all ordinary HTTP APIs.
+CollabEdge uses Vinext App Router, React Server Components, Vite 8 and Workers. The custom Worker applies Access verification, the site request budget and security headers, routes `/realtime/:boardId` and exports Durable Objects. App Router owns all ordinary HTTP APIs.
 
 ```mermaid
 flowchart LR
