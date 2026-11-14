@@ -52,8 +52,8 @@ export async function checkPassword(
   const { peppers, current } = passwordKeys(authEnv);
   const version = passwordHashVersion(encoded);
   if (version === undefined) return { valid: false, needsUpgrade: false };
-  // SESSION_SECRET is frozen for old hashes and the bounded legacy-session grace.
-  // New passwords and sessions use their own independent secrets.
+  // Hashes created before PASSWORD_PEPPERS still use SESSION_SECRET as their
+  // pepper, so it stays frozen. New passwords and sessions use their own keys.
   const pepper = version === null ? authEnv.SESSION_SECRET : peppers[version];
   assert(pepper?.length >= 32, 503, 'Password configuration unavailable');
   const valid = await verifyPassword(password, encoded, pepper);
