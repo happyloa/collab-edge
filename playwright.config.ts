@@ -5,6 +5,8 @@ if (!Number.isInteger(localPort) || localPort < 1024 || localPort > 65535)
 const localUrl = `http://localhost:${localPort}`;
 export default defineConfig({
   testDir: './e2e',
+  // A stray test.only would otherwise let CI pass after running one case.
+  forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
   workers: 1,
   timeout: 60000,
