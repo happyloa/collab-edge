@@ -16,6 +16,7 @@ import {
 import { DEMO } from '../../src/db/demo';
 import {
   clientMessage,
+  id as uuid,
   HEARTBEAT,
   mutationSchema,
   eventSchema,
@@ -366,6 +367,16 @@ export class BoardRoom extends DurableObject<Env> {
           413,
           'Message too large',
         );
+        try {
+          // Identify the mutation before rate limiting so a rejected one is
+          // marked failed instead of waiting forever as pending.
+          const id = (
+            JSON.parse(raw) as { mutation?: { clientMutationId?: unknown } }
+          ).mutation?.clientMutationId;
+          if (uuid.safeParse(id).success) mutationId = id as string;
+        } catch {
+          // The schema parse below reports malformed messages.
+        }
         const state = socketState.parse(socket.deserializeAttachment());
         if (Date.now() - state.window > 60_000) {
           state.window = Date.now();
@@ -452,9 +463,11 @@ export class BoardRoom extends DurableObject<Env> {
     input: Mutation,
   ): Promise<{ revision: number; event: BoardEvent | null }> {
     const mutation = mutationSchema.parse(input);
+    // 409, not 403: a refused operation must not close the socket as if the
+    // person had lost access to the board.
     assert(
       boardId !== DEMO.board || mutation.command.type !== 'board.archive',
-      403,
+      409,
       'The shared demo board cannot be archived',
     );
     const context = await loadMutationContext(this.env.DB, boardId, mutation);
@@ -587,6 +600,7 @@ export class BoardRoom extends DurableObject<Env> {
       sessionId ? [sessionId] : [],
     );
     const allowed = new Map<string, string>();
+    let unavailable = false;
     if (ids.length) {
       try {
         const rows = await this.env.DB.prepare(
@@ -601,6 +615,7 @@ export class BoardRoom extends DurableObject<Env> {
         for (const row of rows.results) allowed.set(row.id, row.user_id);
       } catch {
         // A database failure must not leak events or presence to stale members.
+        unavailable = true;
       }
     }
     const recipients: {
@@ -616,7 +631,12 @@ export class BoardRoom extends DurableObject<Env> {
       )
         recipients.push({ socket, state });
       else if (socket.readyState === WebSocket.OPEN)
-        socket.close(1008, 'Access expired');
+        // Still fail closed, but a transient outage gets a retryable code so
+        // clients reconnect (and reauthorize) instead of being told to sign in.
+        socket.close(
+          unavailable ? 1011 : 1008,
+          unavailable ? 'Service unavailable' : 'Access expired',
+        );
     }
     return recipients;
   }

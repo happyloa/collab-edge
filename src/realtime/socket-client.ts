@@ -17,6 +17,9 @@ import {
   type DraftLease,
   draftErrorMessage,
 } from '../drafts/store';
+// Backoff reaches its 30 s ceiling after five tries; eight tries is about
+// two minutes before the board asks the person to reconnect manually.
+const maxReconnectAttempts = 8;
 export type Pending = {
   mutation: Mutation;
   state: 'pending' | 'failed' | 'conflicted' | 'recovered';
@@ -319,6 +322,14 @@ export function useBoard(
             setError(
               'Your session or membership expired. Please sign in again.',
             );
+          return;
+        }
+        if (attempt >= maxReconnectAttempts) {
+          // A rejected upgrade (expired session, removed board, full room)
+          // reaches the browser as a bare 1006, so stop instead of spending
+          // the site's daily request budget every 30 seconds indefinitely.
+          setStatus('Offline');
+          setError('Connection lost. Check your network and try again.');
           return;
         }
         setStatus(navigator.onLine ? 'Reconnecting' : 'Offline');
