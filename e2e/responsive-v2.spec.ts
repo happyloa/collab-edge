@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 import type { Page } from '@playwright/test';
 import { translate, type Locale } from '../src/i18n/messages';
 
@@ -44,10 +44,9 @@ test('account screens fit the requested widths in both languages and themes', as
     await page.setViewportSize({ width, height: 800 });
     for (const route of ['/login', '/register', '/reset-password']) {
       await page.goto(route);
-      const language = page.getByRole('combobox', { name: 'Language / 語言' });
-      await expect(language).toBeEnabled();
+      await expect(page.getByRole('radio', { name: 'English' })).toBeEnabled();
       for (const locale of ['en', 'zh-TW']) {
-        await language.selectOption(locale);
+        await setLanguage(page, locale);
         for (const theme of ['light', 'dark']) {
           await page.evaluate((value) => {
             document.documentElement.dataset.theme = value;
@@ -116,10 +115,7 @@ test('workspace and board fit the requested widths in both languages and themes'
       for (const target of [page, board])
         await target.setViewportSize({ width, height: 800 });
       for (const locale of ['en', 'zh-TW'] as Locale[]) {
-        for (const target of [page, board])
-          await target
-            .getByRole('combobox', { name: 'Language / 語言' })
-            .selectOption(locale);
+        for (const target of [page, board]) await setLanguage(target, locale);
         for (const theme of ['light', 'dark']) {
           for (const target of [page, board]) {
             await target.evaluate((value) => {

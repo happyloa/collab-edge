@@ -242,7 +242,10 @@ test('owners preview backups, resume committed uploads after reload and retry fi
   await expect(
     page.getByRole('link', { name: 'historical-notes.txt' }),
   ).toHaveCount(0);
-  await page.getByLabel('Language / 語言').selectOption('zh-TW');
+  // The open card dialog is modal, so the header cannot take a pointer click;
+  // switch the language underneath it to check the dialog's translations.
+  await page.getByRole('radio', { name: '繁體中文' }).dispatchEvent('click');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(
     page.getByText('128 位元組 · 檔案無法取得', { exact: true }),
   ).toBeVisible();

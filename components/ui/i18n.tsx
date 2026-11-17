@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useId, useState } from 'react';
 import {
   localeCookie,
   parseLocale,
@@ -45,23 +45,47 @@ export function useI18n() {
   };
 }
 
+const languages = [
+  { value: 'en', short: 'EN', name: 'English' },
+  { value: 'zh-TW', short: '中', name: '繁體中文' },
+] as const;
+
+/**
+ * Two-way language switch. Native radios keep arrow-key selection and the
+ * group semantics; each one covers its segment so the whole cell is the target.
+ */
 export function LanguageSelect() {
   const { locale, setLocale } = useI18n();
   const ready = useHydrated();
+  const name = useId();
   return (
-    <select
-      className="w-auto text-sm"
+    <div
+      role="radiogroup"
       aria-label="Language / 語言"
-      value={locale}
-      disabled={!ready}
-      onChange={(event) => setLocale(parseLocale(event.target.value))}
+      className="language-switch inline-flex shrink-0 rounded-md border border-control-border p-0.5"
     >
-      <option value="en" lang="en">
-        English
-      </option>
-      <option value="zh-TW" lang="zh-TW">
-        繁體中文
-      </option>
-    </select>
+      {languages.map((language) => (
+        <label key={language.value} className="relative">
+          <input
+            type="radio"
+            className="peer absolute inset-0 m-0 size-full cursor-pointer appearance-none border-0 p-0 opacity-0 disabled:cursor-not-allowed"
+            name={name}
+            value={language.value}
+            lang={language.value}
+            aria-label={language.name}
+            title={language.name}
+            checked={locale === language.value}
+            disabled={!ready}
+            onChange={() => setLocale(parseLocale(language.value))}
+          />
+          <span
+            aria-hidden="true"
+            className="flex min-h-10 min-w-10 items-center justify-center rounded-sm px-2 text-xs font-semibold text-muted peer-checked:bg-foreground peer-checked:text-background peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus peer-disabled:opacity-50"
+          >
+            {language.short}
+          </span>
+        </label>
+      ))}
+    </div>
   );
 }

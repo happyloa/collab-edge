@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 
 test('recovery is reachable from login and validates both passwords', async ({
   page,
@@ -20,7 +20,7 @@ test('recovery is reachable from login and validates both passwords', async ({
   await submit.click();
   await expect(page.getByRole('alert')).toHaveText('Passwords do not match');
 
-  await page.getByRole('combobox').selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(page.getByRole('heading', { name: '重設密碼' })).toBeVisible();
   await expect(page.getByRole('alert')).toHaveText('兩次輸入的密碼不相同');
   await page.getByRole('link', { name: '返回登入' }).click();

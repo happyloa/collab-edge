@@ -1,4 +1,4 @@
-import { test, expect, isolatedContext } from './fixture';
+import { test, expect, isolatedContext, setLanguage } from './fixture';
 import type { Page } from '@playwright/test';
 
 test('owners inspect scoped capacity, retry explicitly and retain archived usage', async ({
@@ -125,7 +125,7 @@ test('owners inspect scoped capacity, retry explicitly and retain archived usage
     await expect(
       region.getByRole('meter', { name: 'Workspace boards' }),
     ).toHaveAttribute('value', '1');
-    await owner.getByLabel('Language / 語言').selectOption('zh-TW');
+    await setLanguage(owner, 'zh-TW');
     await expect(
       owner.getByRole('region', { name: '容量與使用限制' }),
     ).toContainText('封存會保留資料');

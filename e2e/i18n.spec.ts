@@ -1,4 +1,4 @@
-import { test, expect, isolatedContext } from './fixture';
+import { test, expect, isolatedContext, setLanguage } from './fixture';
 
 test('language persists across routes and reloads without losing drafts or reconnecting the board', async ({
   page,
@@ -12,9 +12,7 @@ test('language persists across routes and reloads without losing drafts or recon
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     '讓工作持續向前',
@@ -25,14 +23,10 @@ test('language persists across routes and reloads without losing drafts or recon
   await page.getByLabel('密碼', { exact: true }).fill('short');
   await page.getByRole('button', { name: '建立帳號', exact: true }).click();
   await expect(page.getByText('請使用至少 12 個字元')).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('en');
+  await setLanguage(page, 'en');
   await expect(page.getByLabel('Your name')).toHaveValue('測試 User');
   await expect(page.getByText('Use at least 12 characters')).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await page.reload();
   await expect(page.getByRole('heading', { name: '註冊帳號' })).toBeVisible();
   await page.goto('/');
@@ -45,18 +39,14 @@ test('language persists across routes and reloads without losing drafts or recon
   await page.getByLabel('在 Backlog 新增卡片').fill('保留這份草稿 unchanged');
   let sockets = 0;
   page.on('websocket', () => sockets++);
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('en');
+  await setLanguage(page, 'en');
   await expect(page.getByLabel('New card in Backlog')).toHaveValue(
     '保留這份草稿 unchanged',
   );
   await expect(
     page.getByRole('status', { name: 'Connection status' }),
   ).toHaveText('Connected');
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await page.getByRole('button', { name: '活動紀錄', exact: true }).click();
   await expect(page.getByRole('heading', { name: '最近的活動' })).toBeVisible();
   expect(sockets).toBe(0);

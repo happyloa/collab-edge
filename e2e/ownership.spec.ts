@@ -1,4 +1,4 @@
-import { test, expect, isolatedContext } from './fixture';
+import { test, expect, isolatedContext, setLanguage } from './fixture';
 import type { Page } from '@playwright/test';
 import { translate, type Locale } from '../src/i18n/messages';
 
@@ -48,7 +48,7 @@ test('owner and recipient confirm an ownership transfer from separate accounts',
     for (const width of [320, 390]) {
       await owner.setViewportSize({ width, height: 844 });
       for (const locale of ['en', 'zh-TW'] as Locale[]) {
-        await owner.getByLabel('Language / 語言').selectOption(locale);
+        await setLanguage(owner, locale);
         for (const label of [
           'Invite a registered teammate',
           'Transfer to',
@@ -72,7 +72,7 @@ test('owner and recipient confirm an ownership transfer from separate accounts',
         ).toBeLessThanOrEqual(width);
       }
     }
-    await owner.getByLabel('Language / 語言').selectOption('en');
+    await setLanguage(owner, 'en');
 
     await recipient.reload();
     await expect(

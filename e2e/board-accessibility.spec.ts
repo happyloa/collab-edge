@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 
 for (const mode of [
   { width: 1280, height: 720, reducedMotion: 'no-preference' as const },
@@ -254,8 +254,6 @@ test('card comment indicator reflects the actual comments and locale', async ({
   await expect(
     surface.getByRole('img', { name: '1 comment(s)' }),
   ).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(surface.getByRole('img', { name: '1 則留言' })).toBeVisible();
 });

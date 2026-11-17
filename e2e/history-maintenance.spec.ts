@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 
 test('history maintenance stays owner-only, loads on demand and uses the server preview on a new board', async ({
   page,
@@ -51,9 +51,7 @@ test('history maintenance stays owner-only, loads on demand and uses the server 
     panel.getByText('No event details are eligible for clearing.'),
   ).toBeVisible();
   expect(requests).toEqual(['GET']);
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(
     page.getByRole('region', { name: '歷史紀錄維護' }),
   ).toContainText('目前沒有符合條件的事件內容。');

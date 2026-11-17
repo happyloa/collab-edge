@@ -130,7 +130,7 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   await expect(
     page.getByRole('button', { name: 'Write the launch story', exact: true }),
   ).toBeVisible();
-  await page.getByLabel('Language / 語言').selectOption('zh-TW');
+  await page.getByRole('radio', { name: '繁體中文' }).check();
   await expect(page.getByRole('button', { name: '重設展示' })).toBeVisible();
   await expect(
     page.getByRole('link', { name: '雙瀏覽器測試導覽' }),

@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 
 test('motion follows user preference without shifting draggable cards', async ({
   page,
@@ -79,9 +79,7 @@ test('reduced motion is respected on first paint and after switching language', 
     page.getByRole('region', { name: 'Product preview' }),
   ).toBeVisible();
 
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('[data-flow-step]').first()).toHaveCSS(
@@ -112,9 +110,7 @@ test('collaboration illustration is keyboard operable, bilingual and stays local
   await expect(
     story.getByText('Draft preserved', { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   story = page.getByRole('region', { name: '協作如何運作' });
   await expect(story.getByRole('button', { name: '保留草稿' })).toHaveAttribute(
     'aria-pressed',

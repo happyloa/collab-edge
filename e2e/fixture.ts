@@ -4,6 +4,7 @@ import {
   expect,
   type Browser,
   type BrowserContext,
+  type Page,
   type TestInfo,
 } from '@playwright/test';
 
@@ -30,6 +31,14 @@ export const test = base.extend<{ rateLimitIdentity: void }>({
 });
 
 export { expect };
+
+/** Chooses a language in the header's two-way switch. */
+export async function setLanguage(page: Page, locale: string) {
+  await page
+    .getByRole('radiogroup', { name: 'Language / 語言' })
+    .getByRole('radio', { name: locale === 'zh-TW' ? '繁體中文' : 'English' })
+    .check();
+}
 
 export function isolatedContext(
   browser: Browser,

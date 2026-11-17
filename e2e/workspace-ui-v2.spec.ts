@@ -1,4 +1,4 @@
-import { test, expect } from './fixture';
+import { test, expect, setLanguage } from './fixture';
 
 test('board access comes before management and remains usable on narrow screens', async ({
   page,
@@ -45,9 +45,7 @@ test('board access comes before management and remains usable on narrow screens'
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(320);
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(page.getByRole('heading', { name: '你的看板' })).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),

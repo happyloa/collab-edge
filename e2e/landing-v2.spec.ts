@@ -1,4 +1,4 @@
-import { test, expect, isolatedContext } from './fixture';
+import { test, expect, isolatedContext, setLanguage } from './fixture';
 
 test('landing keeps its public paths visible without JavaScript', async ({
   browser,
@@ -47,9 +47,7 @@ test('landing fits small screens in both languages and themes', async ({
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
     for (const locale of ['en', 'zh-TW']) {
-      await page
-        .getByRole('combobox', { name: 'Language / 語言' })
-        .selectOption(locale);
+      await setLanguage(page, locale);
       await expect(page.locator('.skip-link')).toHaveText(
         locale === 'en' ? 'Skip to main content' : '跳至主要內容',
       );
@@ -118,9 +116,7 @@ test('product preview uses demo board titles in both languages', async ({
   await expect(
     preview.getByText('Review keyboard accessibility'),
   ).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Language / 語言' })
-    .selectOption('zh-TW');
+  await setLanguage(page, 'zh-TW');
   await expect(page.getByText('草擬上線公告')).toBeVisible();
   await expect(page.getByText('製作新版首頁')).toBeVisible();
   await expect(page.getByText('檢查鍵盤無障礙操作')).toBeVisible();
