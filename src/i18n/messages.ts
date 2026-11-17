@@ -452,6 +452,18 @@ export const zh = {
   Conversation: '討論',
   'Add a comment': '新增留言',
   'Post comment': '送出留言',
+  'Who orders concurrent edits?': '兩人同時修改，誰先誰後？',
+  'One Durable Object serializes each board; D1 is canonical.':
+    '每個看板由一個 Durable Object 序列化操作，D1 保存正式資料。',
+  'A write committed but the peer missed it': '寫入了，對方卻沒收到？',
+  'Entity, revision and event commit in one batch before broadcast; reconnect replays or resnapshots.':
+    '資料、revision、事件同批提交後才廣播；重連時補事件或取完整快照。',
+  'Does a retry create duplicates?': '重試會不會重複建立？',
+  'Every operation carries a UUID, deduplicated by a unique constraint.':
+    '每個操作帶 UUID，由資料庫唯一約束去重。',
+  'Someone changed the same field': '同一欄位被別人改了？',
+  'Per-field revisions detect it; your attempted edit is kept for retry or discard.':
+    '逐欄位比對 revision，保留你的草稿讓你決定重試或放棄。',
   'Edit comment': '編輯留言',
   'Save comment': '儲存留言',
   'Delete comment': '刪除留言',

@@ -6,35 +6,29 @@ import { useI18n, LanguageSelect } from './ui/i18n';
 import { DemoEntry } from './demo-entry';
 import { CollaborationStory } from './collaboration-story';
 import Link from 'next/link';
-import {
-  ArrowUpRight,
-  ArrowRight,
-  Radio,
-  ShieldCheck,
-  GitBranch,
-  ArrowDown,
-  Check,
-} from 'lucide-react';
+import { ArrowUpRight, ArrowRight, ArrowDown } from 'lucide-react';
 import { ThemeToggle } from './ui/theme';
 import { BrandMark } from './ui/brand-mark';
+// The four questions a shared board has to answer, and what this one does.
 const features = [
   {
-    Icon: Radio,
-    title: 'Together, in real time',
-    description:
-      'Changes travel as ordered events. Your team stays on the same page.',
+    title: 'Who orders concurrent edits?',
+    description: 'One Durable Object serializes each board; D1 is canonical.',
   },
   {
-    Icon: ShieldCheck,
-    title: 'A little more certainty',
+    title: 'A write committed but the peer missed it',
     description:
-      'Conflicting edits are surfaced clearly, with your draft kept safe.',
+      'Entity, revision and event commit in one batch before broadcast; reconnect replays or resnapshots.',
   },
   {
-    Icon: GitBranch,
-    title: 'Built for the in-between',
+    title: 'Does a retry create duplicates?',
     description:
-      'Step away, reconnect, and pick up exactly where your team is now.',
+      'Every operation carries a UUID, deduplicated by a unique constraint.',
+  },
+  {
+    title: 'Someone changed the same field',
+    description:
+      'Per-field revisions detect it; your attempted edit is kept for retry or discard.',
   },
 ];
 export function Home({ signedIn }: { signedIn: boolean }) {
@@ -51,41 +45,26 @@ export function Home({ signedIn }: { signedIn: boolean }) {
       () => {
         gsap.from('[data-hero-enter]', {
           opacity: 0,
-          y: 24,
-          duration: 0.7,
-          stagger: 0.11,
+          y: 10,
+          duration: 0.45,
+          stagger: 0.05,
           ease: 'power3.out',
           clearProps: 'all',
         });
         gsap.from('[data-hero-visual]', {
           opacity: 0,
-          scale: 0.96,
-          rotation: 2,
-          duration: 0.7,
-          delay: 0.25,
+          duration: 0.45,
+          delay: 0.15,
           ease: 'power3.out',
-          clearProps: 'opacity,scale,rotation',
-        });
-        gsap.to('[data-ticker-track]', {
-          xPercent: -50,
-          duration: 30,
-          ease: 'none',
-          repeat: -1,
-          scrollTrigger: {
-            trigger: '[data-ticker-track]',
-            start: 'top bottom',
-            end: 'bottom top',
-            toggleActions: 'play pause resume pause',
-          },
+          clearProps: 'opacity',
         });
         gsap.fromTo(
           '[data-preview]',
-          { opacity: 0, y: 24, scale: 0.97 },
+          { opacity: 0, y: 12 },
           {
             opacity: 1,
             y: 0,
-            scale: 1,
-            duration: 0.7,
+            duration: 0.45,
             ease: 'power3.out',
             immediateRender: false,
             clearProps: 'all',
@@ -97,10 +76,10 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           },
         );
         gsap.from('[data-flow-step]', {
-          y: 24,
+          y: 12,
           opacity: 0,
-          duration: 0.6,
-          stagger: 0.14,
+          duration: 0.4,
+          stagger: 0.06,
           clearProps: 'all',
           scrollTrigger: {
             trigger: '[data-flow]',
@@ -110,12 +89,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
         });
         gsap.fromTo(
           '[data-feature]',
-          { opacity: 0, y: 24 },
+          { opacity: 0, y: 12 },
           {
             opacity: 1,
             y: 0,
-            stagger: 0.13,
-            duration: 0.7,
+            stagger: 0.06,
+            duration: 0.4,
             ease: 'power2.out',
             immediateRender: false,
             clearProps: 'all',
@@ -181,12 +160,8 @@ export function Home({ signedIn }: { signedIn: boolean }) {
       >
         <section className="relative grid items-center gap-12 py-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-20">
           <div className="min-w-0">
-            <p className="eyebrow" data-hero-enter>
-              <span className="home-node" aria-hidden="true" />
-              {t('REALTIME COLLABORATION / BUILT AT THE EDGE')}
-            </p>
             <h1
-              className={`mt-7 font-semibold tracking-tight text-balance ${locale === 'zh-TW' ? 'text-[clamp(2rem,9vw,3.75rem)] leading-[1.2] sm:text-6xl' : 'text-5xl leading-[1.05] sm:text-6xl xl:text-[5.25rem]'}`}
+              className={`font-semibold tracking-tight text-balance ${locale === 'zh-TW' ? 'text-[clamp(2rem,9vw,3.75rem)] leading-[1.2] sm:text-6xl' : 'text-5xl leading-[1.05] sm:text-6xl xl:text-[5.25rem]'}`}
             >
               <span className="block" data-hero-enter>
                 {t('Work moves forward.')}
@@ -244,44 +219,18 @@ export function Home({ signedIn }: { signedIn: boolean }) {
             )}
           </div>
           <div className="relative min-w-0" data-hero-visual>
-            <div className="mb-3 flex items-center justify-between text-xs text-muted">
-              <span>{t('THE COLLABORATION STUDY')}</span>
-              <span aria-hidden="true">01 — 03</span>
-            </div>
             <CollaborationStory />
           </div>
         </section>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border py-5 text-xs text-muted">
-          <span>VINEXT / REACT / DURABLE OBJECTS / D1</span>
-          <a href="#how-it-works" className="inline-flex items-center gap-2">
-            {t('Follow a change through the system')}
-            <ArrowDown size={14} />
-          </a>
-        </div>
-        <div className="home-ticker mt-8" aria-hidden="true">
-          <div className="home-ticker-track" data-ticker-track>
-            {[0, 1].map((copy) => (
-              <span className="home-ticker-group" key={copy}>
-                <span>{t('Together, in real time')}</span>
-                <span className="home-ticker-star">✳</span>
-                <span>{t('A little more certainty')}</span>
-                <span className="home-ticker-star">✳</span>
-                <span>{t('Built for the in-between')}</span>
-                <span className="home-ticker-star">✳</span>
-              </span>
-            ))}
-          </div>
-        </div>
         <section
           id="how-it-works"
-          className="scroll-mt-8 py-14 sm:py-20"
+          className="scroll-mt-8 border-t border-foreground py-14 sm:py-20"
           data-flow
         >
           <div className="mb-9 flex flex-wrap items-end justify-between gap-5">
             <div className="max-w-2xl">
-              <p className="eyebrow mb-4">{t('01 / UNDER THE SURFACE')}</p>
               <h2 className="text-3xl leading-tight font-semibold tracking-tight sm:text-4xl">
-                {t('Every change has a place in the story.')}
+                {t('Follow a change through the system')}
               </h2>
             </div>
             <a
@@ -315,15 +264,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
                 className="home-flow-step border-t border-border px-1 py-6 md:px-6 md:py-8"
                 data-flow-step
               >
-                <div className="mb-8 flex items-center justify-between text-primary">
-                  <span
-                    className="text-4xl font-light tracking-tight"
-                    aria-hidden="true"
-                  >
-                    {number}
-                  </span>
-                  <Check size={18} />
-                </div>
+                <span
+                  className="mb-6 block font-mono text-xs text-muted"
+                  aria-hidden="true"
+                >
+                  {number}
+                </span>
                 <h3 className="text-lg font-semibold">{t(title)}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-muted">
                   {t(description)}
@@ -349,15 +295,9 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           </ol>
         </section>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="eyebrow mb-4">{t('02 / THE SHARED SPACE')}</p>
-            <h2 className="text-3xl font-semibold tracking-tight">
-              {t('A familiar board. Thoughtful details.')}
-            </h2>
-          </div>
-          <span className="text-sm text-muted">
+          <h2 className="text-3xl font-semibold tracking-tight">
             {t('A preview of the private app')}
-          </span>
+          </h2>
         </div>
         <section
           aria-label={t('Product preview')}
@@ -371,10 +311,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               </span>
               <h2 className="mt-1 font-semibold">{t('Website Launch')}</h2>
             </div>
-            <span className="badge">
-              <span className="status-dot" />
-              {t('Preview')}
-            </span>
+            <span className="badge">{t('Preview')}</span>
           </div>
           <div className="grid gap-4 bg-background p-6 sm:grid-cols-3">
             {[
@@ -393,33 +330,36 @@ export function Home({ signedIn }: { signedIn: boolean }) {
                 'Review keyboard accessibility',
                 'Approve the visual direction',
               ],
-            ].map(([name, ...titles], i) => (
+            ].map(([name, ...titles]) => (
               <div key={t(name)}>
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
-                  <span className={`column-dot tone-${i}`} />
+                <div className="mb-3 flex items-center gap-2 border-t-2 border-foreground pt-3 text-sm font-semibold">
                   {t(name)}
-                  <span className="ml-auto text-muted">02</span>
+                  <span className="ml-auto font-mono text-xs font-normal text-muted">
+                    2
+                  </span>
                 </div>
                 {titles.map((title) => (
                   <div
                     key={t(title)}
-                    className="surface interactive-surface mb-3 p-5"
+                    className="surface interactive-surface mb-2 p-4"
                   >
-                    <h3 className="font-medium">{t(title)}</h3>
+                    <h3 className="text-sm font-medium">{t(title)}</h3>
                   </div>
                 ))}
               </div>
             ))}
           </div>
         </section>
-        <section className="mt-14 grid gap-8 sm:grid-cols-3" data-features>
-          {features.map(({ Icon, title, description }) => (
+        <section
+          className="mt-16 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4"
+          data-features
+        >
+          {features.map(({ title, description }) => (
             <article
-              key={t(title)}
-              className="border-t-2 border-primary px-1 pt-6"
+              key={title}
+              className="border-t border-foreground pt-5"
               data-feature
             >
-              <Icon className="mb-4 text-primary" size={23} />
               <h2 className="font-semibold">{t(title)}</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 {t(description)}
@@ -427,12 +367,11 @@ export function Home({ signedIn }: { signedIn: boolean }) {
             </article>
           ))}
         </section>
-        <section className="home-evidence mt-20 rounded-2xl p-7 sm:p-12">
-          <p className="home-evidence-kicker">{t('03 / THE EVIDENCE')}</p>
-          <div className="mt-5 grid gap-8 md:grid-cols-2">
+        <section className="home-evidence mt-20 rounded-lg p-7 sm:p-12">
+          <div className="grid gap-8 md:grid-cols-2">
             <div>
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {t('See what happens behind the board.')}
+                {t('Source and architecture')}
               </h2>
               <p className="mt-4 max-w-lg text-sm leading-relaxed">
                 {t(
@@ -464,18 +403,12 @@ export function Home({ signedIn }: { signedIn: boolean }) {
             </div>
           </div>
         </section>
-        <section className="mt-16 flex flex-wrap items-center justify-between gap-6 rounded-3xl border border-border bg-primary/8 px-7 py-10 sm:px-10">
-          <div>
-            <p className="eyebrow mb-3">{t('04 / TRY IT FOR YOURSELF')}</p>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {t('Make a change. See what happens.')}
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">
-              {t(
-                'The public playground runs in your browser. Explore cards and conflicts without an account.',
-              )}
-            </p>
-          </div>
+        <section className="mt-16 flex flex-wrap items-center justify-between gap-6 border-t border-foreground pt-10">
+          <h2 className="max-w-xl text-2xl leading-snug font-semibold tracking-tight sm:text-3xl">
+            {t(
+              'The public playground runs in your browser. Explore cards and conflicts without an account.',
+            )}
+          </h2>
           <div className="flex flex-wrap gap-3">
             <a
               className="button"
@@ -495,7 +428,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
         </section>
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 border-t border-border px-5 py-8 text-sm text-muted sm:px-8">
-        <span>{t('Made for moving forward, together.')}</span>
+        <span>CollabEdge</span>
         <a href="https://github.com/happyloa/collab-edge">
           {t('View source ↗')}
         </a>
