@@ -123,6 +123,10 @@ const errors: Record<string, string> = {
   'Board not found': '找不到看板',
   'Card not found': '找不到卡片',
   'Card no longer exists': '此卡片已不存在',
+  'Comment no longer exists': '此留言已不存在',
+  'Only the author can edit this comment': '只有留言作者可以編輯這則留言',
+  'Only the author or a workspace owner can delete this comment':
+    '只有留言作者或工作區擁有者可以刪除這則留言',
   'Column no longer exists': '此欄位已不存在',
   'Destination no longer exists': '目標欄位已不存在',
   'This board is archived': '此看板已封存',

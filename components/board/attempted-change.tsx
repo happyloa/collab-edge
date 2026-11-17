@@ -37,6 +37,8 @@ export function AttemptedChange({
     'card.archive': 'Archive card',
     'card.restore': 'Restore card',
     'comment.create': 'Post comment',
+    'comment.update': 'Edit comment',
+    'comment.remove': 'Delete comment',
   }[command.type];
 
   switch (command.type) {
@@ -100,6 +102,20 @@ export function AttemptedChange({
       add('Card', cardName(command.payload.cardId));
       add('Comment', command.payload.body);
       break;
+    case 'comment.update':
+    case 'comment.remove': {
+      const comment = state.comments.find(
+        (item) => item.id === command.payload.id,
+      );
+      if (comment) add('Card', cardName(comment.cardId));
+      add(
+        'Comment',
+        command.type === 'comment.update'
+          ? command.payload.body
+          : (comment?.body ?? t('Comment unavailable')),
+      );
+      break;
+    }
   }
 
   return (

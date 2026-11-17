@@ -345,3 +345,119 @@ describe('security and synchronization', () => {
     expect(applyEvent(state, { ...event, revision: 2 })).toBe(state);
   });
 });
+describe('comment edits', () => {
+  const commentId = crypto.randomUUID(),
+    otherId = crypto.randomUUID();
+  const withComment: Snapshot = {
+    ...state,
+    comments: [
+      {
+        id: commentId,
+        cardId,
+        boardId,
+        actorId,
+        body: 'First draft',
+        createdAt: '2026-11-01T00:00:00.000Z',
+      },
+    ],
+  };
+  const run = (
+    snapshot: Snapshot,
+    command: Parameters<typeof prepareMutation>[1]['command'],
+    actor = actorId,
+    baseRevision = 2,
+    moderator = false,
+  ) =>
+    prepareMutation(
+      snapshot,
+      { clientMutationId: crypto.randomUUID(), baseRevision, command },
+      actor,
+      moderator,
+    );
+  const update = (body: string) => ({
+    type: 'comment.update' as const,
+    payload: { id: commentId, body },
+  });
+  const remove = {
+    type: 'comment.remove' as const,
+    payload: { id: commentId },
+  };
+
+  it('lets only the author edit and stamps the edit revision', () => {
+    const patch = run(withComment, update('Second draft'));
+    expect(patch.comments).toHaveLength(1);
+    expect(patch.comments?.[0]).toMatchObject({
+      id: commentId,
+      body: 'Second draft',
+      bodyRevision: 3,
+      createdAt: '2026-11-01T00:00:00.000Z',
+    });
+    expect(patch.comments?.[0]?.editedAt).toBeTruthy();
+    expect(applyPatch(withComment, patch).comments).toHaveLength(1);
+    expect(() => run(withComment, update('Hijacked'), otherId)).toThrow(
+      'Only the author can edit this comment',
+    );
+    // Not even a workspace owner rewrites someone else's words.
+    expect(() =>
+      run(withComment, update('Hijacked'), otherId, 2, true),
+    ).toThrow('Only the author can edit this comment');
+  });
+  it('does not mark an unchanged body as edited', () => {
+    const patch = run(withComment, update('First draft'));
+    expect(patch.comments).toEqual([]);
+  });
+  it('rejects a stale edit or delete after a newer edit', () => {
+    const edited: Snapshot = {
+      ...withComment,
+      board: { ...state.board, revision: 3 },
+      comments: [
+        { ...withComment.comments[0], body: 'Newer', bodyRevision: 3 },
+      ],
+    };
+    expect(() => run(edited, update('Stale'), actorId, 2)).toThrow(
+      ConflictError,
+    );
+    expect(() => run(edited, remove, actorId, 2)).toThrow(ConflictError);
+    expect(
+      run(edited, update('Fresh'), actorId, 3).comments?.[0],
+    ).toMatchObject({ body: 'Fresh', bodyRevision: 4 });
+  });
+  it('lets the author or a workspace owner delete, and nobody else', () => {
+    const patch = run(withComment, remove);
+    expect(patch.removedComments).toEqual([commentId]);
+    expect(patch.comments).toEqual([]);
+    expect(applyPatch(withComment, patch).comments).toEqual([]);
+    expect(() => run(withComment, remove, otherId)).toThrow(
+      'Only the author or a workspace owner can delete this comment',
+    );
+    expect(run(withComment, remove, otherId, 2, true).removedComments).toEqual([
+      commentId,
+    ]);
+  });
+  it('treats deleting a missing comment as done and editing it as an error', () => {
+    const patch = run(state, remove);
+    expect(patch.removedComments).toBeUndefined();
+    expect(patch.comments).toEqual([]);
+    expect(() => run(state, update('Too late'))).toThrow(
+      'Comment no longer exists',
+    );
+  });
+  it('keeps imported comments and archived cards read-only', () => {
+    const imported: Snapshot = {
+      ...withComment,
+      comments: [{ ...withComment.comments[0], importedAuthorName: 'Carol' }],
+    };
+    expect(() => run(imported, update('Rewritten'))).toThrow(
+      'Only the author can edit this comment',
+    );
+    expect(run(imported, remove).removedComments).toEqual([commentId]);
+    const archived: Snapshot = {
+      ...withComment,
+      cards: [{ ...state.cards[0], archived: true }],
+    };
+    expect(() => run(archived, update('Rewritten'))).toThrow(
+      'Card no longer exists',
+    );
+    expect(() => run(archived, remove)).toThrow('Card no longer exists');
+  });
+});

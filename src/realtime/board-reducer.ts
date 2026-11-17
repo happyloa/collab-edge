@@ -10,6 +10,7 @@ export function applyPatch(state: Snapshot, patch: Patch): Snapshot {
     (c) => !removed.has(c.columnId),
   );
   const cardIds = new Set(cards.map((c) => c.id));
+  const removedComments = new Set(patch.removedComments ?? []);
   return {
     ...state,
     board: { ...state.board, ...patch.board },
@@ -17,8 +18,8 @@ export function applyPatch(state: Snapshot, patch: Patch): Snapshot {
       (c) => !removed.has(c.id),
     ),
     cards,
-    comments: upsert(state.comments, patch.comments).filter((c) =>
-      cardIds.has(c.cardId),
+    comments: upsert(state.comments, patch.comments).filter(
+      (c) => cardIds.has(c.cardId) && !removedComments.has(c.id),
     ),
     attachments: upsert(state.attachments, patch.attachments).filter(
       (a) => cardIds.has(a.cardId) && !patch.removedAttachments?.includes(a.id),
@@ -166,5 +167,30 @@ export function optimistic(
           },
         ],
       });
+    case 'comment.update':
+      // An unchanged body is not an edit and must not mark the comment edited.
+      if (
+        !state.comments.some(
+          (comment) =>
+            comment.id === c.payload.id && comment.body !== c.payload.body,
+        )
+      )
+        return state;
+      return {
+        ...state,
+        comments: state.comments.map((comment) =>
+          comment.id === c.payload.id
+            ? {
+                ...comment,
+                body: c.payload.body,
+                editedAt: new Date().toISOString(),
+              }
+            : comment,
+        ),
+      };
+    case 'comment.remove':
+      if (!state.comments.some((comment) => comment.id === c.payload.id))
+        return state;
+      return applyPatch(state, { removedComments: [c.payload.id] });
   }
 }

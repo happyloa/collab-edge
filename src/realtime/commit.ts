@@ -21,6 +21,12 @@ export function commitStatements(
   },
 ): D1PreparedStatement[] {
   const { boardId, actorId, payload: patch } = event;
+  const guard = (condition: string, ...values: unknown[]) =>
+    db
+      .prepare(
+        `INSERT INTO mutation_guard(value) SELECT CASE WHEN ${condition} THEN 1 ELSE 0 END`,
+      )
+      .bind(...values);
   const assignment =
     mutation.command.type === 'card.update'
       ? mutation.command.payload.assigneeId
@@ -144,20 +150,63 @@ export function commitStatements(
         ),
       );
   }
-  for (const comment of patch.comments ?? [])
-    statements.push(
-      db
-        .prepare(
-          'INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at) VALUES(?,?,?,?,?,?)',
-        )
-        .bind(
+  if (mutation.command.type === 'comment.update')
+    // Only the author's own, non-imported comment on this board is rewritten;
+    // the guard aborts the batch when that matched no row.
+    for (const comment of patch.comments ?? [])
+      statements.push(
+        db
+          .prepare(
+            'UPDATE card_comments SET body=?,body_revision=?,edited_at=? WHERE id=? AND board_id=? AND actor_id=? AND imported_author_name IS NULL',
+          )
+          .bind(
+            comment.body,
+            comment.bodyRevision ?? event.revision,
+            comment.editedAt ?? event.createdAt,
+            comment.id,
+            boardId,
+            actorId,
+          ),
+        guard(
+          'EXISTS(SELECT 1 FROM card_comments WHERE id=? AND board_id=? AND actor_id=? AND body_revision=?)',
           comment.id,
-          comment.cardId,
           boardId,
           actorId,
-          comment.body,
-          comment.createdAt,
+          comment.bodyRevision ?? event.revision,
         ),
+      );
+  else
+    for (const comment of patch.comments ?? [])
+      statements.push(
+        db
+          .prepare(
+            'INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at) VALUES(?,?,?,?,?,?)',
+          )
+          .bind(
+            comment.id,
+            comment.cardId,
+            boardId,
+            actorId,
+            comment.body,
+            comment.createdAt,
+          ),
+      );
+  for (const id of patch.removedComments ?? [])
+    statements.push(
+      // The room checked this against its snapshot; recheck inside the
+      // transaction that the actor still wrote the comment or owns the workspace.
+      guard(
+        `EXISTS(SELECT 1 FROM card_comments WHERE id=? AND board_id=? AND actor_id=?)
+          OR EXISTS(SELECT 1 FROM workspace_members WHERE workspace_id=? AND user_id=? AND role='OWNER')`,
+        id,
+        boardId,
+        actorId,
+        workspaceId,
+        actorId,
+      ),
+      db
+        .prepare('DELETE FROM card_comments WHERE id=? AND board_id=?')
+        .bind(id, boardId),
     );
   for (const id of patch.removedColumns ?? [])
     statements.push(

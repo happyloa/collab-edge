@@ -21,10 +21,15 @@ function changedEntity<T extends { id: string }>(
     (key) => current[key as keyof T] !== before[key as keyof T],
   );
 }
+/**
+ * Validates a command against the board and returns the patch to commit.
+ * `moderator` is true for a workspace owner, who may delete any comment.
+ */
 export function prepareMutation(
   state: Snapshot,
   mutation: Mutation,
   actorId: string,
+  moderator = false,
 ): Patch {
   const { command: c, baseRevision } = mutation;
   assert(baseRevision <= state.board.revision, 400, 'Invalid base revision');
@@ -156,6 +161,41 @@ export function prepareMutation(
         'Comment limit reached',
       );
       break;
+    case 'comment.update': {
+      const comment = state.comments.find((v) => v.id === c.payload.id);
+      assert(comment, 404, 'Comment no longer exists');
+      assert(
+        state.cards.some((v) => v.id === comment.cardId && !v.archived),
+        404,
+        'Card no longer exists',
+      );
+      // 409, not 403: the room closes the socket on 403 as lost board access.
+      assert(
+        comment.actorId === actorId && !comment.importedAuthorName,
+        409,
+        'Only the author can edit this comment',
+      );
+      if (c.payload.body !== comment.body) changed(comment.bodyRevision ?? 0);
+      break;
+    }
+    case 'comment.remove': {
+      // Removing a comment that is already gone succeeds without a change.
+      const comment = state.comments.find((v) => v.id === c.payload.id);
+      if (comment) {
+        assert(
+          state.cards.some((v) => v.id === comment.cardId && !v.archived),
+          404,
+          'Card no longer exists',
+        );
+        assert(
+          comment.actorId === actorId || moderator,
+          409,
+          'Only the author or a workspace owner can delete this comment',
+        );
+        changed(comment.bodyRevision ?? 0);
+      }
+      break;
+    }
   }
   const after = optimistic(state, mutation, actorId);
   const patch: Patch = {};
@@ -209,6 +249,13 @@ export function prepareMutation(
           : v.dueDateRevision,
     }));
   if (after.comments === state.comments) patch.comments = [];
+  else if (c.type === 'comment.remove') {
+    patch.comments = [];
+    patch.removedComments = [c.payload.id];
+  } else if (c.type === 'comment.update')
+    patch.comments = after.comments
+      .filter((item) => item.id === c.payload.id)
+      .map((item) => ({ ...item, bodyRevision: next }));
   else {
     const previousCommentIds = new Set(state.comments.map((item) => item.id));
     patch.comments = after.comments.filter(

@@ -3,6 +3,7 @@ export const id = z.uuid();
 const title = z.string().trim().min(1).max(160);
 const revision = z.number().int().nonnegative();
 const anchor = id.nullable();
+const commentBody = z.string().trim().min(1).max(2000);
 export const commandSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('board.rename'),
@@ -53,12 +54,13 @@ export const commandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('card.restore'), payload: z.object({ id }) }),
   z.object({
     type: z.literal('comment.create'),
-    payload: z.object({
-      id,
-      cardId: id,
-      body: z.string().trim().min(1).max(2000),
-    }),
+    payload: z.object({ id, cardId: id, body: commentBody }),
   }),
+  z.object({
+    type: z.literal('comment.update'),
+    payload: z.object({ id, body: commentBody }),
+  }),
+  z.object({ type: z.literal('comment.remove'), payload: z.object({ id }) }),
 ]);
 export const mutationSchema = z.object({
   clientMutationId: id,
@@ -124,6 +126,10 @@ export const commentSchema = z.object({
   body: z.string(),
   createdAt: z.string(),
   importedAuthorName: z.string().max(80).optional(),
+  // Present only once the body has been edited. They stay optional without a
+  // default so files exported before editing existed keep their checksum.
+  bodyRevision: revision.optional(),
+  editedAt: z.string().optional(),
 });
 export const attachmentSchema = z.object({
   id,
@@ -159,6 +165,7 @@ export const patchSchema = z.object({
   cards: z.array(cardSchema).optional(),
   comments: z.array(commentSchema).optional(),
   removedColumns: z.array(id).optional(),
+  removedComments: z.array(id).optional(),
   attachments: z.array(attachmentSchema).optional(),
   removedAttachments: z.array(id).optional(),
   attachmentReferences: z.array(attachmentSchema).optional(),

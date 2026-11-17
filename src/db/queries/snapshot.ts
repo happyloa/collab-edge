@@ -11,6 +11,21 @@ import {
 } from '../schema';
 import { assert } from '../../lib/errors';
 import { snapshotSchema, type Mutation } from '../../realtime/protocol';
+// Optional comment fields are left out rather than sent as null or zero, so an
+// unedited comment has the same shape it had before comments could be edited.
+function commentFromRow({
+  importedAuthorName,
+  bodyRevision,
+  editedAt,
+  ...comment
+}: typeof comments.$inferSelect) {
+  return {
+    ...comment,
+    ...(importedAuthorName === null ? {} : { importedAuthorName }),
+    ...(bodyRevision === 0 ? {} : { bodyRevision }),
+    ...(editedAt === null ? {} : { editedAt }),
+  };
+}
 export async function loadSnapshot(binding: D1Database, boardId: string) {
   const db = drizzle(binding);
   const [
@@ -36,11 +51,7 @@ export async function loadSnapshot(binding: D1Database, boardId: string) {
     board: boardRows[0],
     columns: columnRows,
     cards: cardRows,
-    comments: commentRows.map(({ importedAuthorName, ...comment }) =>
-      importedAuthorName === null
-        ? comment
-        : { ...comment, importedAuthorName },
-    ),
+    comments: commentRows.map(commentFromRow),
     attachments: attachmentRows,
     attachmentReferences: referenceRows,
   });
@@ -49,8 +60,9 @@ export async function loadSnapshot(binding: D1Database, boardId: string) {
 /**
  * One consistent read of what a mutation needs: its earlier receipt, if any,
  * and the rows its command is validated against. Commands order and validate
- * against every column and card, but only `comment.create` reads comments, and
- * only those of its own card plus any row already using its ID. Attachments are
+ * against every column and card, but only comment commands read comments:
+ * `comment.create` those of its own card plus any row already using its ID,
+ * `comment.update` and `comment.remove` the one row they name. Attachments are
  * never part of a mutation. The returned state is therefore not a complete
  * board and must not be sent to clients; use `loadSnapshot` for that.
  */
@@ -87,7 +99,10 @@ export async function loadMutationContext(
                 eq(comments.cardId, command.payload.cardId),
                 eq(comments.id, command.payload.id),
               )
-            : sql`0`,
+            : command.type === 'comment.update' ||
+                command.type === 'comment.remove'
+              ? eq(comments.id, command.payload.id)
+              : sql`0`,
         ),
     ]);
   if (receipts[0]) return { receipt: receipts[0], state: null } as const;
@@ -100,11 +115,7 @@ export async function loadMutationContext(
       cards: cardRows,
       comments: commentRows
         .filter((comment) => comment.boardId === boardId)
-        .map(({ importedAuthorName, ...comment }) =>
-          importedAuthorName === null
-            ? comment
-            : { ...comment, importedAuthorName },
-        ),
+        .map(commentFromRow),
       attachments: [],
       attachmentReferences: [],
     }),

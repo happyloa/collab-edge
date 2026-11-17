@@ -139,6 +139,8 @@ export const comments = sqliteTable(
     body: text().notNull(),
     importedAuthorName: text('imported_author_name'),
     createdAt: text('created_at').notNull(),
+    bodyRevision: integer('body_revision').notNull().default(0),
+    editedAt: text('edited_at'),
   },
   (t) => [
     index('comments_board').on(t.boardId),

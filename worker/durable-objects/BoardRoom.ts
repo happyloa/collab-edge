@@ -395,7 +395,11 @@ export class BoardRoom extends DurableObject<Env> {
         });
         const user = await currentUser(request);
         assert(user, 401, 'Session expired');
-        await boardAccess(user.id, state.boardId, message.type === 'mutate');
+        const { role } = await boardAccess(
+          user.id,
+          state.boardId,
+          message.type === 'mutate',
+        );
         if (message.type === 'resync')
           await this.replay(socket, state.boardId, message.lastSeenRevision);
         if (message.type === 'ping') this.send(socket, { type: 'pong' });
@@ -416,6 +420,7 @@ export class BoardRoom extends DurableObject<Env> {
               state.boardId,
               user.id,
               message.mutation,
+              role === 'OWNER',
             );
             if (result.event) await this.broadcastEvent(result.event);
             else {
@@ -461,6 +466,7 @@ export class BoardRoom extends DurableObject<Env> {
     boardId: string,
     actorId: string,
     input: Mutation,
+    moderator: boolean,
   ): Promise<{ revision: number; event: BoardEvent | null }> {
     const mutation = mutationSchema.parse(input);
     // 409, not 403: a refused operation must not close the socket as if the
@@ -494,7 +500,7 @@ export class BoardRoom extends DurableObject<Env> {
       429,
       'Demo board mutation quota reached',
     );
-    const patch = prepareMutation(state, mutation, actorId);
+    const patch = prepareMutation(state, mutation, actorId, moderator);
     const assignment =
       mutation.command.type === 'card.update'
         ? mutation.command.payload.assigneeId
