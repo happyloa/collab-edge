@@ -142,7 +142,12 @@ test('public demo preserves conflicts, restores cards and never calls an API', a
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   const fonts = await page.evaluate(async () => {
     await document.fonts.ready;
-    return document.fonts.check('16px "Noto Sans TC"');
+    // Latin text renders in Instrument Sans, so ask about the glyphs each
+    // family actually draws on this page instead of the default space.
+    return (
+      document.fonts.check('16px "Noto Sans TC"', '重設展示') &&
+      document.fonts.check('16px "Instrument Sans"', 'CollabEdge')
+    );
   });
   expect(fonts).toBe(true);
   await page.screenshot({
