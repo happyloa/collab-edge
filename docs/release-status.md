@@ -13,13 +13,13 @@
 ## 部署
 
 - 2026-11-14：commit `75bb8be` 由 Workers Build `ef94189b-b7fb-4174-a257-4bf6311c5603` 部署成功。部署指令先執行 `db:migrate:remote`，因此到 `0007_board_scoped_cards` 為止的 migration 皆已套用。同一 commit 的 GitHub CI、CodeQL 與公開體驗發布皆成功。
-- 留言編輯與刪除（migration `0008_comment_edits`）只在本機驗證過，尚未部署。
+- 2026-11-17：Workers Build `77bbf479-00c6-4025-bdbb-6f3d698ac9c1` 部署成功，Worker 版本 `f3f39417-deed-4eaf-b4d9-bb8d1f943ea6`，`0008_comment_edits` 已套用，留言編輯與刪除隨這版上線。前一次建置 `0ce2016f-73bb-4b2a-870a-34b5e984d1f7` 失敗在一個 React 測試的焦點斷言，修正為 commit `3e1b001`。只改測試的推送沒有觸發建置，這次是由擁有者在後台重跑；成功的檢查掛在 `b2208aa`，它與 `3e1b001` 只差那個測試檔，部署的程式相同。`3e1b001` 的 GitHub CI 與 CodeQL 皆成功。部署後匿名請求仍導向 Access（302）。
 
 正式站只允許擁有者的 Access 信箱。匿名請求會導向 Access，正式附件停用，未使用付費服務；Workers Free 方案由擁有者確認，未另外讀取帳單。
 
 ## 尚未完成的人工驗收
 
-- 通過 Access 登入後的正式流程，依[正式站 smoke 清單](deployment.md#production-smoke-check)。
+- 通過 Access 登入後的正式流程，依[正式站 smoke 清單](deployment.md#production-smoke-check)，包含這版新增的留言編輯與刪除。
 - 讀屏工具、實體手機與 Safari、完整 WCAG 與對比審核。
 - 所有頁面、語系與主題的穩定視覺回歸。
 - Firefox／WebKit 快速直接導頁時偶有取消載入的診斷訊息；一般連結導航測試通過，改版前也有此現象。

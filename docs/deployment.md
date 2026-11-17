@@ -22,7 +22,7 @@ References: [Workers Access and WebSocket limitations](https://developers.cloudf
 
 Native Workers Builds is connected to `happyloa/collab-edge`, with production trigger `d5048a22-ca1a-4390-842a-01904be97a9a`. Pushes to `main` initiate builds automatically; no preview trigger was created. GitHub CI runs separately. The following settings are configured in Cloudflare.
 
-Pure changes to `docs/**`, `README.md`, `README.en.md` and `AGENTS.md` do not trigger a Cloudflare build, saving free build minutes. Every other `main` push runs the native verification, applies remote migrations and deploys. This does not wait for GitHub CI or the browser suite, so run `pnpm test:e2e` before pushing to `main`. Node 24.12.0 and pnpm 12.5.1 are configured as build variables.
+Pure changes to `docs/**`, `README.md`, `README.en.md` and `AGENTS.md` do not trigger a Cloudflare build, saving free build minutes. On 2026-11-17 a push that changed only `tests/` did not start one either, so when a release is waiting on a test fix, start the build from the dashboard. Every other `main` push runs the native verification, applies remote migrations and deploys. This does not wait for GitHub CI or the browser suite, so run `pnpm test:e2e` before pushing to `main`. Node 24.12.0 and pnpm 12.5.1 are configured as build variables.
 
 In Workers & Pages → `collab-edge` → Settings → Builds → Connect, authorize the Cloudflare GitHub App only for `happyloa/collab-edge` and configure:
 
@@ -76,7 +76,7 @@ After passing Access as the owner:
 
 1. Sign in (or use the Alice demo account). The workspace and board load and the status becomes Connected.
 2. On a disposable board, create a card, assign a member and a due date, reload and confirm both persist. Search and filter it, archive and restore it, then archive and restore the board.
-3. In a second independent browser context (same owner email for Access), sign in as Bob or a second app account and verify live sync, a conflicting edit with retry, and reconnect. Do not widen the Access allowlist for this.
+3. In a second independent browser context (same owner email for Access), sign in as Bob or a second app account and verify live sync, a conflicting edit with retry, and reconnect. Post a comment, edit it and delete it, and confirm the other context follows each step. Do not widen the Access allowlist for this.
 4. Open **Activity → Manage history** on a new board; it should report nothing to clear. Do not clear real production activity just to test it.
 5. Ownership transfer, password reset and account deletion change real accounts. Run them only on disposable accounts you control; otherwise record them as pending.
 
