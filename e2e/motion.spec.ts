@@ -6,24 +6,27 @@ test('motion follows user preference without shifting draggable cards', async ({
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
   const hero = page.getByRole('heading', { name: /Work moves forward/ });
-  const ticker = page.locator('[data-ticker-track]');
   await expect(hero).toBeVisible();
-  await expect(ticker).toHaveCSS('transform', /matrix/);
 
+  // Hover changes colour, never position, so controls stay where they are.
   const action = page
     .getByRole('link', { name: 'Explore the public playground' })
     .first();
   await action.hover();
-  await expect(action).toHaveCSS('transform', /matrix/);
+  await expect(action).toHaveCSS('transform', 'none');
+  expect(
+    await action.evaluate((element) =>
+      parseFloat(getComputedStyle(element).transitionDuration),
+    ),
+  ).toBeGreaterThan(0);
   const previewRegion = page.getByRole('region', { name: 'Product preview' });
   await previewRegion.scrollIntoViewIfNeeded();
   await expect(previewRegion).toBeVisible();
   const preview = previewRegion.locator('.interactive-surface').first();
   await preview.hover();
-  await expect(preview).toHaveCSS('transform', /matrix/);
+  await expect(preview).toHaveCSS('transform', 'none');
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(ticker).toHaveCSS('transform', 'none');
   await expect(hero).toBeVisible();
   await expect(action).toHaveCSS('transform', 'none');
   expect(
@@ -67,7 +70,7 @@ test('reduced motion is respected on first paint and after switching language', 
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.locator('[data-ticker-track]')).toHaveCSS(
+  await expect(page.locator('[data-flow-step]').first()).toHaveCSS(
     'transform',
     'none',
   );
@@ -81,7 +84,7 @@ test('reduced motion is respected on first paint and after switching language', 
     .selectOption('zh-TW');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.locator('[data-ticker-track]')).toHaveCSS(
+  await expect(page.locator('[data-flow-step]').first()).toHaveCSS(
     'transform',
     'none',
   );
