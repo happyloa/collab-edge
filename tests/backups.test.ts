@@ -91,6 +91,10 @@ function backupFixture(): {
         actorId,
         body: `Original comment ${index}`,
         createdAt: '2026-10-05T00:00:00Z',
+        // The second comment was edited before the export.
+        ...(index === 1
+          ? { bodyRevision: 3, editedAt: '2026-10-06T00:00:00Z' }
+          : {}),
       })),
       attachments: [
         {
@@ -331,6 +335,13 @@ it('restores into fresh local D1 atomically, normalizes ordering and retains met
         comment.cardId === snapshot.cards.find((card) => !card.archived)?.id,
     ),
   ).toBe(true);
+  // The edited marker survives; the revision restarts with the new board.
+  const [untouched, edited] = ['Original comment 0', 'Original comment 1'].map(
+    (body) => snapshot.comments.find((comment) => comment.body === body),
+  );
+  expect(edited).toMatchObject({ editedAt: '2026-10-06T00:00:00Z' });
+  expect(edited).not.toHaveProperty('bodyRevision');
+  expect(untouched).not.toHaveProperty('editedAt');
   expect(snapshot.attachments).toEqual([]);
   expect(snapshot.attachmentReferences?.[0]).toMatchObject({
     filename: 'source-notes.txt',

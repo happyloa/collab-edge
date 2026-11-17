@@ -447,8 +447,9 @@ export async function completeRestore(
         .bind(job.target_board_id, job.assignees, jobId),
       db
         .prepare(
-          `INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at,imported_author_name)
+          `INSERT INTO card_comments(id,card_id,board_id,actor_id,body,created_at,edited_at,imported_author_name)
         SELECT comment.new_id,card.new_id,?,?,json_extract(comment.payload,'$.body'),json_extract(comment.payload,'$.createdAt'),
+          json_extract(comment.payload,'$.editedAt'),
           COALESCE(json_extract(comment.payload,'$.importedAuthorName'),json_extract(person.value,'$.name'),json_extract(comment.payload,'$.actorId'))
         FROM board_restore_items comment JOIN board_restore_items card ON card.job_id=comment.job_id AND card.kind='card'
           AND card.source_id=json_extract(comment.payload,'$.cardId')

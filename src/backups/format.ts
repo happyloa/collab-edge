@@ -58,6 +58,8 @@ export const backupComment = snapshotSchema.shape.comments.element
       .max(2000)
       .refine((value) => value.trim().length > 0),
     createdAt: timestamp,
+    bodyRevision: safeRevision.optional(),
+    editedAt: timestamp.optional(),
   })
   .strict();
 export const backupAttachment = snapshotSchema.shape.attachments.element
@@ -205,6 +207,11 @@ export function validateBackupRelations(backup: BoardBackup) {
   }
   for (const item of snapshot.comments) {
     assert(cards.has(item.cardId), 400, 'Backup contains broken relationships');
+    assert(
+      (item.bodyRevision ?? 0) <= snapshot.board.revision,
+      400,
+      'Backup contains invalid revisions',
+    );
     comments.set(item.cardId, (comments.get(item.cardId) ?? 0) + 1);
   }
   for (const item of [...snapshot.attachments, ...references]) {
