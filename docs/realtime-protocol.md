@@ -18,9 +18,11 @@ Client messages are Zod discriminated unions: `resync`, `mutate`, `presence`, `p
 }
 ```
 
-The nested `command` discriminated union keeps each payload typed. Commands cover board rename/archive/restore, column create/rename/move/remove, card create/update/move/archive/restore, and comment create. Attachments enter through HTTP and the same serialized board coordinator.
+The nested `command` discriminated union keeps each payload typed. Commands cover board rename/archive/restore, column create/rename/move/remove, card create/update/move/archive/restore, and comment create/update/remove. Attachments enter through HTTP and the same serialized board coordinator.
 
 `card.update` accepts optional `assigneeId` (member UUID or null) and `dueDate` (valid YYYY-MM-DD calendar date or null). Both have independent conflict revisions. The coordinator validates current workspace membership before assignment and repeats that check inside the entity/revision/event transaction. Older stored events default absent metadata to null and field revisions to zero. Dates have no timezone; UI date filters use the browser's local calendar day. Archived cards and boards retain their quota footprint. Restoration checks the relevant entity revision and uses the same UUID idempotency and authorization as other writes.
+
+`comment.update` replaces a comment's body and is accepted only from its author; a workspace owner cannot rewrite someone else's comment, and comments imported from a backup cannot be edited at all. `comment.remove` is accepted from the author or a workspace owner. Both require the card to be unarchived, and both are refused with an error that leaves the socket open. The commit transaction rechecks authorship (or owner membership, for a removal) before it writes. An edited comment carries `bodyRevision` and `editedAt`; a comment that was never edited has neither field. Removing a comment deletes its row, but the text stays in the payload of earlier events until an owner clears that history.
 
 Each event contains boardId, revision, eventId, clientMutationId, actorId, type, a patch payload and createdAt. Patches upsert changed entities and explicitly list removed IDs. Column and card IDs are client-generated UUIDs whose primary keys span all boards, so each upsert only touches rows of its own board and a guard inside the same transaction rejects the mutation when an ID already belongs to another board. Numeric positions are calculated from authoritative ordering and neighbor IDs. Successful events update local state without refetching the board.
 
@@ -40,16 +42,18 @@ Alice opens a card at revision 40. Bob changes its title at revision 41. Alice s
 
 Title, description, assignee and due date keep separate revision markers, so an older description edit can still succeed after a title-only change. This is field-level optimistic concurrency, not global last-write-wins. The client submits only the fields changed in its form.
 
+A comment's body has its own marker. An edit or removal whose base revision is older than the last edit conflicts, which happens when the author has the same comment open in two tabs or an owner deletes a comment the author has just changed. Saving an unchanged body commits no edit, and removing a comment that is already gone succeeds as a no-op.
+
 Creates rebase while their parent exists. Moves use authoritative neighbor ordering and rebase while the entity and destination exist; new cards and columns are placed after the highest existing position. Deleted parents reject dependent commands. Deleting a modified entity conflicts, and columns must be empty before removal so cards, comments and files are never deleted silently. Already-archived cards and already-removed columns produce an idempotent no-op event for a new mutation ID.
 
 Every accepted new mutation ID increments the board revision once. Idempotency is scoped to board and mutation UUID, and a UUID already used by another actor is rejected. Pending commands keep their UUID across reconnects, so an uncertain acknowledgement cannot duplicate data.
 
 ## Local drafts
 
-Card details, unsent comments and unconfirmed mutations are saved in the browser's IndexedDB, so they survive a reload. The board lists saved drafts; **Review draft** reopens one. Closing an edited dialog (or pressing Escape) offers keep, discard or continue editing.
+Card details, unsent comments, an unfinished comment edit and unconfirmed mutations are saved in the browser's IndexedDB, so they survive a reload. The board lists saved drafts; **Review draft** reopens one. Closing an edited dialog (or pressing Escape) offers keep, discard or continue editing.
 
 The device keeps at most 24 records and 256 KiB, with 96 KiB per record, and each record expires seven days after its last edit. When storage is full or blocked, the UI keeps the current inputs and stops submitting board changes. Each dialog has its own record, so two tabs editing one card do not overwrite each other. Signing in as another account, signing out, resetting the password or deleting the account clears the device drafts; a plain session expiry keeps them for the same account.
 
-A restored form keeps its original revision for the fields its author changed, so it cannot overwrite a newer value from a teammate without going through the conflict flow. After a reload, uncertain writes are shown for review and never sent automatically; **Retry my draft** first reuses the original UUID so the server can deduplicate a write that already committed. Drafts never contain passwords, tokens, cookies or attachment bytes, and a full reload while offline is not supported.
+A restored form keeps its original revision for the fields its author changed, so it cannot overwrite a newer value from a teammate without going through the conflict flow. A restored comment edit keeps the revision it started from in the same way; if the comment was deleted in the meantime, the dialog shows the unsent text read-only so it can be copied. After a reload, uncertain writes are shown for review and never sent automatically; **Retry my draft** first reuses the original UUID so the server can deduplicate a write that already committed. Drafts never contain passwords, tokens, cookies or attachment bytes, and a full reload while offline is not supported.
 
-Implementation: [draft store](../src/drafts/store.ts), [field restoration](../src/drafts/restore.ts), [socket queue](../src/realtime/socket-client.ts). Browser coverage: [drafts scenarios](../e2e/drafts.spec.ts).
+Implementation: [draft store](../src/drafts/store.ts), [field restoration](../src/drafts/restore.ts), [socket queue](../src/realtime/socket-client.ts). Browser coverage: [drafts scenarios](../e2e/drafts.spec.ts), [comment edits](../e2e/comments.spec.ts).

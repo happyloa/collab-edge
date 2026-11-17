@@ -21,11 +21,11 @@ corepack pnpm test:perf
 | `test:showcase` | Static simulation, conflict recovery, reset, bilingual UI, recorded media and no private API/WS requests                   |
 | `test:perf`     | Local browser fixtures with 25/100/200 cards and 125/1,000/4,000 comments                                                  |
 
-Workers tests use local workerd, D1, R2 and SQLite Durable Objects. They cover authorization, tenant isolation when another board's column or card IDs are reused, session/key races, atomic rollback, quotas, UUID deduplication, field conflicts, ordering, replay, hibernation and private attachment access. Retention and restore tests exercise retries, compaction boundaries, staging cleanup and unchanged source data.
+Workers tests use local workerd, D1, R2 and SQLite Durable Objects. They cover authorization, tenant isolation when another board's column or card IDs are reused, session/key races, atomic rollback, quotas, UUID deduplication, field conflicts, ordering, replay, hibernation, private attachment access, and comment edits and removals by authors, owners and other members. Retention and restore tests exercise retries, compaction boundaries, staging cleanup and unchanged source data.
 
-React tests cover recovery controls, disabled attachments, pending and conflicting field states, receipt-bound move announcements, pagination retries and irreversible-action guards. ESLint compatibility probes verify that real React and accessibility errors remain detectable.
+React tests cover recovery controls, disabled attachments, pending and conflicting field states, receipt-bound move announcements, pagination retries, irreversible-action guards and the comment edit and delete controls. ESLint compatibility probes verify that real React and accessibility errors remain detectable.
 
-The two-browser scenario creates Alice and Bob, invites a teammate, checks ordered updates and presence, moves a card, resolves a stale edit, reconnects, comments, uploads a local file and verifies a private export. Browser page errors fail the scenario. See the [walkthrough](realtime-walkthrough.md), [keyboard checks](interface.md), [retention limits](event-retention.md) and [performance reproduction](snapshot-performance.md).
+The two-browser scenario creates Alice and Bob, invites a teammate, checks ordered updates and presence, moves a card, resolves a stale edit, reconnects, comments, uploads a local file and verifies a private export. Browser page errors fail the scenario. A second two-browser scenario edits and deletes a comment while a teammate watches, and restores an unfinished edit from a saved draft. See the [walkthrough](realtime-walkthrough.md), [keyboard checks](interface.md), [retention limits](event-retention.md) and [performance reproduction](snapshot-performance.md).
 
 ## Local isolation
 

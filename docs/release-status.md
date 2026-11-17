@@ -1,11 +1,11 @@
 # 驗證狀態與限制
 
-更新於 2026-11-14。歷史紀錄見 Git。
+更新於 2026-11-17。歷史紀錄見 Git。
 
 ## 自動驗證
 
-- `pnpm verify`：100 個 Workers 測試、21 個 React 測試、ESLint 相容性探針、Vinext 相容檢查與正式建置皆通過。
-- `pnpm test:e2e`：69 個本機瀏覽器情境通過（完整 Chromium 套件，加上 Firefox／WebKit 的導航、鍵盤對話框與歷史維護）。
+- `pnpm verify`：110 個 Workers 測試、26 個 React 測試、ESLint 相容性探針、Vinext 相容檢查與正式建置皆通過。
+- `pnpm test:e2e`：70 個本機瀏覽器情境通過（完整 Chromium 套件，加上 Firefox／WebKit 的導航、鍵盤對話框與歷史維護）。
 - 審計依[例外政策](dependencies.md)解讀，不宣稱零 advisory。
 
 本機與 CI 通過不代表下方的人工驗收已完成。
@@ -13,6 +13,7 @@
 ## 部署
 
 - 2026-11-14：commit `75bb8be` 由 Workers Build `ef94189b-b7fb-4174-a257-4bf6311c5603` 部署成功。部署指令先執行 `db:migrate:remote`，因此到 `0007_board_scoped_cards` 為止的 migration 皆已套用。同一 commit 的 GitHub CI、CodeQL 與公開體驗發布皆成功。
+- 留言編輯與刪除（migration `0008_comment_edits`）只在本機驗證過，尚未部署。
 
 正式站只允許擁有者的 Access 信箱。匿名請求會導向 Access，正式附件停用，未使用付費服務；Workers Free 方案由擁有者確認，未另外讀取帳單。
 

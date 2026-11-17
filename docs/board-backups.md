@@ -8,7 +8,7 @@ Version `collabedge.board.v2` includes the board, columns, cards, archived state
 
 The reader accepts older `collabedge.board.v1` exports after the same structural validation and displays their missing-checksum warning. Keep these files private: they contain board text and member names. They contain no password, session cookie, Access token or R2 object key.
 
-Attachment binaries and previous event history are omitted. Imported files become unavailable references with their names, MIME types and sizes. The UI provides no download link for them, and they count toward the ten-file limit per card. Exporting an imported board includes those references again. Imported comments preserve their original body and timestamp, with an explicitly unverified author name from the file. Their database actor is the current restorer; the import never creates users or impersonates historical accounts.
+Attachment binaries and previous event history are omitted. Imported files become unavailable references with their names, MIME types and sizes. The UI provides no download link for them, and they count toward the ten-file limit per card. Exporting an imported board includes those references again. Imported comments preserve their original body and timestamp, with an explicitly unverified author name from the file. A comment that was edited before the export keeps its edited time; imported comments can be deleted but not edited. Their database actor is the current restorer; the import never creates users or impersonates historical accounts.
 
 ## Preview and recovery
 
