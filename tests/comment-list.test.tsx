@@ -83,7 +83,10 @@ it('offers editing only on the reader’s own comments and submits from the revi
     { type: 'comment.update', payload: { id: 'mine', body: 'My better note' } },
     7,
   );
-  expect(screen.getByRole('button', { name: 'Edit comment' })).toHaveFocus();
+  // Focus returns in an effect that can run after the button reappears.
+  await vi.waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Edit comment' })).toHaveFocus(),
+  );
 });
 
 it('keeps the edit open when the change could not be queued and skips unchanged text', async () => {
