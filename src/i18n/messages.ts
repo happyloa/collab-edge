@@ -143,7 +143,6 @@ export const zh = {
   'Catch up again': '重新連線',
   'Illustrated scenarios only. No server connection or saved changes.':
     '此處為情境示意，不連接伺服器，也不儲存修改。',
-  'How it works': '運作方式',
   'Plan on one board. See every committed change, keep your draft when edits collide, and reconnect without losing your place.':
     '在同一個看板規劃，掌握每次已提交的變更。編輯衝突時保留草稿，重新連線後接回團隊的進度。',
   'Explore the public playground': '開啟免登入展示',

@@ -123,12 +123,6 @@ export function Home({ signedIn }: { signedIn: boolean }) {
           className="flex flex-wrap items-center gap-3 sm:gap-5"
           aria-label={t('Main navigation')}
         >
-          <a
-            href="#how-it-works"
-            className="hidden text-sm text-muted lg:inline"
-          >
-            {t('How it works')}
-          </a>
           <LanguageSelect />
           <ThemeToggle />
           {signedIn ? (
