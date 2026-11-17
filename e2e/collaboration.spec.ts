@@ -108,7 +108,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await dragHandle.press('ArrowRight');
     await expect(
       alice.getByRole('region', { name: 'Review', exact: true }),
-    ).toHaveClass(/bg-border/);
+    ).toHaveClass(/bg-surface-subtle/);
     await dragHandle.press('Space');
     for (const page of [alice, bob])
       await expect(
@@ -131,7 +131,7 @@ test('two people synchronize, resolve conflicts, reconnect, and share private fi
     await dragHandle.press('ArrowLeft');
     await expect(
       alice.getByRole('region', { name: 'In Progress', exact: true }),
-    ).toHaveClass(/bg-border/);
+    ).toHaveClass(/bg-surface-subtle/);
     await dragHandle.press('Space');
     for (const page of [alice, bob])
       await expect(

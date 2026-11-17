@@ -13,7 +13,7 @@ import {
   type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { ArrowLeft, Activity, Download } from 'lucide-react';
+import { ArrowLeft, Activity, Download, Plus, Settings2 } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError } from '../../src/lib/api-client';
@@ -249,11 +249,11 @@ function Board({
           <ThemeToggle />
         </div>
       </header>
-      <div className="motion-reveal flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-6">
+      <div className="motion-reveal flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 pt-6 pb-4 sm:px-6">
         <div>
           <Link
             href="/workspaces"
-            className="mb-3 flex items-center gap-1 text-xs text-muted"
+            className="mb-2 flex items-center gap-1 text-xs text-muted hover:text-foreground"
           >
             <ArrowLeft size={13} />
             {t('Workspace')}
@@ -261,42 +261,42 @@ function Board({
           <h1
             data-board-heading
             tabIndex={-1}
-            className="text-2xl font-semibold"
+            className="text-3xl font-semibold sm:text-4xl"
           >
             {state.board.name}
           </h1>
-          <p className="mt-2 text-sm text-muted">
-            {t(
-              live.status !== 'Connected' || live.pending.length > 0
-                ? 'Connect and finish pending edits before exporting.'
-                : 'Make progress visible. Keep your team in sync.',
-            )}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 whitespace-nowrap">
-          {!readOnly && (
-            <button
-              className="button secondary"
-              onClick={() => setSettings({ ...state.board })}
-            >
-              {t('Board settings')}
-            </button>
-          )}
-          <span className="badge">
+          <p className="mt-2 font-mono text-xs text-muted">
             {t('{role} · Revision {revision}', {
               role: t(live.role ?? initial.role),
               revision: state.board.revision,
             })}
-          </span>
+          </p>
+          {(live.status !== 'Connected' || live.pending.length > 0) && (
+            <p className="mt-2 text-sm text-muted">
+              {t('Connect and finish pending edits before exporting.')}
+            </p>
+          )}
+        </div>
+        <div className="-mx-3 flex flex-wrap items-center gap-1 whitespace-nowrap sm:mx-0">
+          {!readOnly && (
+            <button
+              className="button ghost"
+              onClick={() => setSettings({ ...state.board })}
+            >
+              <Settings2 size={16} aria-hidden="true" />
+              {t('Board settings')}
+            </button>
+          )}
           <button
-            className="button secondary"
+            className="button ghost"
+            aria-expanded={showActivity}
             onClick={() => setShowActivity(!showActivity)}
           >
             <Activity size={16} />
             {t('Activity')}
           </button>
           <button
-            className="button secondary"
+            className="button ghost"
             onClick={exportBoard}
             disabled={exporting || !canExport}
             aria-busy={exporting}
@@ -307,7 +307,7 @@ function Board({
           </button>
         </div>
       </div>
-      <main id="main-content" tabIndex={-1} className="p-4 sm:p-6">
+      <main id="main-content" tabIndex={-1} className="px-4 pb-6 sm:px-6">
         {live.pending.some((item) => item.state === 'pending') && (
           <p className="notice mb-4" role="status">
             {t('{count} change(s) awaiting confirmation.', {
@@ -355,6 +355,7 @@ function Board({
           people={initial.people}
           filtered={filtered}
           activeFilterCount={activeFilterCount}
+          archiveOpen={showArchive}
           onToggleArchive={() => setShowArchive(!showArchive)}
         />
         {showArchive && (
@@ -597,16 +598,23 @@ function Board({
                     form.reset();
                 }}
               >
-                <input
-                  name="title"
-                  aria-label={t('New column name')}
-                  placeholder={t('New column…')}
-                  required
-                  maxLength={160}
-                />
-                <button className="mt-3 text-sm text-muted">
-                  {t('+ Add column')}
-                </button>
+                <div className="flex items-center gap-1">
+                  <input
+                    name="title"
+                    className="border-dashed bg-transparent"
+                    aria-label={t('New column name')}
+                    placeholder={t('New column…')}
+                    required
+                    maxLength={160}
+                  />
+                  <button
+                    className="icon-button shrink-0"
+                    aria-label={t('+ Add column')}
+                    title={t('+ Add column')}
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                  </button>
+                </div>
               </form>
             )}
           </div>

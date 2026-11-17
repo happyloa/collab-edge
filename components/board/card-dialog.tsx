@@ -128,22 +128,27 @@ export function CardDialog({
     state.cards.find((card) => card.id === initial.id) ?? initial;
   const fieldStatusId = (field: CardField) => `${editFormId}-${field}-status`;
   function fieldStatus(field: CardField, value: string | null) {
+    const status = cardFieldStatus({
+      field,
+      value,
+      original: original[field],
+      current: currentCard,
+      pending,
+      busy: submittingFields,
+      saveStatus,
+    });
+    // The settled state is the normal case; only say it to screen readers and
+    // keep the visible line for drafts, pending saves and conflicts.
     return (
       <span
         id={fieldStatusId(field)}
-        className="block text-xs font-normal text-muted"
+        className={
+          status === 'Server-confirmed value.'
+            ? 'sr-only'
+            : 'block text-xs font-normal text-muted'
+        }
       >
-        {t(
-          cardFieldStatus({
-            field,
-            value,
-            original: original[field],
-            current: currentCard,
-            pending,
-            busy: submittingFields,
-            saveStatus,
-          }),
-        )}
+        {t(status)}
       </span>
     );
   }
@@ -415,11 +420,13 @@ export function CardDialog({
             className="mb-4"
           />
         )}
+        {/* Reconnecting stays reachable while "Connected": a session that
+            expired elsewhere only shows up on the next message. */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <span className="badge">{t(connectionStatus)}</span>
           <button
             type="button"
-            className="button secondary"
+            className="button ghost -mr-3"
             onClick={reconnect}
             disabled={
               connectionStatus === 'Connecting' ||

@@ -7,7 +7,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, GripVertical, MessageSquare } from 'lucide-react';
+import {
+  Plus,
+  GripVertical,
+  MessageSquare,
+  MoreHorizontal,
+} from 'lucide-react';
 import { useI18n } from '../ui/i18n';
 import type { Snapshot, Command } from '../../src/realtime/protocol';
 import type { Pending } from '../../src/realtime/socket-client';
@@ -45,18 +50,18 @@ const SortableCard = memo(function SortableCard({
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className="surface sortable-surface mb-3 p-4"
+      className="surface sortable-surface mb-2 px-3 pt-1 pb-3"
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1">
         <button
-          className="min-h-11 flex-1 text-left text-sm leading-relaxed font-medium"
+          className="min-h-11 flex-1 py-2 text-left text-sm leading-snug font-medium"
           onClick={() => open(card)}
         >
           {card.title}
         </button>
         {!readOnly && (
           <button
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-border"
+            className="-mr-2 inline-flex size-11 shrink-0 cursor-grab items-center justify-center rounded-md text-control-border hover:bg-surface-subtle hover:text-foreground"
             aria-label={t('Move {title}', { title: card.title })}
             {...attributes}
             {...listeners}
@@ -66,12 +71,14 @@ const SortableCard = memo(function SortableCard({
         )}
       </div>
       {card.description && (
-        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted">
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted">
           {card.description}
         </p>
       )}
-      <div className="mt-5 flex items-center justify-between gap-2 text-xs text-muted">
-        <span>CE–{card.id.slice(0, 4).toUpperCase()}</span>
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted">
+        <span className="font-mono text-[0.6875rem]">
+          CE–{card.id.slice(0, 4).toUpperCase()}
+        </span>
         {pending && <span>{t('Saving…')}</span>}
         {commentCount > 0 && (
           <span
@@ -85,14 +92,18 @@ const SortableCard = memo(function SortableCard({
         )}
       </div>
       {(card.assigneeId || card.dueDate) && (
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
           {card.assigneeId && (
-            <span>
+            <span className="tag">
               {people.find((p) => p.id === card.assigneeId)?.name ??
                 t('Former member')}
             </span>
           )}
-          {card.dueDate && <time dateTime={card.dueDate}>{card.dueDate}</time>}
+          {card.dueDate && (
+            <time className="tag font-mono" dateTime={card.dueDate}>
+              {card.dueDate}
+            </time>
+          )}
         </div>
       )}
     </div>
@@ -110,7 +121,7 @@ function Column({
     <section
       ref={setNodeRef}
       aria-label={column.title}
-      className={`w-72 shrink-0 rounded-xl p-2 ${isOver ? 'bg-border' : 'bg-surface-subtle'}`}
+      className={`w-72 shrink-0 rounded-lg px-2 pb-2 ${isOver ? 'bg-surface-subtle' : ''}`}
     >
       {children}
     </section>
@@ -146,81 +157,90 @@ export function BoardColumn({
   const { t } = useI18n();
   return (
     <Column column={column}>
-      <div className="mb-4 flex items-center gap-2 px-1">
-        <span className={`column-dot tone-${index % 4}`} />
-        <h2 className="flex-1 text-sm font-semibold">{column.title}</h2>
-        <span className="text-xs text-muted">{cards.length}</span>
+      <div className="relative mb-3 flex min-h-11 items-center gap-2 border-t-2 border-foreground pt-1 pl-1">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {column.title}
+        </h2>
+        <span className="font-mono text-xs text-muted">{cards.length}</span>
+        {!readOnly && (
+          <details className="column-options text-xs text-muted">
+            <summary
+              className="icon-button size-9 cursor-pointer list-none"
+              aria-label={t('Column options')}
+              title={t('Column options')}
+            >
+              <MoreHorizontal size={16} aria-hidden="true" />
+            </summary>
+            <div className="surface absolute top-full right-0 z-10 mt-1 w-64 p-3 shadow-float">
+              <form
+                className="mb-3 flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  mutate({
+                    type: 'column.rename',
+                    payload: {
+                      id: column.id,
+                      title: String(new FormData(e.currentTarget).get('title')),
+                    },
+                  });
+                }}
+              >
+                <input
+                  aria-label={t('Rename {title}', {
+                    title: column.title,
+                  })}
+                  name="title"
+                  defaultValue={column.title}
+                  required
+                  maxLength={160}
+                />
+                <button>{t('Save')}</button>
+              </form>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  disabled={index === 0}
+                  onClick={() =>
+                    mutate({
+                      type: 'column.move',
+                      payload: {
+                        id: column.id,
+                        beforeId: columns[index - 1]?.id ?? null,
+                      },
+                    })
+                  }
+                >
+                  {t('Move left')}
+                </button>
+                <button
+                  disabled={index === columns.length - 1}
+                  onClick={() =>
+                    mutate({
+                      type: 'column.move',
+                      payload: {
+                        id: column.id,
+                        beforeId: columns[index + 2]?.id ?? null,
+                      },
+                    })
+                  }
+                >
+                  {t('Move right')}
+                </button>
+                <button
+                  className="text-destructive"
+                  onClick={() =>
+                    mutate({
+                      type: 'column.remove',
+                      payload: { id: column.id },
+                    })
+                  }
+                >
+                  {t('Remove empty column')}
+                </button>
+              </div>
+            </div>
+          </details>
+        )}
       </div>
-      {!readOnly && (
-        <details className="mb-3 text-xs text-muted">
-          <summary className="cursor-pointer">{t('Column options')}</summary>
-          <form
-            className="my-2 flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              mutate({
-                type: 'column.rename',
-                payload: {
-                  id: column.id,
-                  title: String(new FormData(e.currentTarget).get('title')),
-                },
-              });
-            }}
-          >
-            <input
-              aria-label={t('Rename {title}', {
-                title: column.title,
-              })}
-              name="title"
-              defaultValue={column.title}
-              required
-              maxLength={160}
-            />
-            <button>{t('Save')}</button>
-          </form>
-          <div className="flex flex-wrap gap-3">
-            <button
-              disabled={index === 0}
-              onClick={() =>
-                mutate({
-                  type: 'column.move',
-                  payload: {
-                    id: column.id,
-                    beforeId: columns[index - 1]?.id ?? null,
-                  },
-                })
-              }
-            >
-              {t('Move left')}
-            </button>
-            <button
-              disabled={index === columns.length - 1}
-              onClick={() =>
-                mutate({
-                  type: 'column.move',
-                  payload: {
-                    id: column.id,
-                    beforeId: columns[index + 2]?.id ?? null,
-                  },
-                })
-              }
-            >
-              {t('Move right')}
-            </button>
-            <button
-              className="text-destructive"
-              onClick={() =>
-                mutate({
-                  type: 'column.remove',
-                  payload: { id: column.id },
-                })
-              }
-            >
-              {t('Remove empty column')}
-            </button>
-          </div>
-        </details>
-      )}
       <SortableContext
         items={cards.map((c) => c.id)}
         strategy={verticalListSortingStrategy}
@@ -242,7 +262,7 @@ export function BoardColumn({
         ))}
       </SortableContext>
       {cards.length === 0 && (
-        <div className="mb-3 rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted">
+        <div className="mb-2 px-1 py-4 text-xs text-muted">
           {t(filtered ? 'No matching cards' : 'Room for something new')}
         </div>
       )}
@@ -264,19 +284,25 @@ export function BoardColumn({
               form.reset();
           }}
         >
-          <input
-            name="title"
-            aria-label={t('New card in {title}', {
-              title: column.title,
-            })}
-            placeholder={t('Add a card…')}
-            required
-            maxLength={160}
-          />
-          <button className="mt-2 flex items-center gap-1 text-xs text-muted">
-            <Plus size={14} />
-            {t('Add card')}
-          </button>
+          <div className="flex items-center gap-1">
+            <input
+              name="title"
+              className="border-dashed bg-transparent text-sm"
+              aria-label={t('New card in {title}', {
+                title: column.title,
+              })}
+              placeholder={t('Add a card…')}
+              required
+              maxLength={160}
+            />
+            <button
+              className="icon-button shrink-0"
+              aria-label={t('Add card')}
+              title={t('Add card')}
+            >
+              <Plus size={16} aria-hidden="true" />
+            </button>
+          </div>
         </form>
       )}
     </Column>
