@@ -28,6 +28,15 @@ export const draftSchema = z
     original: fields,
     fields,
     comment: z.string().max(2000),
+    // An unsent edit of an existing comment, with the revision it started from.
+    commentEdit: z
+      .object({
+        id,
+        body: z.string().max(2000),
+        baseRevision: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
     updatedAt: z.number().int().nonnegative(),
   })
   .strict();

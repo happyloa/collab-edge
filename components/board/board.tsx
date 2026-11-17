@@ -436,10 +436,11 @@ function Board({
                   <div className="min-w-0 flex-1 text-sm">
                     <p>{draft.fields.title || t('Untitled draft')}</p>
                     <p className="line-clamp-1 text-xs text-muted">
-                      {(draft.comment || draft.fields.description).slice(
-                        0,
-                        120,
-                      )}
+                      {(
+                        draft.comment ||
+                        draft.commentEdit?.body ||
+                        draft.fields.description
+                      ).slice(0, 120)}
                     </p>
                   </div>
                   <time className="text-xs text-muted">
@@ -637,15 +638,25 @@ function Board({
           connectionStatus={live.status}
           connectionError={live.error}
           ownerId={initial.user.id}
+          canModerate={(live.role ?? initial.role) === 'OWNER'}
           draftLease={drafts.lease}
           restoredDraft={restoredDraft}
           attention={live.pending
-            .filter(
-              (p) =>
-                p.state === 'conflicted' &&
-                p.mutation.command.type === 'card.update' &&
-                p.mutation.command.payload.id === selected.id,
-            )
+            .filter((p) => {
+              if (p.state !== 'conflicted') return false;
+              const { command } = p.mutation;
+              if (command.type === 'card.update')
+                return command.payload.id === selected.id;
+              return (
+                (command.type === 'comment.update' ||
+                  command.type === 'comment.remove') &&
+                state.comments.some(
+                  (comment) =>
+                    comment.id === command.payload.id &&
+                    comment.cardId === selected.id,
+                )
+              );
+            })
             .map((p) => (
               <div
                 key={p.mutation.clientMutationId}

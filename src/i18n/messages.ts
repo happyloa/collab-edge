@@ -453,7 +453,13 @@ export const zh = {
   'Add a comment': '新增留言',
   'Post comment': '送出留言',
   'Edit comment': '編輯留言',
+  'Save comment': '儲存留言',
   'Delete comment': '刪除留言',
+  'Confirm delete comment': '確認刪除留言',
+  Edited: '已編輯',
+  'Unsent comment edit': '尚未送出的留言修改',
+  'This comment can no longer be edited. Your text is kept here so you can copy it.':
+    '這則留言已無法編輯，你輸入的內容保留在這裡，方便複製。',
   '{count} comment(s)': '{count} 則留言',
   Attachments: '附件',
   'Upload a file': '上傳檔案',

@@ -12,6 +12,7 @@ import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError } from '../../src/lib/api-client';
 import { Attachments } from './attachments';
+import { CommentList, type CommentEdit } from './comment-list';
 import { cardFieldStatus, type CardField } from './card-field-status';
 import type { Pending } from '../../src/realtime/socket-client';
 import type { Snapshot, Command } from '../../src/realtime/protocol';
@@ -38,6 +39,7 @@ export function CardDialog({
   connectionStatus,
   connectionError,
   ownerId,
+  canModerate = false,
   draftLease,
   restoredDraft,
   attention,
@@ -56,6 +58,7 @@ export function CardDialog({
   connectionStatus: string;
   connectionError: string;
   ownerId: string;
+  canModerate?: boolean;
   draftLease: DraftLease | null;
   restoredDraft?: CardDraft | null;
   attention?: ReactNode;
@@ -66,7 +69,7 @@ export function CardDialog({
   ) => Promise<boolean>;
   moveMessage: string;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
 
   const dialog = useRef<HTMLDialogElement>(null);
   const closeGuard = useRef<HTMLDivElement>(null);
@@ -91,6 +94,9 @@ export function CardDialog({
   );
   const [dueDate, setDueDate] = useState(restored.fields.dueDate ?? '');
   const [comment, setComment] = useState(restoredDraft?.comment ?? '');
+  const [commentEdit, setCommentEdit] = useState<CommentEdit | null>(
+    restoredDraft?.commentEdit ?? null,
+  );
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const [base] = useState(restoredDraft?.baseRevision ?? state.board.revision);
@@ -105,12 +111,19 @@ export function CardDialog({
   const writes = useRef(Promise.resolve());
   const nextDraft = useRef<CardDraft | 'remove' | null>(null);
   const writing = useRef(false);
+  const comments = state.comments.filter((item) => item.cardId === initial.id);
+  // An edit whose comment has since been deleted still holds unsent text.
+  const commentEditDirty =
+    commentEdit !== null &&
+    commentEdit.body !==
+      comments.find((item) => item.id === commentEdit.id)?.body;
   const dirty =
     title !== original.title ||
     description !== original.description ||
     (assigneeId || null) !== original.assigneeId ||
     (dueDate || null) !== (original.dueDate || null) ||
-    comment !== '';
+    comment !== '' ||
+    commentEditDirty;
   const currentCard =
     state.cards.find((card) => card.id === initial.id) ?? initial;
   const fieldStatusId = (field: CardField) => `${editFormId}-${field}-status`;
@@ -153,6 +166,7 @@ export function CardDialog({
         dueDate: dueDate || null,
       },
       comment,
+      ...(commentEditDirty && commentEdit ? { commentEdit } : {}),
       updatedAt: Date.now(),
     };
     setSaveStatus('Saving draft on this device…');
@@ -187,6 +201,8 @@ export function CardDialog({
     assigneeId,
     dueDate,
     comment,
+    commentEdit,
+    commentEditDirty,
     dirty,
     readOnly,
     draftLease,
@@ -442,7 +458,7 @@ export function CardDialog({
                   if (await mutate({ type: 'card.update', payload }, base)) {
                     // The socket queue is durable before clearing the form draft.
                     await writes.current;
-                    if (comment === '') {
+                    if (comment === '' && !commentEditDirty) {
                       if (draftLease) await removeDraft(draftLease, draftId);
                       close();
                     } else {
@@ -468,6 +484,9 @@ export function CardDialog({
                             dueDate: dueDate || null,
                           },
                           comment,
+                          ...(commentEditDirty && commentEdit
+                            ? { commentEdit }
+                            : {}),
                           updatedAt: Date.now(),
                         });
                       close();
@@ -695,29 +714,32 @@ export function CardDialog({
           </div>
           <div className="min-w-0 lg:border-l lg:border-border lg:pl-8">
             <section className="mt-8 border-t border-border pt-6 lg:mt-0 lg:border-t-0 lg:pt-0">
-              <h2 className="font-semibold">{t('Conversation')}</h2>
-              <ul className="my-4 space-y-3">
-                {state.comments
-                  .filter((c) => c.cardId === initial.id)
-                  .map((c) => (
-                    <li
-                      key={c.id}
-                      className="rounded-lg bg-background p-3 text-sm"
-                    >
-                      <p className="whitespace-pre-wrap">{c.body}</p>
-                      {c.importedAuthorName && (
-                        <p className="mt-2 text-xs text-muted">
-                          {t('Imported author: {name} (unverified)', {
-                            name: c.importedAuthorName,
-                          })}
-                        </p>
-                      )}
-                      <time className="mt-2 block text-xs text-muted">
-                        {new Date(c.createdAt).toLocaleString(locale)}
-                      </time>
-                    </li>
-                  ))}
-              </ul>
+              <h2
+                className="font-semibold"
+                tabIndex={-1}
+                data-conversation-heading
+              >
+                {t('Conversation')}
+              </h2>
+              <CommentList
+                comments={comments}
+                userId={ownerId}
+                canModerate={canModerate}
+                readOnly={readOnly}
+                busy={busy}
+                revision={state.board.revision}
+                edit={commentEdit}
+                onEdit={setCommentEdit}
+                submit={async (command, baseRevision) => {
+                  if (busy) return false;
+                  setBusy(true);
+                  try {
+                    return await mutate(command, baseRevision);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
               {readOnly && comment && (
                 <label className="field">
                   {t('Unsent comment')}
