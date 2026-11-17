@@ -3,7 +3,7 @@ import { useI18n, LanguageSelect } from '../ui/i18n';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, ArrowUpRight, LayoutDashboard, LogOut } from 'lucide-react';
+import { Plus, ArrowUpRight, LogOut } from 'lucide-react';
 import { api } from '../ui/providers';
 import { ThemeToggle } from '../ui/theme';
 import { BrandMark } from '../ui/brand-mark';
@@ -121,7 +121,6 @@ export function Dashboard() {
                   aria-pressed={w.id === id}
                   onClick={() => setSelected(w.id)}
                 >
-                  <LayoutDashboard size={17} />
                   {w.name}
                 </button>
               ))}
@@ -142,19 +141,25 @@ export function Dashboard() {
                 });
               }}
             >
-              <label className="field">
-                {t('New workspace')}
-                <input
-                  name="name"
-                  required
-                  maxLength={80}
-                  placeholder={t('Your team’s name')}
-                />
-              </label>
-              <button className="button secondary w-full">
-                <Plus size={16} />
-                {t('Create workspace')}
-              </button>
+              <div className="flex items-center gap-1">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">{t('New workspace')}</span>
+                  <input
+                    name="name"
+                    className="border-dashed bg-transparent"
+                    required
+                    maxLength={80}
+                    placeholder={t('New workspace')}
+                  />
+                </label>
+                <button
+                  className="icon-button shrink-0"
+                  aria-label={t('Create workspace')}
+                  title={t('Create workspace')}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                </button>
+              </div>
             </form>
             <p className="mt-4 text-xs text-muted">
               {t('Up to 3 workspaces per account.')}
@@ -223,17 +228,16 @@ export function Dashboard() {
             )}
             {detail.data && (
               <>
-                <p className="eyebrow">
-                  {t('WORKSPACE /')} {t(detail.data.role)}
-                </p>
-                <h1 className="mt-3 text-3xl font-semibold">
-                  {detail.data.workspace.name}
-                </h1>
-                <p className="mt-3 text-muted">
-                  {t('A shared view of what’s moving forward.')}
-                </p>
-                <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
-                  <h2 className="text-xl font-semibold">{t('Your boards')}</h2>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-4xl font-semibold">
+                    {detail.data.workspace.name}
+                  </h1>
+                  <span className="badge" data-workspace-role>
+                    {t(detail.data.role)}
+                  </span>
+                </div>
+                <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t-2 border-foreground pt-4">
+                  <h2 className="text-sm font-semibold">{t('Your boards')}</h2>
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
@@ -244,33 +248,36 @@ export function Dashboard() {
                     {t('Show archived boards')}
                   </label>
                 </div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <ul className="mt-2">
                   {detail.data.boards
                     .filter((board) => board.archived === showArchived)
-                    .map((board, index) => (
-                      <Link
-                        key={board.id}
-                        href={`/boards/${board.id}`}
-                        className="surface interactive-surface motion-card group p-6"
-                        style={{ animationDelay: `${index * 70}ms` }}
-                      >
-                        <div className="flex justify-between">
-                          <LayoutDashboard className="text-primary" size={24} />
-                          <ArrowUpRight size={18} />
-                        </div>
-                        <h2 className="mt-6 font-semibold">{board.name}</h2>
-                        <p className="mt-2 text-xs text-muted">
-                          {t('Revision {revision} · Realtime board', {
-                            revision: board.revision,
-                          })}
-                        </p>
-                      </Link>
+                    .map((board) => (
+                      <li key={board.id} className="border-b border-border">
+                        <Link
+                          href={`/boards/${board.id}`}
+                          className="group flex min-h-14 items-center gap-4 py-3"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-lg font-medium group-hover:underline group-hover:underline-offset-4">
+                            {board.name}
+                          </span>
+                          <span className="font-mono text-xs text-muted">
+                            {t('Revision {revision}', {
+                              revision: board.revision,
+                            })}
+                          </span>
+                          <ArrowUpRight
+                            size={18}
+                            aria-hidden="true"
+                            className="text-muted group-hover:text-foreground"
+                          />
+                        </Link>
+                      </li>
                     ))}
-                </div>
+                </ul>
                 {!detail.data.boards.some(
                   (board) => board.archived === showArchived,
                 ) && (
-                  <p className="mt-5 rounded-xl border border-dashed border-control-border p-5 text-sm text-muted">
+                  <p className="mt-5 text-sm text-muted">
                     {t(
                       showArchived
                         ? 'No archived boards in this workspace.'
@@ -283,7 +290,7 @@ export function Dashboard() {
                 {detail.data.role !== 'VIEWER' && (
                   <form
                     key={`new-board:${detail.data.workspace.id}`}
-                    className="mt-6 flex flex-wrap items-end gap-3"
+                    className="mt-6 flex flex-wrap items-center gap-2"
                     onSubmit={(e) => {
                       e.preventDefault();
                       const form = e.currentTarget;
@@ -300,13 +307,13 @@ export function Dashboard() {
                       });
                     }}
                   >
-                    <label className="field min-w-[min(100%,14rem)] flex-1">
-                      {t('New board')}
+                    <label className="min-w-[min(100%,14rem)] flex-1 sm:max-w-sm">
+                      <span className="sr-only">{t('New board')}</span>
                       <input
                         name="name"
                         required
                         maxLength={80}
-                        placeholder={t('What are we working toward?')}
+                        placeholder={t('New board')}
                       />
                     </label>
                     <button className="button">

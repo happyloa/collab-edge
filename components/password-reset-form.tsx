@@ -47,10 +47,7 @@ export function PasswordResetForm({
 
   return (
     <AuthShell>
-      <p className="eyebrow">{t('ACCOUNT RECOVERY')}</p>
-      <h1 className="mt-3 text-3xl font-semibold">
-        {t('Reset your password')}
-      </h1>
+      <h1 className="text-4xl font-semibold">{t('Reset your password')}</h1>
       <p className="mt-3 text-muted">
         {t(
           'First verify your email with Cloudflare Access. This resets the CollabEdge account using that same email.',

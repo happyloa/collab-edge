@@ -106,7 +106,7 @@ test('owner and recipient confirm an ownership transfer from separate accounts',
     await recipient.getByLabel('Confirm with your password').fill(password);
     await recipient.getByRole('button', { name: 'Accept ownership' }).click();
     await expect(
-      recipient.getByText('WORKSPACE / OWNER', { exact: true }),
+      recipient.locator('[data-workspace-role]', { hasText: 'OWNER' }),
     ).toBeVisible();
     await expect(
       recipient.getByRole('button', { name: 'Accept ownership' }),
@@ -114,7 +114,7 @@ test('owner and recipient confirm an ownership transfer from separate accounts',
 
     await owner.reload();
     await expect(
-      owner.getByText('WORKSPACE / EDITOR', { exact: true }),
+      owner.locator('[data-workspace-role]', { hasText: 'EDITOR' }),
     ).toBeVisible();
     await expect(
       owner.getByRole('button', { name: 'Request transfer' }),

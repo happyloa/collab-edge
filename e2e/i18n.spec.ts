@@ -34,9 +34,7 @@ test('language persists across routes and reloads without losing drafts or recon
     .getByRole('combobox', { name: 'Language / 語言' })
     .selectOption('zh-TW');
   await page.reload();
-  await expect(
-    page.getByRole('heading', { name: '為好點子留個空間。' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: '註冊帳號' })).toBeVisible();
   await page.goto('/');
   await page.getByRole('button', { name: '以 Alice 體驗' }).click();
   const status = page.getByRole('status', { name: '連線狀態' });
@@ -107,8 +105,6 @@ test('saved locale renders on the server and invalid cookies fall back to Englis
   ]);
   await page.goto('/login');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(
-    page.getByRole('heading', { name: 'Welcome back.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
   await context.close();
 });

@@ -23,42 +23,21 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto grid max-w-7xl gap-10 py-8 lg:min-h-[calc(100vh-5rem)] lg:grid-cols-2 lg:items-center lg:gap-20 lg:py-16"
+        className="motion-reveal mx-auto w-full max-w-sm py-12 sm:py-20"
       >
-        <aside className="auth-story hidden rounded-2xl p-10 lg:block xl:p-14">
-          <p className="auth-story-kicker">{t('PRIVATE WORKSPACE')}</p>
-          <p className="mt-8 max-w-md text-5xl leading-tight font-semibold tracking-tight">
-            {t('A shared place for work in progress.')}
-          </p>
-          <p className="mt-6 max-w-sm text-sm leading-relaxed">
-            {t(
-              'Keep the board, its changes, and the people working on it in context.',
-            )}
-          </p>
-          <div className="auth-story-line mt-16" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <p className="mt-5 text-xs">
-            {t('One board · ordered changes · shared context')}
-          </p>
-        </aside>
-        <div className="motion-reveal mx-auto w-full max-w-md">
-          {children}
-          <p className="mt-8 border-t border-border pt-5 text-xs leading-relaxed text-muted">
-            {t(
-              'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.',
-            )}{' '}
-            <a
-              href="https://happyloa.github.io/collab-edge/"
-              className="inline-flex items-center gap-1 text-primary underline underline-offset-4"
-            >
-              {t('Explore the public playground')}{' '}
-              <ArrowUpRight size={13} aria-hidden="true" />
-            </a>
-          </p>
-        </div>
+        {children}
+        <p className="mt-10 border-t border-border pt-5 text-xs leading-relaxed text-muted">
+          {t(
+            'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.',
+          )}{' '}
+          <a
+            href="https://happyloa.github.io/collab-edge/"
+            className="inline-flex items-center gap-1 text-primary underline underline-offset-4"
+          >
+            {t('Explore the public playground')}{' '}
+            <ArrowUpRight size={13} aria-hidden="true" />
+          </a>
+        </p>
       </main>
     </div>
   );

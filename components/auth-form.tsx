@@ -38,17 +38,9 @@ export function AuthForm({
   } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
   return (
     <AuthShell>
-      <p className="eyebrow">{t('YOUR NEXT CHAPTER')}</p>
-      <h1 className="mt-3 text-3xl font-semibold">
-        {t(registerMode ? 'Make room for good work.' : 'Welcome back.')}
+      <h1 className="text-4xl font-semibold">
+        {t(registerMode ? 'Create an account' : 'Sign in')}
       </h1>
-      <p className="mt-3 text-muted">
-        {t(
-          registerMode
-            ? 'Create an account and bring your team together.'
-            : 'Your team’s shared space is right here.',
-        )}
-      </p>
       <form
         method="post"
         className="mt-8 space-y-5"
@@ -135,9 +127,12 @@ export function AuthForm({
           )}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-6 text-sm text-muted">
         {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
-        <Link className="text-primary" href={switchModeHref}>
+        <Link
+          className="text-primary underline underline-offset-4"
+          href={switchModeHref}
+        >
           {t(registerMode ? 'Sign in' : 'Create an account')}
         </Link>
       </p>
