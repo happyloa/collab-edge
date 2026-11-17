@@ -55,13 +55,11 @@ export const zh = {
   Empty: '空白',
   'At end': '在末端',
   'Illustrative flow': '示意流程',
-  'PRIVATE WORKSPACE': '私人工作區',
   'Your boards': '你的看板',
   'No archived boards in this workspace.': '這個工作區沒有已封存的看板。',
   'No boards in this workspace.': '這個工作區目前沒有看板。',
   'No boards here yet. Create one to get started.':
     '這裡還沒有看板，建立一個看板開始使用。',
-  'WORKSPACE MANAGEMENT': '工作區管理',
   'Workspace management': '工作區管理',
   'Move without dragging': '不拖曳移動',
   Filters: '篩選',
@@ -83,18 +81,11 @@ export const zh = {
   'End of column': '欄位末端',
   'Before {title}': '在 {title} 之前',
   'Move card': '移動卡片',
-  'Move submitted. The board will show the result when confirmed.':
-    '已送出移動，確認後看板會顯示結果。',
   '{count} change(s) awaiting confirmation.': '{count} 筆變更等待確認。',
   'Connect and finish pending edits before exporting.':
     '請先連線並完成待確認的編輯，再匯出看板。',
   'You can view this board, but your role does not allow editing.':
     '你可以檢視這個看板，但目前的角色無法編輯。',
-  'A shared place for work in progress.': '一起推進工作的共同空間。',
-  'Keep the board, its changes, and the people working on it in context.':
-    '讓看板、變更與參與的成員都在同一個脈絡中。',
-  'One board · ordered changes · shared context':
-    '同一個看板 · 有序的變更 · 共同的脈絡',
   'Work moves forward.': '讓工作持續向前。',
   'Changes stay in view.': '每次變更，清楚可見。',
   'See how synchronization works': '看看同步如何運作',
@@ -103,12 +94,9 @@ export const zh = {
     '私人應用程式需要通過 Cloudflare Access 授權；公開展示則不需登入。',
   'Private app demo · Access may be required. Open Bob in another window to collaborate.':
     '私人應用程式示範可能需要 Access 驗證；可在另一個視窗以 Bob 身分協作。',
-  '03 / THE EVIDENCE': '03 / 實作與驗證',
-  'See what happens behind the board.': '看看看板背後如何運作。',
   'Explore the source and a recorded local two-browser test. The public playground is a simulation, not a live session.':
     '查看原始碼與本機雙瀏覽器測試實錄。公開展示是模擬情境，並非即時多人連線。',
   'Recorded local two-browser test': '本機雙瀏覽器測試實錄',
-  '04 / TRY IT FOR YOURSELF': '04 / 親自試試',
   'History maintenance': '歷史紀錄維護',
   'Manage history': '管理歷史紀錄',
   'Only event details older than 30 days can be cleared. The latest 200 changes remain available.':
@@ -138,7 +126,6 @@ export const zh = {
     '部分較舊的活動內容已清除，目前的看板資料仍保留。',
   'How collaboration works': '協作如何運作',
   'TWO VIEWS. ONE BOARD.': '兩個視窗，同一個看板',
-  Illustration: '示意互動',
   'My team’s next chapter': '團隊的下一個篇章',
   'Build a shared space': '打造共同的空間',
   'Draft preserved': '草稿已保留',
@@ -157,14 +144,10 @@ export const zh = {
   'Illustrated scenarios only. No server connection or saved changes.':
     '此處為情境示意，不連接伺服器，也不儲存修改。',
   'How it works': '運作方式',
-  'REALTIME COLLABORATION / BUILT AT THE EDGE': '即時協作 / 在邊緣運行',
   'Plan on one board. See every committed change, keep your draft when edits collide, and reconnect without losing your place.':
     '在同一個看板規劃，掌握每次已提交的變更。編輯衝突時保留草稿，重新連線後接回團隊的進度。',
   'Explore the public playground': '開啟免登入展示',
-  'THE COLLABORATION STUDY': '協作的每個瞬間',
   'Follow a change through the system': '看看一次修改如何同步',
-  '01 / UNDER THE SURFACE': '01 / 畫面背後',
-  'Every change has a place in the story.': '每次修改，都有明確的順序。',
   'Read the architecture': '閱讀技術架構',
   'Keep the attempted edit': '保留這次編輯',
   'The browser keeps confirmed state and your pending draft separately.':
@@ -175,14 +158,9 @@ export const zh = {
   'Bring everyone up to date': '讓團隊接回最新進度',
   'Authorized browsers receive ordered events. Reconnects replay changes or load a consistent snapshot.':
     '已授權的瀏覽器依序接收事件；重連時補回變更，或載入版本一致的快照。',
-  '02 / THE SHARED SPACE': '02 / 共同的空間',
-  'A familiar board. Thoughtful details.': '熟悉的看板，細節都在。',
   'A preview of the private app': '私人協作平台預覽',
-  '03 / TRY IT FOR YOURSELF': '03 / 親自試試',
-  'Make a change. See what happens.': '改一張卡片，看看會發生什麼。',
   'The public playground runs in your browser. Explore cards and conflicts without an account.':
     '公開展示在瀏覽器中運行，免登入即可體驗卡片操作與編輯衝突。',
-  'INTERACTIVE PORTFOLIO / COLLABEDGE': '互動作品 / COLLABEDGE',
   'Imported copies share a 64 MiB lifetime payload budget across the site. Archiving a board does not reset it.':
     '全站匯入副本共用 64 MiB 的累計資料上限。封存看板不會重設這項用量。',
   'Capacity and limits': '容量與使用限制',
@@ -211,13 +189,10 @@ export const zh = {
   Active: '使用中',
   Idle: '閒置中',
   'Viewing {title}': '正在查看 {title}',
-  'A little less friction. A lot more together.': '少一點阻礙，多一點默契。',
   Done: '已完成',
   'Interactive demo': '互動展示',
   'A public playground. Changes stay in this tab and reset on reload. No account or server connection.':
     '公開體驗空間。修改只保留在目前分頁，重新載入就會重設，不需要帳號或伺服器連線。',
-  'Try editing a card, moving it, or simulating a teammate edit to see how a conflicting draft is preserved. Live collaboration is available in the private app and local setup.':
-    '試著編輯或移動卡片，也可以模擬隊友修改，體驗發生衝突時如何保留草稿。真正的即時協作可在私人正式站或本機環境使用。',
   'View source': '查看原始碼',
   'Two-browser test walkthrough': '雙瀏覽器測試導覽',
   'Watch real two-browser test': '觀看真實雙瀏覽器測試',
@@ -267,30 +242,13 @@ export const zh = {
   'card.restore': '還原卡片',
   BETA: '測試版',
   'Sign in': '登入',
-  'Get started': '開始使用',
-  'A little closer. A lot more in sync.': '讓彼此更靠近，讓協作更同步。',
-  'Good work happens': '讓好點子成真，',
   'in a': '從',
-  'shared space.': '共同的空間開始。',
-  'Bring your team’s next big idea into focus. Plan together, see changes as they happen, and keep every decision in the same conversation.':
-    '讓團隊的下一個好點子逐漸成形。一起規劃、即時掌握變更，讓每個決定都有跡可循。',
-  'Create your workspace': '建立你的工作區',
   'Open workspace': '開啟工作區',
   'Product preview': '產品預覽',
   'Acme Product Team /': 'Acme 產品團隊 /',
   'Website Launch': '網站上線計畫',
   Preview: '預覽',
-  'Made for moving forward, together.': '為一起前進而打造。',
   'View source ↗': '查看原始碼 ↗',
-  'Together, in real time': '一起協作，即時同步',
-  'Changes travel as ordered events. Your team stays on the same page.':
-    '變更依序同步，讓團隊始終掌握相同進度。',
-  'A little more certainty': '讓每次修改更安心',
-  'Conflicting edits are surfaced clearly, with your draft kept safe.':
-    '清楚提示編輯衝突，並保留你的草稿。',
-  'Built for the in-between': '隨時接回團隊的步調',
-  'Step away, reconnect, and pick up exactly where your team is now.':
-    '暫時離線也沒關係，重新連線就能接回團隊的最新進度。',
   Backlog: '待辦事項',
   'In Progress': '進行中',
   Review: '審查中',
@@ -300,14 +258,8 @@ export const zh = {
   'Refine the mobile navigation': '改善手機版導覽',
   'Review keyboard accessibility': '檢查鍵盤無障礙操作',
   'Approve the visual direction': '確認視覺方向',
-  'Explore a clearer first impression': '打造更清晰的第一印象',
-  'Build a home for the next chapter': '為下一階段打造新首頁',
-  'Bring the visual identity to life': '實現品牌視覺設計',
-  'Make every interaction accessible': '讓每個互動都易於操作',
-  'Test the details that matter': '驗證關鍵操作細節',
   Design: '設計',
   Product: '產品',
-  'YOUR NEXT CHAPTER': '開啟你的下一個篇章',
   'Your name': '你的姓名',
   'Email address': '電子郵件',
   Password: '密碼',
@@ -316,19 +268,11 @@ export const zh = {
   'Portfolio environment · limited capacity. Keep sensitive information out of shared demo boards.':
     '作品展示環境，使用量有限。請勿在共用示範看板中填入敏感資訊。',
   'Try as {person}': '以 {person} 體驗',
-  'Shared public demo · open Bob in a private window to collaborate.':
-    '共用示範看板：在無痕視窗以 Bob 開啟，即可體驗協作。',
-  'Make room for good work.': '為好點子留個空間。',
-  'Welcome back.': '歡迎回來。',
-  'Create an account and bring your team together.':
-    '建立帳號，讓團隊一起協作。',
-  'Your team’s shared space is right here.': '你的團隊工作區就在這裡。',
   'Just a moment…': '請稍候…',
   'Create account': '建立帳號',
   'Forgot password?': '忘記密碼？',
   'On the private site, use the email you verified with Cloudflare Access.':
     '在私人網站請使用剛才通過 Cloudflare Access 驗證的信箱。',
-  'ACCOUNT RECOVERY': '帳號復原',
   'Reset your password': '重設密碼',
   'First verify your email with Cloudflare Access. This resets the CollabEdge account using that same email.':
     '請先透過 Cloudflare Access 驗證信箱。系統只會重設使用該信箱的 CollabEdge 帳號。',
@@ -351,20 +295,14 @@ export const zh = {
   'Sign out': '登出',
   'YOUR WORKSPACES': '你的工作區',
   'New workspace': '新增工作區',
-  'Your team’s name': '你的團隊名稱',
   'Create workspace': '建立工作區',
   'Up to 3 workspaces per account.': '每個帳號最多建立 3 個工作區。',
-  'Sign in →': '前往登入 →',
   'Loading your workspaces…': '正在載入工作區…',
   'A fresh space for your team.': '給團隊一個全新的空間。',
   'Create a workspace to start planning together.':
     '建立工作區，開始一起規劃。',
-  'WORKSPACE /': '工作區 /',
-  'A shared view of what’s moving forward.': '一起掌握正在前進的每件事。',
-  'Revision {revision} · Realtime board': '版本 {revision} · 即時協作看板',
   '{role} · Revision {revision}': '{role} · 版本 {revision}',
   'New board': '新增看板',
-  'What are we working toward?': '這次想一起完成什麼？',
   'Create board': '建立看板',
   'People in this space': '工作區成員',
   OWNER: '擁有者',
@@ -405,8 +343,6 @@ export const zh = {
   'Opening your shared space…': '正在開啟協作空間…',
   'Connection status': '連線狀態',
   Workspace: '工作區',
-  'Make progress visible. Keep your team in sync.':
-    '讓進度清楚可見，讓團隊保持同步。',
   'Board settings': '看板設定',
   Activity: '活動紀錄',
   'Export board JSON': '匯出看板 JSON',
@@ -505,9 +441,6 @@ export const zh = {
   'attachment.remove': '移除附件',
   'Drag instructions':
     '按空白鍵開始拖曳，使用方向鍵移動，再按空白鍵放下，或按 Escape 取消。',
-  'Picked up card.': '已拿起卡片。',
-  'Card moved.': '已移動卡片。',
-  'Card dropped.': '已放下卡片。',
   'Drag cancelled.': '已取消拖曳。',
   'Drafts on this device': '此裝置上的草稿',
   'Saved for seven days in this browser. Review a draft before sending it.':
