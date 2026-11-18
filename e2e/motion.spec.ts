@@ -5,7 +5,7 @@ test('motion follows user preference without shifting draggable cards', async ({
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
-  const hero = page.getByRole('heading', { name: /Work moves forward/ });
+  const hero = page.getByRole('heading', { name: /Realtime kanban/ });
   await expect(hero).toBeVisible();
 
   // Hover changes colour, never position, so controls stay where they are.

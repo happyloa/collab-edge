@@ -263,7 +263,7 @@ export function BoardColumn({
       </SortableContext>
       {cards.length === 0 && (
         <div className="mb-2 px-1 py-4 text-xs text-muted">
-          {t(filtered ? 'No matching cards' : 'Room for something new')}
+          {t(filtered ? 'No matching cards' : 'No cards')}
         </div>
       )}
       {!readOnly && (

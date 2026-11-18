@@ -17,7 +17,7 @@ test('landing keeps its public paths visible without JavaScript', async ({
     await page.keyboard.press('Enter');
     await expect(page.getByRole('main')).toBeFocused();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(
-      'Work moves forward.',
+      'Realtime kanban',
     );
     await expect(
       page

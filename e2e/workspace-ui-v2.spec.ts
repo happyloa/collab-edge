@@ -19,9 +19,7 @@ test('board access comes before management and remains usable on narrow screens'
     .getByLabel('New workspace', { exact: true })
     .fill('Layout workspace');
   await page.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(
-    page.getByText('No boards here yet. Create one to get started.'),
-  ).toBeVisible();
+  await expect(page.getByText('No boards yet.')).toBeVisible();
   await page.getByLabel('New board', { exact: true }).fill('First board');
   await page.getByRole('button', { name: 'Create board' }).click();
   const board = page.getByRole('link', { name: /First board/ });

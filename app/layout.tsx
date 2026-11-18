@@ -6,9 +6,9 @@ import { Providers } from '../components/ui/providers';
 import { SkipLink } from '../components/ui/skip-link';
 
 export const metadata: Metadata = {
-  title: 'CollabEdge — A shared space for what comes next',
+  title: 'CollabEdge — realtime kanban on Cloudflare Workers',
   description:
-    'A realtime workspace with server-authoritative collaboration, built at the edge.',
+    'A realtime kanban board that keeps your draft when edits collide. Runs on Cloudflare Workers.',
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' }],
   },

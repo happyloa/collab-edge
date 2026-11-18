@@ -128,7 +128,7 @@ export function AuthForm({
         </button>
       </form>
       <p className="mt-6 text-sm text-muted">
-        {t(registerMode ? 'Already have a space?' : 'New here?')}{' '}
+        {t(registerMode ? 'Already have an account?' : 'New here?')}{' '}
         <Link
           className="text-primary underline underline-offset-4"
           href={switchModeHref}

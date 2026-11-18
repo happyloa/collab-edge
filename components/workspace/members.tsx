@@ -23,7 +23,7 @@ export function Members({
     <section className="surface mt-10 p-6">
       <h2 className="flex items-center gap-2 font-semibold">
         <Users size={18} />
-        {t('People in this space')}
+        {t('Members')}
       </h2>
       <ul className="mt-5 divide-y divide-border">
         {detail.members.map((member) => (

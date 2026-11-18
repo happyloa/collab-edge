@@ -58,14 +58,12 @@ export const zh = {
   'Your boards': '你的看板',
   'No archived boards in this workspace.': '這個工作區沒有已封存的看板。',
   'No boards in this workspace.': '這個工作區目前沒有看板。',
-  'No boards here yet. Create one to get started.':
-    '這裡還沒有看板，建立一個看板開始使用。',
+  'No boards yet.': '還沒有看板。',
   'Workspace management': '工作區管理',
   'Move without dragging': '不拖曳移動',
   Filters: '篩選',
   '{count} active filter(s).': '已啟用 {count} 個篩選條件。',
   'Board columns': '看板欄位',
-  'PUBLIC PLAYGROUND / COLLABEDGE': '公開互動展示 / COLLABEDGE',
   'Try the shared workflow.': '親自體驗協作流程。',
   'Interactive simulation · no account, no live connection':
     '互動模擬 · 不需帳號，不連接即時服務',
@@ -86,8 +84,8 @@ export const zh = {
     '請先連線並完成待確認的編輯，再匯出看板。',
   'You can view this board, but your role does not allow editing.':
     '你可以檢視這個看板，但目前的角色無法編輯。',
-  'Work moves forward.': '讓工作持續向前。',
-  'Changes stay in view.': '每次變更，清楚可見。',
+  'Realtime kanban': '多人即時看板',
+  'that keeps your draft when edits collide.': '衝突時保留草稿。',
   'See how synchronization works': '看看同步如何運作',
   'Source and architecture': '原始碼與技術架構',
   'The private app requires authorized Cloudflare Access. The public playground needs no sign-in.':
@@ -143,8 +141,8 @@ export const zh = {
   'Catch up again': '重新連線',
   'Illustrated scenarios only. No server connection or saved changes.':
     '此處為情境示意，不連接伺服器，也不儲存修改。',
-  'Plan on one board. See every committed change, keep your draft when edits collide, and reconnect without losing your place.':
-    '在同一個看板規劃，掌握每次已提交的變更。編輯衝突時保留草稿，重新連線後接回團隊的進度。',
+  'Runs on Cloudflare Workers. Cards, comments, assignees, filters, archives and backup restore, with recovery from disconnects.':
+    '跑在 Cloudflare Workers 上。卡片、留言、指派、篩選、封存、備份還原，並能處理斷線。',
   'Explore the public playground': '開啟免登入展示',
   'Follow a change through the system': '看看一次修改如何同步',
   'Read the architecture': '閱讀技術架構',
@@ -284,7 +282,7 @@ export const zh = {
   'Your account uses {current}. Cloudflare Access verified {verified}. Use the verified email to enable password recovery.':
     '目前帳號信箱為 {current}，Cloudflare Access 已驗證 {verified}。改用已驗證信箱後即可重設密碼。',
   'Use verified email': '改用已驗證信箱',
-  'Already have a space?': '已經有帳號了嗎？',
+  'Already have an account?': '已經有帳號了嗎？',
   'New here?': '第一次使用嗎？',
   'Create an account': '註冊帳號',
   'Use at least 12 characters': '請使用至少 12 個字元',
@@ -297,13 +295,13 @@ export const zh = {
   'Create workspace': '建立工作區',
   'Up to 3 workspaces per account.': '每個帳號最多建立 3 個工作區。',
   'Loading your workspaces…': '正在載入工作區…',
-  'A fresh space for your team.': '給團隊一個全新的空間。',
-  'Create a workspace to start planning together.':
-    '建立工作區，開始一起規劃。',
+  'No workspaces yet': '還沒有工作區',
+  'Create one to add boards and invite people.':
+    '建立一個工作區，就能新增看板並邀請成員。',
   '{role} · Revision {revision}': '{role} · 版本 {revision}',
   'New board': '新增看板',
   'Create board': '建立看板',
-  'People in this space': '工作區成員',
+  Members: '成員',
   OWNER: '擁有者',
   EDITOR: '編輯者',
   VIEWER: '檢視者',
@@ -339,7 +337,7 @@ export const zh = {
   'I understand this cannot be undone.': '我了解此操作無法復原。',
   'Permanently delete account': '永久刪除帳號',
   'Back to workspaces': '返回工作區',
-  'Opening your shared space…': '正在開啟協作空間…',
+  'Loading board…': '正在載入看板…',
   'Connection status': '連線狀態',
   Workspace: '工作區',
   'Board settings': '看板設定',
@@ -358,7 +356,7 @@ export const zh = {
   'Move left': '向左移動',
   'Move right': '向右移動',
   'Remove empty column': '移除空欄位',
-  'Room for something new': '準備迎接新的任務',
+  'No cards': '沒有卡片',
   'Add a card…': '新增卡片…',
   'Add card': '新增卡片',
   'New column name': '新欄位名稱',

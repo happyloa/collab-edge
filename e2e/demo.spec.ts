@@ -6,7 +6,7 @@ test('public demo supports keyboard entry, mobile layout, and dark theme', async
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: /Work moves forward/ }),
+    page.getByRole('heading', { name: /Realtime kanban/ }),
   ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Try as Alice' }),

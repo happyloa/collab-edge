@@ -212,17 +212,18 @@ export function Dashboard() {
               }}
             />
             {list.isPending && (
-              <div role="status" className="surface h-40 animate-pulse p-6">
+              <div role="status" className="max-w-xs text-sm text-muted">
+                <div className="loading-bar mb-3" aria-hidden="true" />
                 {t('Loading your workspaces…')}
               </div>
             )}
             {!id && !list.isPending && (
               <div className="surface p-10">
                 <h1 className="text-3xl font-semibold">
-                  {t('A fresh space for your team.')}
+                  {t('No workspaces yet')}
                 </h1>
                 <p className="mt-4 text-muted">
-                  {t('Create a workspace to start planning together.')}
+                  {t('Create one to add boards and invite people.')}
                 </p>
               </div>
             )}
@@ -283,7 +284,7 @@ export function Dashboard() {
                         ? 'No archived boards in this workspace.'
                         : detail.data.role === 'VIEWER'
                           ? 'No boards in this workspace.'
-                          : 'No boards here yet. Create one to get started.',
+                          : 'No boards yet.',
                     )}
                   </p>
                 )}

@@ -158,11 +158,11 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               className={`font-semibold tracking-tight text-balance ${locale === 'zh-TW' ? 'text-[clamp(2rem,9vw,3.75rem)] leading-[1.2] sm:text-6xl' : 'text-5xl leading-[1.05] sm:text-6xl xl:text-[5.25rem]'}`}
             >
               <span className="block" data-hero-enter>
-                {t('Work moves forward.')}
+                {t('Realtime kanban')}
               </span>
               <span className="block" data-hero-enter>
                 <span className="home-headline-accent">
-                  {t('Changes stay in view.')}
+                  {t('that keeps your draft when edits collide.')}
                 </span>
               </span>
             </h1>
@@ -171,7 +171,7 @@ export function Home({ signedIn }: { signedIn: boolean }) {
               data-hero-enter
             >
               {t(
-                'Plan on one board. See every committed change, keep your draft when edits collide, and reconnect without losing your place.',
+                'Runs on Cloudflare Workers. Cards, comments, assignees, filters, archives and backup restore, with recovery from disconnects.',
               )}
             </p>
             <div className="mt-9 flex flex-wrap gap-3" data-hero-enter>

@@ -15,7 +15,7 @@ test('language persists across routes and reloads without losing drafts or recon
   await setLanguage(page, 'zh-TW');
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-TW');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    '讓工作持續向前',
+    '多人即時看板',
   );
   await page.getByRole('link', { name: '註冊帳號' }).click();
   await page.getByLabel('你的姓名').fill('測試 User');
