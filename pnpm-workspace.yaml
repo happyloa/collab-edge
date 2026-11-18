@@ -10,5 +10,9 @@ audit:
   # parser/walker nesting; CI checks the pinned graph and guard before the audit.
   ignore:
     - GHSA-vfj7-8cjw-p6xm
+    # picomatch has no fixed release. It is reached only through build tooling
+    # with this repository's own glob patterns; CI pins the two locked versions
+    # and checks that application code never imports a glob matcher.
+    - GHSA-fc5q-39xc-vjpf
 patchedDependencies:
   braces@3.0.3: patches/braces@3.0.3.patch

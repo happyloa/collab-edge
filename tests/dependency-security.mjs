@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 // The audit exception is valid only for the patched version in this lockfile.
 const lock = readFileSync('pnpm-lock.yaml', 'utf8');
@@ -48,6 +49,51 @@ assert.deepEqual(
   ['3.0.3'],
   'Review the braces patch on version changes',
 );
+
+// GHSA-fc5q-39xc-vjpf has no fixed picomatch release. The exception holds
+// only for these locked versions and only while the matcher stays in build
+// tooling, where every pattern comes from this repository's configuration.
+{
+  const picomatchVersions = [
+    ...new Set(
+      [...lock.matchAll(/^ {2}picomatch@([^\s:(]+)(?:\([^\n]*\))?:/gm)].map(
+        (match) => match[1],
+      ),
+    ),
+  ].sort();
+  assert.deepEqual(
+    picomatchVersions,
+    ['2.3.2', '4.0.7'],
+    'Review the picomatch audit exception on version changes',
+  );
+  const manifest = JSON.parse(readFileSync('package.json', 'utf8'));
+  const matchers = ['picomatch', 'micromatch', 'fast-glob', 'tinyglobby'];
+  for (const name of matchers)
+    assert.ok(
+      !manifest.dependencies?.[name] && !manifest.devDependencies?.[name],
+      `${name} must not become a direct dependency under the audit exception`,
+    );
+  const importsMatcher = new RegExp(
+    `(?:from\\s*|import\\s*\\(\\s*|require\\s*\\(\\s*)['"](?:${matchers.join('|')})['"/]`,
+  );
+  const scan = (directory) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) scan(path);
+      else if (/\.(?:ts|tsx|mjs|js)$/.test(entry.name))
+        assert.ok(
+          !importsMatcher.test(readFileSync(path, 'utf8')),
+          `${path} imports a glob matcher; revisit the picomatch exception`,
+        );
+    }
+  };
+  // Everything that runs in the Worker or the browser.
+  for (const directory of ['app', 'components', 'src', 'worker', 'showcase'])
+    scan(directory);
+  console.log(
+    'picomatch stays at the reviewed versions and outside application code',
+  );
+}
 
 const require = createRequire(import.meta.url);
 let resolveFrom = createRequire(import.meta.resolve('vinext'));
