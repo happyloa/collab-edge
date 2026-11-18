@@ -66,9 +66,10 @@ export function BoardLoader({
     );
   if (!query.data)
     return (
-      <main id="main-content" tabIndex={-1} className="p-10">
-        <div role="status" className="surface h-60 animate-pulse p-6">
-          {t('Opening your shared space…')}
+      <main id="main-content" tabIndex={-1} className="px-4 py-10 sm:px-6">
+        <div role="status" className="max-w-xs text-sm text-muted">
+          <div className="loading-bar mb-3" aria-hidden="true" />
+          {t('Loading board…')}
         </div>
       </main>
     );
@@ -284,7 +285,7 @@ function Board({
               onClick={() => setSettings({ ...state.board })}
             >
               <Settings2 size={16} aria-hidden="true" />
-              {t('Board settings')}
+              <span className="max-sm:sr-only">{t('Board settings')}</span>
             </button>
           )}
           <button
@@ -292,8 +293,8 @@ function Board({
             aria-expanded={showActivity}
             onClick={() => setShowActivity(!showActivity)}
           >
-            <Activity size={16} />
-            {t('Activity')}
+            <Activity size={16} aria-hidden="true" />
+            <span className="max-sm:sr-only">{t('Activity')}</span>
           </button>
           <button
             className="button ghost"
@@ -302,8 +303,8 @@ function Board({
             aria-busy={exporting}
             title={t('Exports current board data without attachment files.')}
           >
-            <Download size={16} />
-            {t('Export board JSON')}
+            <Download size={16} aria-hidden="true" />
+            <span className="max-sm:sr-only">{t('Export board JSON')}</span>
           </button>
         </div>
       </div>
