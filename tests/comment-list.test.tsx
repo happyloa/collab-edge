@@ -47,6 +47,7 @@ function Harness({
       </h2>
       <CommentList
         comments={comments}
+        people={[{ id: 'bob', name: 'Bob Lee' }]}
         userId="alice"
         canModerate={canModerate}
         readOnly={readOnly}
@@ -63,6 +64,10 @@ function Harness({
 it('offers editing only on the reader’s own comments and submits from the revision the edit began at', async () => {
   const submit = vi.fn().mockResolvedValue(true);
   render(<Harness submit={submit} />);
+  // Each comment names its author; someone no longer in the workspace is
+  // labelled instead of left blank.
+  expect(screen.getByText('Bob Lee')).toBeInTheDocument();
+  expect(screen.getByText('Former member')).toBeInTheDocument();
   // Bob's comment has no controls for Alice.
   expect(screen.getAllByRole('button', { name: 'Edit comment' })).toHaveLength(
     1,

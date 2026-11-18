@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import { X } from 'lucide-react';
+import { RefreshCw, X } from 'lucide-react';
 import { useI18n } from '../ui/i18n';
 import { ApiErrorNotice } from '../ui/api-error-notice';
 import { ApiError } from '../../src/lib/api-client';
@@ -354,10 +354,26 @@ export function CardDialog({
       className="motion-dialog card-detail-dialog m-auto max-h-[calc(100dvh_-_1rem)] w-[calc(100%_-_1rem)] max-w-xl overflow-hidden rounded-2xl border border-border bg-surface p-0 text-foreground shadow-float backdrop:bg-black/40 open:flex open:flex-col lg:max-w-4xl"
     >
       <div className="card-detail-content min-h-0 overflow-auto p-5 sm:p-7">
-        <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
-          <h2 id="card-dialog-title" className="eyebrow">
+        <div className="mb-5 flex items-center gap-1 border-b border-border pb-3">
+          <h2 id="card-dialog-title" className="eyebrow mr-auto">
             {t('CARD DETAILS')}
           </h2>
+          <span className="badge mr-1">{t(connectionStatus)}</span>
+          {/* Reconnecting stays reachable while "Connected": a session that
+              expired elsewhere only shows up on the next message. */}
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={t('Reconnect board')}
+            title={t('Reconnect board')}
+            onClick={reconnect}
+            disabled={
+              connectionStatus === 'Connecting' ||
+              connectionStatus === 'Syncing'
+            }
+          >
+            <RefreshCw size={17} aria-hidden="true" />
+          </button>
           <button
             className="icon-button"
             data-card-dialog-close
@@ -420,22 +436,6 @@ export function CardDialog({
             className="mb-4"
           />
         )}
-        {/* Reconnecting stays reachable while "Connected": a session that
-            expired elsewhere only shows up on the next message. */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="badge">{t(connectionStatus)}</span>
-          <button
-            type="button"
-            className="button ghost -mr-3"
-            onClick={reconnect}
-            disabled={
-              connectionStatus === 'Connecting' ||
-              connectionStatus === 'Syncing'
-            }
-          >
-            {t('Reconnect board')}
-          </button>
-        </div>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="min-w-0">
             <form
@@ -508,8 +508,9 @@ export function CardDialog({
               }}
             >
               <label className="field">
-                {t('Title')}
+                <span className="sr-only">{t('Title')}</span>
                 <input
+                  className="rounded-none border-0 border-b border-border bg-transparent px-0 pt-0 pb-2 text-2xl font-semibold tracking-tight sm:text-2xl"
                   aria-label={t('Title')}
                   aria-describedby={fieldStatusId('title')}
                   value={title}
@@ -534,40 +535,42 @@ export function CardDialog({
                 />
                 {fieldStatus('description', description)}
               </label>
-              <label className="field">
-                {t('Assignee')}
-                <select
-                  aria-label={t('Assignee')}
-                  aria-describedby={fieldStatusId('assigneeId')}
-                  disabled={readOnly || busy}
-                  value={assigneeId}
-                  onChange={(e) => setAssigneeId(e.target.value)}
-                >
-                  <option value="">{t('Unassigned')}</option>
-                  {assigneeId && !people.some((p) => p.id === assigneeId) && (
-                    <option value={assigneeId}>{t('Former member')}</option>
-                  )}
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldStatus('assigneeId', assigneeId || null)}
-              </label>
-              <label className="field">
-                {t('Due date')}
-                <input
-                  type="date"
-                  aria-label={t('Due date')}
-                  aria-describedby={fieldStatusId('dueDate')}
-                  readOnly={readOnly}
-                  disabled={busy}
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-                {fieldStatus('dueDate', dueDate || null)}
-              </label>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="field">
+                  {t('Assignee')}
+                  <select
+                    aria-label={t('Assignee')}
+                    aria-describedby={fieldStatusId('assigneeId')}
+                    disabled={readOnly || busy}
+                    value={assigneeId}
+                    onChange={(e) => setAssigneeId(e.target.value)}
+                  >
+                    <option value="">{t('Unassigned')}</option>
+                    {assigneeId && !people.some((p) => p.id === assigneeId) && (
+                      <option value={assigneeId}>{t('Former member')}</option>
+                    )}
+                    {people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldStatus('assigneeId', assigneeId || null)}
+                </label>
+                <label className="field">
+                  {t('Due date')}
+                  <input
+                    type="date"
+                    aria-label={t('Due date')}
+                    aria-describedby={fieldStatusId('dueDate')}
+                    readOnly={readOnly}
+                    disabled={busy}
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                  {fieldStatus('dueDate', dueDate || null)}
+                </label>
+              </div>
               {!readOnly && (
                 <div className="flex flex-wrap justify-between gap-3">
                   <button className="button card-desktop-save" disabled={busy}>
@@ -608,11 +611,10 @@ export function CardDialog({
             </form>
             {!readOnly && (
               <section
-                className="mt-8 space-y-4 border-t border-border pt-6"
+                className="mt-6 space-y-3 border-t border-border pt-5"
                 aria-label={t('Move without dragging')}
               >
-                <h2 className="font-semibold">{t('Move without dragging')}</h2>
-                <label className="field">
+                <label className="field sm:flex-row sm:items-center sm:gap-3 sm:[&>select]:flex-1">
                   {t('Move to')}
                   <select
                     value={
@@ -730,6 +732,7 @@ export function CardDialog({
               </h2>
               <CommentList
                 comments={comments}
+                people={people}
                 userId={ownerId}
                 canModerate={canModerate}
                 readOnly={readOnly}

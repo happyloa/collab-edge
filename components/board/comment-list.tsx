@@ -14,6 +14,7 @@ export type CommentEdit = NonNullable<CardDraft['commentEdit']>;
  */
 export function CommentList({
   comments,
+  people = [],
   userId,
   canModerate,
   readOnly,
@@ -24,6 +25,7 @@ export function CommentList({
   submit,
 }: {
   comments: Comment[];
+  people?: { id: string; name: string }[];
   userId: string;
   canModerate: boolean;
   readOnly: boolean;
@@ -42,6 +44,13 @@ export function CommentList({
     !readOnly && comment.actorId === userId && !comment.importedAuthorName;
   const canDelete = (comment: Comment) =>
     !readOnly && (comment.actorId === userId || canModerate);
+  // An imported comment belongs to whoever restored it in the database, so its
+  // author is the unverified name from the file, shown on its own line below.
+  const authorName = (comment: Comment) =>
+    comment.importedAuthorName
+      ? null
+      : (people.find((person) => person.id === comment.actorId)?.name ??
+        t('Former member'));
   const target = edit && comments.find((comment) => comment.id === edit.id);
   const editingId = target && canEdit(target) ? target.id : null;
   useEffect(() => {
@@ -61,9 +70,22 @@ export function CommentList({
   }
   return (
     <>
-      <ul ref={list} className="my-4 space-y-3">
+      <ul ref={list} className="my-4 divide-y divide-border">
         {comments.map((comment) => (
-          <li key={comment.id} className="rounded-lg bg-background p-3 text-sm">
+          <li key={comment.id} className="py-3 text-sm first:pt-0">
+            <p className="mb-1 flex flex-wrap items-baseline gap-x-2 text-xs text-muted">
+              {authorName(comment) && (
+                <span className="text-sm font-semibold text-foreground">
+                  {authorName(comment)}
+                </span>
+              )}
+              <time>{new Date(comment.createdAt).toLocaleString(locale)}</time>
+              {comment.editedAt && (
+                <span title={new Date(comment.editedAt).toLocaleString(locale)}>
+                  {t('Edited')}
+                </span>
+              )}
+            </p>
             {edit && editingId === comment.id ? (
               <form
                 onSubmit={async (event) => {
@@ -84,7 +106,7 @@ export function CommentList({
                 }}
               >
                 <label className="field">
-                  {t('Edit comment')}
+                  <span className="sr-only">{t('Edit comment')}</span>
                   <textarea
                     ref={editor}
                     aria-label={t('Edit comment')}
@@ -120,19 +142,6 @@ export function CommentList({
                 })}
               </p>
             )}
-            <p className="mt-2 text-xs text-muted">
-              <time>{new Date(comment.createdAt).toLocaleString(locale)}</time>
-              {comment.editedAt && (
-                <>
-                  {' · '}
-                  <span
-                    title={new Date(comment.editedAt).toLocaleString(locale)}
-                  >
-                    {t('Edited')}
-                  </span>
-                </>
-              )}
-            </p>
             {editingId !== comment.id &&
               (canEdit(comment) || canDelete(comment)) && (
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-xs">
@@ -140,7 +149,7 @@ export function CommentList({
                     <button
                       type="button"
                       data-comment-edit={comment.id}
-                      className="text-primary underline underline-offset-4"
+                      className="text-muted underline underline-offset-4 hover:text-foreground"
                       disabled={busy}
                       onClick={() =>
                         onEdit({
@@ -156,7 +165,11 @@ export function CommentList({
                   {canDelete(comment) && (
                     <button
                       type="button"
-                      className="text-destructive"
+                      className={
+                        confirmDelete === comment.id
+                          ? 'font-semibold text-destructive'
+                          : 'text-muted underline underline-offset-4 hover:text-destructive'
+                      }
                       disabled={busy}
                       onClick={async () => {
                         if (confirmDelete !== comment.id) {
