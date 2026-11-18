@@ -149,13 +149,10 @@ function Showcase() {
       >
         <div className="motion-reveal mb-10 grid items-center gap-9 border-b border-border py-7 pb-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-12">
           <div className="min-w-0">
-            <p className="eyebrow mb-3">
-              {t('PUBLIC PLAYGROUND / COLLABEDGE')}
-            </p>
             <h1 className="max-w-xl text-5xl leading-tight font-semibold tracking-tight sm:text-6xl">
               {t('Try the shared workflow.')}
             </h1>
-            <p className="mt-5 inline-flex rounded-full border border-control-border px-3 py-1.5 text-xs font-medium">
+            <p className="mt-5 text-sm font-medium">
               {t('Interactive simulation · no account, no live connection')}
             </p>
             <p className="mt-3 max-w-2xl text-muted">
@@ -206,18 +203,20 @@ function Showcase() {
             {t('Reset demo')}
           </button>
         </div>
-        <div className="surface motion-reveal motion-delay-3 mb-6 flex flex-wrap items-end gap-3 p-4">
-          <label className="field min-w-48 flex-1">
-            {t('Search cards')}
+        <div className="motion-reveal motion-delay-3 mb-6 flex flex-wrap items-center gap-2">
+          <label className="min-w-48 flex-1 sm:max-w-xs">
+            <span className="sr-only">{t('Search cards')}</span>
             <input
               type="search"
+              placeholder={t('Search cards')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
-          <label className="field">
-            {t('Filter by assignee')}
+          <label>
+            <span className="sr-only">{t('Filter by assignee')}</span>
             <select
+              className="w-auto"
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
             >
@@ -230,9 +229,13 @@ function Showcase() {
               ))}
             </select>
           </label>
-          <label className="field">
-            {t('Filter by due date')}
-            <select value={due} onChange={(e) => setDue(e.target.value)}>
+          <label>
+            <span className="sr-only">{t('Filter by due date')}</span>
+            <select
+              className="w-auto"
+              value={due}
+              onChange={(e) => setDue(e.target.value)}
+            >
               <option value="">{t('All dates')}</option>
               {[
                 ['today', 'Due today'],
@@ -246,17 +249,19 @@ function Showcase() {
               ))}
             </select>
           </label>
-          <button
-            className="button secondary"
-            onClick={() => {
-              setSearch('');
-              setAssignee('');
-              setDue('');
-            }}
-          >
-            {t('Clear filters')}
-          </button>
-          <label className="flex items-center gap-2 text-sm">
+          {(search || assignee || due) && (
+            <button
+              className="button ghost"
+              onClick={() => {
+                setSearch('');
+                setAssignee('');
+                setDue('');
+              }}
+            >
+              {t('Clear filters')}
+            </button>
+          )}
+          <label className="flex min-h-11 items-center gap-2 text-sm sm:ml-auto">
             <input
               className="w-auto"
               type="checkbox"
@@ -279,13 +284,12 @@ function Showcase() {
             <section
               key={column.id}
               aria-label={t(column.title)}
-              className="motion-reveal rounded-panel border border-border bg-surface-subtle p-4"
+              className="motion-reveal border-t-2 border-foreground pt-3"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <h3 className="mb-4 flex items-center gap-2 font-semibold">
-                <span className={`column-dot tone-${index + 1}`} />
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
                 {t(column.title)}
-                <span className="ml-auto text-sm font-normal text-muted">
+                <span className="ml-auto font-mono text-xs font-normal text-muted">
                   {visible.filter((card) => card.columnId === column.id).length}
                 </span>
               </h3>
