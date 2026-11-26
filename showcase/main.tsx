@@ -497,7 +497,11 @@ function Showcase() {
               </select>
             </label>
             <div className="flex flex-wrap gap-2">
-              <button className="button" disabled={draft.card.archived}>
+              <button
+                type="submit"
+                className="button"
+                disabled={draft.card.archived}
+              >
                 {t('Save changes')}
               </button>
               <button

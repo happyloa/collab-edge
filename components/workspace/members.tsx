@@ -112,7 +112,9 @@ export function Members({
                 <option value="VIEWER">{t('VIEWER')}</option>
               </select>
             </label>
-            <button className="button secondary">{t('Add member')}</button>
+            <button type="submit" className="button secondary">
+              {t('Add member')}
+            </button>
           </form>
           <form
             className="mt-5 flex items-end gap-3"
@@ -136,7 +138,9 @@ export function Members({
                 maxLength={80}
               />
             </label>
-            <button className="button secondary">{t('Rename')}</button>
+            <button type="submit" className="button secondary">
+              {t('Rename')}
+            </button>
           </form>
           {detail.canTransferOwnership && (
             <div className="mt-8 border-t border-border pt-6">
@@ -221,6 +225,7 @@ export function Members({
                     />
                   </div>
                   <button
+                    type="submit"
                     className="button secondary"
                     disabled={
                       !detail.members.some(
@@ -280,7 +285,9 @@ export function Members({
                 autoComplete="current-password"
               />
             </div>
-            <button className="button">{t('Accept ownership')}</button>
+            <button type="submit" className="button">
+              {t('Accept ownership')}
+            </button>
           </form>
           <button
             className="mt-4 text-sm text-destructive"

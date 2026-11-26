@@ -120,7 +120,11 @@ export function CommentList({
                   />
                 </label>
                 <div className="mt-3 flex flex-wrap items-center gap-4">
-                  <button className="button secondary" disabled={busy}>
+                  <button
+                    type="submit"
+                    className="button secondary"
+                    disabled={busy}
+                  >
                     {t('Save comment')}
                   </button>
                   <button

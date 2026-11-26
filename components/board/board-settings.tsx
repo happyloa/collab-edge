@@ -43,7 +43,9 @@ export function BoardSettings({
             maxLength={160}
           />
         </label>
-        <button className="button">{t('Save board name')}</button>
+        <button type="submit" className="button">
+          {t('Save board name')}
+        </button>
         <button type="button" className="button secondary" onClick={close}>
           {t('Cancel')}
         </button>

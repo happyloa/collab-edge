@@ -96,7 +96,11 @@ export function PasswordResetForm({
             />
           </div>
           <ApiErrorNotice error={error} />
-          <button className="button w-full" disabled={busy || !hydrated}>
+          <button
+            type="submit"
+            className="button w-full"
+            disabled={busy || !hydrated}
+          >
             {t(busy ? 'Just a moment…' : 'Set new password')}
           </button>
         </form>

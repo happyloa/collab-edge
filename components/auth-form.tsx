@@ -117,7 +117,11 @@ export function AuthForm({
           </div>
         )}
         <ApiErrorNotice error={error} />
-        <button className="button w-full" disabled={isSubmitting || !hydrated}>
+        <button
+          type="submit"
+          className="button w-full"
+          disabled={isSubmitting || !hydrated}
+        >
           {t(
             isSubmitting
               ? 'Just a moment…'

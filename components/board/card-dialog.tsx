@@ -573,7 +573,11 @@ export function CardDialog({
               </div>
               {!readOnly && (
                 <div className="flex flex-wrap justify-between gap-3">
-                  <button className="button card-desktop-save" disabled={busy}>
+                  <button
+                    type="submit"
+                    className="button card-desktop-save"
+                    disabled={busy}
+                  >
                     {t('Save changes')}
                   </button>
                   <button
@@ -792,7 +796,11 @@ export function CardDialog({
                       disabled={busy}
                     />
                   </label>
-                  <button className="button secondary mt-3" disabled={busy}>
+                  <button
+                    type="submit"
+                    className="button secondary mt-3"
+                    disabled={busy}
+                  >
                     {t('Post comment')}
                   </button>
                 </form>

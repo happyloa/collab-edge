@@ -609,6 +609,7 @@ function Board({
                     maxLength={160}
                   />
                   <button
+                    type="submit"
                     className="icon-button shrink-0"
                     aria-label={t('+ Add column')}
                     title={t('+ Add column')}

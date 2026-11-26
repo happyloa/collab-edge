@@ -153,6 +153,7 @@ export function Dashboard() {
                   />
                 </label>
                 <button
+                  type="submit"
                   className="icon-button shrink-0"
                   aria-label={t('Create workspace')}
                   title={t('Create workspace')}
@@ -317,7 +318,7 @@ export function Dashboard() {
                         placeholder={t('New board')}
                       />
                     </label>
-                    <button className="button">
+                    <button type="submit" className="button">
                       <Plus size={16} />
                       {t('Create board')}
                     </button>

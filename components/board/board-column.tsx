@@ -176,7 +176,7 @@ export function BoardColumn({
                 className="mb-3 flex gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  mutate({
+                  void mutate({
                     type: 'column.rename',
                     payload: {
                       id: column.id,
@@ -194,7 +194,7 @@ export function BoardColumn({
                   required
                   maxLength={160}
                 />
-                <button>{t('Save')}</button>
+                <button type="submit">{t('Save')}</button>
               </form>
               <div className="flex flex-wrap gap-3">
                 <button
@@ -296,6 +296,7 @@ export function BoardColumn({
               maxLength={160}
             />
             <button
+              type="submit"
               className="icon-button shrink-0"
               aria-label={t('Add card')}
               title={t('Add card')}

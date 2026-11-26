@@ -1,7 +1,7 @@
 @import 'tailwindcss';
-@source '../components';
 @import '../src/styles/noto-sans-tc.css';
 @import '../src/styles/instrument-sans.css';
+@source '../components';
 @theme {
   --font-sans: 'Instrument Sans', 'Noto Sans TC', sans-serif;
   --font-mono:
