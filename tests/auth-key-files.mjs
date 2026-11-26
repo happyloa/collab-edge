@@ -20,10 +20,10 @@ try {
   const path = join(root, '.tools', 'auth-keys.initial.json');
   const original = readFileSync(path, 'utf8');
   const { secrets } = JSON.parse(original);
-  assert.deepEqual(Object.keys(secrets).sort(), [
-    'PASSWORD_PEPPERS',
-    'SESSION_SIGNING_KEY',
-  ]);
+  assert.deepEqual(
+    Object.keys(secrets).sort((a, b) => a.localeCompare(b)),
+    ['PASSWORD_PEPPERS', 'SESSION_SIGNING_KEY'],
+  );
   for (const [name, binding] of Object.entries(secrets)) {
     assert.equal(binding.name, name);
     assert.equal(binding.type, 'secret_text');

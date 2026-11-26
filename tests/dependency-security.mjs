@@ -60,7 +60,7 @@ assert.deepEqual(
         (match) => match[1],
       ),
     ),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
   assert.deepEqual(
     picomatchVersions,
     ['2.3.2', '4.0.7'],
@@ -191,7 +191,7 @@ for (const version of sourceMapVersions) {
     'a();',
   );
   // Construction must reject before a generator can amplify this tiny map.
-  for (const line of [1e9, -1, Infinity, NaN, 1.5])
+  for (const line of [1e9, -1, Infinity, Number.NaN, 1.5])
     assert.throws(() => new SourceMapConsumer(indexed(line)), /Section offset/);
   assert.throws(
     () =>
